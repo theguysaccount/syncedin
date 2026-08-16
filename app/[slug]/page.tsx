@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { createServiceClient } from "@/lib/supabase/server";
+import { proxiedAvatar } from "@/lib/avatar";
 import { Wordmark } from "../Wordmark";
 import { NetworkDensity } from "../communities/NetworkDensity";
 import { DemoConversation } from "./DemoConversation";
@@ -328,8 +329,12 @@ export default async function InviteLandingPage({
     (invite as any).person_highlights?.toString().trim() ||
     invite.person_title?.toString().trim() ||
     "";
-  const recipientAvatarUrl =
-    (invite as any).recipient_avatar_url ?? null;
+  // Route scraped photos through /api/avatar — the source CDNs
+  // (media.licdn.com, cdninstagram.com) reject cross-origin hotlinks, which
+  // rendered a broken image here and an empty circle on the OG card.
+  const recipientAvatarUrl = proxiedAvatar(
+    (invite as any).recipient_avatar_url ?? null
+  );
 
   return (
     <main className="invite-shell">

@@ -4,6 +4,7 @@ import {
   observationSnippet as _observationSnippet,
   buildInviteCopy as _buildInviteCopy
 } from "@/lib/invite-copy";
+import { proxiedAvatar } from "@/lib/avatar";
 
 export const runtime = "nodejs"; // service client needs node runtime
 export const alt = "Your twin started a conversation on SyncedIn";
@@ -163,9 +164,13 @@ export default async function InviteOgImage({
             width: "100%"
           }}
         >
+          {/* Scraped photos (media.licdn.com etc.) 403 on a cross-origin
+              fetch, so Satori rendered an empty circle. Proxying through
+              our own origin makes the fetch succeed; if it still fails the
+              proxy serves a placeholder rather than nothing. */}
           {recipientAvatar ? (
             <img
-              src={recipientAvatar}
+              src={proxiedAvatar(recipientAvatar, SITE_URL) ?? recipientAvatar}
               width={104}
               height={104}
               style={{
@@ -208,9 +213,14 @@ export default async function InviteOgImage({
             display: "flex",
             flexDirection: "column",
             maxWidth: 820,
-            background: "rgba(255,255,255,0.55)",
+            background: "rgba(255,255,255,0.72)",
             borderRadius: 28,
-            padding: "30px 36px"
+            padding: "30px 36px",
+            // Belt-and-braces: even if a future copy change runs long, clip
+            // the box instead of letting text spill past the card edge (the
+            // "cut off mid-sentence" render Jack caught).
+            maxHeight: 400,
+            overflow: "hidden"
           }}
         >
           <div

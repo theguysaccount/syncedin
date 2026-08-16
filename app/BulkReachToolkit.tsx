@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { proxiedAvatar } from "@/lib/avatar";
 
 /**
  * Every channel we can give a human to move many invites at once.
@@ -1250,17 +1251,23 @@ export function BulkReachToolkit({
                     flexWrap: "wrap"
                   }}
                 >
+                  {/* Initials always render underneath; the photo layers on
+                      top. Scraped photos live on CDNs that block hotlinking
+                      (media.licdn.com), so we route them through
+                      /api/avatar — and if the load still fails, onError
+                      hides the img and the initials show through instead of
+                      a broken-image glyph. */}
                   <div
                     aria-hidden="true"
                     style={{
+                      position: "relative",
                       width: 38,
                       height: 38,
                       borderRadius: 999,
                       flexShrink: 0,
                       overflow: "hidden",
-                      background: avatarUrl
-                        ? "var(--panel-2)"
-                        : "linear-gradient(135deg, #1f8bff 0%, #6b2dc9 100%)",
+                      background:
+                        "linear-gradient(135deg, #1f8bff 0%, #6b2dc9 100%)",
                       color: "#fff",
                       fontWeight: 800,
                       fontSize: 14,
@@ -1272,21 +1279,25 @@ export function BulkReachToolkit({
                         "0 4px 12px -4px rgba(31, 139, 255, 0.45)"
                     }}
                   >
+                    {initials}
                     {avatarUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
-                        src={avatarUrl}
-                        alt={p.contact.name || "Recipient"}
+                        src={proxiedAvatar(avatarUrl) ?? avatarUrl}
+                        alt=""
+                        onError={(e) => {
+                          e.currentTarget.style.display = "none";
+                        }}
                         style={{
+                          position: "absolute",
+                          inset: 0,
                           width: "100%",
                           height: "100%",
                           objectFit: "cover",
                           display: "block"
                         }}
                       />
-                    ) : (
-                      initials
-                    )}
+                    ) : null}
                   </div>
                   <div style={{ minWidth: 0, flex: 1 }}>
                     <div

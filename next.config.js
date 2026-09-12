@@ -1,6 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // This app uses native images; do not expose the unused image optimizer.
+  images: { unoptimized: true },
   // Internal rewrites — keep the URL the user sees, but serve the
   // existing route's component. Communities and conferences share the
   // same Supabase table (kind='community' vs 'conference'), so the

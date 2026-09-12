@@ -3,6 +3,7 @@ import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { anthropic, TWIN_MODEL } from "@/lib/anthropic";
 import { exaPeopleSearch, type ExaPerson } from "@/lib/exa";
 import type { Profile, TwinProfile } from "@/lib/types";
+import { discoveryOptions, discoveryQuery, discoveryScopePrompt, rankDiscoveryPeople } from "@/lib/discovery-search";
 
 /**
  * Twin-powered connection suggestions.
@@ -28,13 +29,15 @@ export async function POST(req: Request) {
   // AI music platforms", "biotech CEOs with humanitarian focus". If present,
   // the twin's plan must respond to it directly while still using the user's
   // own context as the lens.
-  let body: { intent?: string } = {};
+  let body: Record<string, unknown> = {};
   try {
-    body = await req.json();
+    const parsed = await req.json();
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) body = parsed;
   } catch {
     /* no body is fine — open-ended planning */
   }
-  const intent = (body.intent ?? "").trim().slice(0, 280);
+  const intent = typeof body.intent === "string" ? body.intent.trim().slice(0, 280) : "";
+  const reason = typeof body.connection_reason === "string" ? body.connection_reason.trim().slice(0, 1000) : "";
 
   const service = createServiceClient();
   const [{ data: profile }, { data: twin }] = await Promise.all([
@@ -48,6 +51,10 @@ export async function POST(req: Request) {
   const p = profile as Profile;
   const t = twin as TwinProfile | null;
   const selfName = p?.display_name || p?.email || "the user";
+  const options = discoveryOptions(body, twin);
+  if (options.scope === "local" && !options.location) {
+    return NextResponse.json({ error: "missing_location", detail: "Enter a city for a local search." }, { status: 400 });
+  }
 
   if (!t?.goals) {
     return NextResponse.json(
@@ -68,6 +75,10 @@ Goals: ${t.goals}
 Deal preferences: ${t.deal_preferences || "(not specified)"}
 Deal-breakers: ${t.deal_breakers || "(not specified)"}
 Other context: ${(t.ai_export_blob || "").slice(0, 4000)}${intentBlock}
+
+# Search priorities
+${discoveryScopePrompt(options)}
+${reason ? `Specific reason for connecting: ${JSON.stringify(reason)}. Every suggestion should serve this purpose, even when it differs from the sender's usual goals.` : ""}
 
 Return ONLY valid JSON with this exact shape:
 {
@@ -106,7 +117,9 @@ Rules:
     const end = text.lastIndexOf("}");
     if (start !== -1 && end !== -1) {
       const parsed = JSON.parse(text.slice(start, end + 1));
-      plan = (parsed.suggestions as Plan[]) ?? [];
+      plan = Array.isArray(parsed.suggestions) ? parsed.suggestions
+        .filter((item: Plan) => item && typeof item.rationale === "string" && typeof item.search_query === "string" && item.search_query.trim())
+        .slice(0, 4) : [];
     }
   } catch (e: any) {
     console.error("twin-suggest plan error", e);
@@ -124,7 +137,7 @@ Rules:
   const searches = await Promise.all(
     plan.map(async (s) => {
       try {
-        const people = await exaPeopleSearch(s.search_query, 6);
+        const people = rankDiscoveryPeople(await exaPeopleSearch(discoveryQuery(s.search_query, options), 6), options);
         return { ...s, people };
       } catch (e) {
         console.error("twin-suggest exa search failed for", s.search_query, e);
@@ -133,5 +146,5 @@ Rules:
     })
   );
 
-  return NextResponse.json({ suggestions: searches });
+  return NextResponse.json({ suggestions: searches, search_scope: options.scope, search_location: options.location });
 }

@@ -233,7 +233,7 @@ export async function GET(req: Request) {
   <a href="${APP_URL}/conversations/${
     p.convId
   }" style="display:inline-block;background:#1f59ff;color:#fff;text-decoration:none;padding:7px 14px;border-radius:6px;font-weight:700;font-size:12px;margin-right:6px;">Review &amp; accept →</a>
-  <a href="${APP_URL}/proposals" style="display:inline-block;color:#6b7280;text-decoration:none;padding:7px 14px;font-weight:600;font-size:12px;">See all</a>
+  <a href="${APP_URL}/messages" style="display:inline-block;color:#6b7280;text-decoration:none;padding:7px 14px;font-weight:600;font-size:12px;">See all</a>
 </td></tr>`
       )
       .join("");
@@ -252,7 +252,7 @@ export async function GET(req: Request) {
       } waiting on you, ${escapeHtml(d.displayName)}.`,
       body: `<p style="margin:0 0 14px 0;">Your twins lined up the following deals. Tap any of them to accept, counter, or reply.</p><table role="presentation" cellpadding="0" cellspacing="0" width="100%">${proposalsHtml}</table>`,
       ctaText: "Open all proposals →",
-      ctaUrl: `${APP_URL}/proposals`,
+      ctaUrl: `${APP_URL}/messages`,
       footerNote: `Weekly digest · <a href="${APP_URL}/settings/notifications" style="color:#9ca3af;">manage</a> · <a href="${unsub}" style="color:#9ca3af;">unsubscribe</a>`
     });
 
@@ -266,7 +266,7 @@ export async function GET(req: Request) {
           `· ${p.otherName} (${p.age}): ${p.summary}\n  ${APP_URL}/conversations/${p.convId}`
       ),
       "",
-      `Open all proposals: ${APP_URL}/proposals`,
+      `Open all proposals: ${APP_URL}/messages`,
       `Unsubscribe: ${unsub}`
     ].join("\n");
 

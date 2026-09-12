@@ -45,3 +45,7 @@ select
         filter (where rn <= 30)::numeric, 3)        as acceptance_rate_last30
 from scored
 group by user_id;
+
+-- This cross-user aggregate is an internal report, not a client API.
+revoke all on public.twin_edit_baseline from public, anon, authenticated;
+grant select on public.twin_edit_baseline to service_role;

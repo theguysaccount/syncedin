@@ -18,6 +18,8 @@ export default async function OnboardingPage({
     welcome?: string;
     fromInvite?: string;
     conv?: string;
+    error?: string;
+    detail?: string;
   };
 }) {
   const supabase = createClient();
@@ -37,6 +39,8 @@ export default async function OnboardingPage({
     .select("*")
     .eq("id", user.id)
     .maybeSingle();
+  const { data: contactPrefs } = await supabase.from("notification_preferences")
+    .select("phone_number").eq("user_id", user.id).maybeSingle();
 
   // Activity counts for the live sync meter — same fetches the dashboard
   // runs, so the % shown here matches the % shown on /dashboard exactly.
@@ -66,6 +70,7 @@ export default async function OnboardingPage({
 
   const initial = {
     display_name: profile?.display_name ?? "",
+    phone_number: contactPrefs?.phone_number ?? "",
     goals: twin?.goals ?? "",
     deal_preferences: twin?.deal_preferences ?? "",
     communication_style: twin?.communication_style ?? "",
@@ -135,6 +140,13 @@ export default async function OnboardingPage({
 
       {searchParams.saved === "1" && (
         <p className="mt-2 text-sm retro-green">✓ Saved.</p>
+      )}
+      {searchParams.error && (
+        <p className="mt-2 text-sm retro-red">
+          {searchParams.detail
+            ? decodeURIComponent(searchParams.detail)
+            : "Add a valid phone number before saving."}
+        </p>
       )}
 
       <div className="mt-3 grid lg:grid-cols-[1fr_320px] gap-8 items-start">

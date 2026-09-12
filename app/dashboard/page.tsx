@@ -142,7 +142,7 @@ export default async function DashboardPage() {
       ? service
           .from("twin_profiles")
           .select(
-            "user_id, goals, deal_preferences, ai_export_blob, communication_style, deal_breakers"
+            "user_id, goals, deal_preferences, ai_export_blob, communication_style, deal_breakers, current_city, hometown"
           )
           .in("user_id", realUserIds)
       : Promise.resolve({ data: [] as any[] })
@@ -339,6 +339,7 @@ export default async function DashboardPage() {
         goals: t?.goals ?? null,
         deal_preferences: t?.deal_preferences ?? null,
         headline_fallback: headlineFromBlob,
+        location: (t as any)?.current_city || (t as any)?.hometown || null,
         connection_score,
         // Surface signup recency so the sort below can put fresh joiners
         // at the top of the directory.
@@ -1046,7 +1047,7 @@ export default async function DashboardPage() {
               people twin-search. Lifted below the conversations list
               so the user's existing relationships are the first thing
               they see on the dashboard. */}
-          <DiscoverSearch directory={directory} />
+          <DiscoverSearch key={user.id} directory={directory} userId={user.id} defaultLocation={twin?.current_city || twin?.hometown || ""} />
 
           {/* Premium-unlock progress — 3 completed referrals = Premium
               free. completedReferrals computed up top so the build

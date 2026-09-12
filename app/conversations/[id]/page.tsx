@@ -279,12 +279,12 @@ export default async function ConversationPage({
         .eq("user_id", userId)
     ])
   ]);
-  if (mRes.status === "fulfilled" && mRes.value > 0)
-    unreadCounts["/messages"] = mRes.value;
+  const messageUnread =
+    (mRes.status === "fulfilled" ? mRes.value : 0) +
+    (prRes.status === "fulfilled" ? prRes.value : 0);
+  if (messageUnread > 0) unreadCounts["/messages"] = messageUnread;
   if (pRes.status === "fulfilled" && pRes.value > 0)
     unreadCounts["/poll"] = pRes.value;
-  if (prRes.status === "fulfilled" && prRes.value > 0)
-    unreadCounts["/proposals"] = prRes.value;
   const completedConvsCount = new Set(
     ((myMsgsForMeter ?? []) as Array<{ conversation_id: string }>).map(
       (m) => m.conversation_id

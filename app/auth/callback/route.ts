@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { registerClawRoute } from "@/lib/claw-messenger";
+import { normalizePhoneNumber, phonePreferencePatch } from "@/lib/phone";
+import { authContextFromNext, loginReturnUrl, safeAuthNext } from "@/lib/auth-return";
 
 // Supabase magic-link / OAuth callback.
 // Handles both PKCE (?code=...) and OTP token_hash (?token_hash=...&type=...).
@@ -17,15 +20,28 @@ async function resolveLanding(
   origin: string,
   explicitNext: string | null
 ): Promise<string> {
-  if (explicitNext && explicitNext !== "/dashboard") {
-    return `${origin}${explicitNext}`;
-  }
   try {
     const sb = createClient();
     const {
       data: { user }
     } = await sb.auth.getUser();
     if (!user) return `${origin}${explicitNext || "/dashboard"}`;
+    const metadataPhone = normalizePhoneNumber(
+      (user.user_metadata as any)?.phone_number
+    );
+    if (metadataPhone) {
+      const { data: prefs, error: readError } = await sb.from("notification_preferences")
+        .select("phone_consent_source").eq("user_id", user.id).maybeSingle();
+      if (!readError && !prefs?.phone_consent_source) {
+        const { error } = await sb.from("notification_preferences")
+          .upsert({ user_id: user.id, ...phonePreferencePatch(metadataPhone, "auth_callback") }, { onConflict: "user_id" });
+        if (!error) {
+          const route = await registerClawRoute(metadataPhone);
+          if (!route.ok && !route.skipped) console.warn("[auth callback] claw route registration failed", route.error);
+        } else console.warn("[auth callback] private phone save failed", error);
+      }
+    }
+    if (explicitNext && explicitNext !== "/dashboard") return `${origin}${explicitNext}`;
     const { data: twin } = await sb
       .from("twin_profiles")
       .select("user_id, goals, ai_export_blob")
@@ -52,7 +68,7 @@ export async function GET(request: Request) {
   const code = searchParams.get("code");
   const token_hash = searchParams.get("token_hash");
   const type = searchParams.get("type");
-  const explicitNext = searchParams.get("next");
+  const explicitNext = safeAuthNext(searchParams.get("next"));
 
   const supabase = createClient();
   let errMsg = "";
@@ -85,8 +101,7 @@ export async function GET(request: Request) {
     errMsg = "The sign-in link had no auth token — it may have been mangled by your email client. Request a fresh one.";
   }
 
-  const detail = encodeURIComponent(errMsg || "unknown callback error");
   return NextResponse.redirect(
-    `${origin}/login?error=callback&detail=${detail}`
+    `${origin}${loginReturnUrl(authContextFromNext(explicitNext), { error: "callback", detail: errMsg || "unknown callback error" })}`
   );
 }

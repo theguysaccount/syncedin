@@ -474,7 +474,6 @@ export default async function HomePage() {
         </section>
 
         <style>{`
-          /* Smooth-scroll for anchor navigation to #top. */
           html { scroll-behavior: smooth; }
 
           .lh-section-tag {
@@ -582,7 +581,7 @@ export default async function HomePage() {
             border: 1px solid rgba(31, 89, 255, 0.18);
           }
           .lh-why-stat {
-            font-family: "IBM Plex Mono", ui-monospace, monospace;
+            font-family: IBM Plex Mono, ui-monospace, monospace;
             font-size: 32px;
             font-weight: 900;
             letter-spacing: -0.02em;
@@ -654,16 +653,7 @@ export default async function HomePage() {
             font-weight: 700;
             font-size: 15px;
             color: var(--text);
-            list-style: none;
           }
-          .lh-faq-item summary::-webkit-details-marker { display: none; }
-          .lh-faq-item summary::after {
-            content: "+";
-            float: right;
-            color: var(--text-dim);
-            font-weight: 700;
-          }
-          .lh-faq-item[open] summary::after { content: "−"; }
           .lh-faq-item p {
             margin: 10px 0 0;
             font-size: 14px;

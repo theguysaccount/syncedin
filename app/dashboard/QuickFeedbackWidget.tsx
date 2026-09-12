@@ -41,7 +41,7 @@ export function QuickFeedbackWidget({
       // Prepend the surface tag onto the body so we can still tell
       // which page the post came from when triaging.
       const bodyWithSurface = body.trim()
-        ? `${body.trim()}\n\n—\nsubmitted from: ${surface}`
+        ? `${body.trim()}\n\n---\nsubmitted from: ${surface}`
         : `(submitted from ${surface})`;
       const res = await fetch("/api/feedback", {
         method: "POST",
@@ -176,7 +176,7 @@ export function QuickFeedbackWidget({
 
       {sentId !== null ? (
         <div className="qfw-thanks">
-          <h4>✓ Got it — thank you.</h4>
+          <h4>✓ Got it, thank you.</h4>
           <p>
             Your post is live on the public feedback board. Jack reads
             every one. Vote up the ones that matter most to you and
@@ -244,7 +244,7 @@ export function QuickFeedbackWidget({
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value.slice(0, 160))}
-            placeholder="One-line summary — what's confusing or missing?"
+            placeholder="One-line summary: what's confusing or missing?"
             className="retro-input"
             style={{ fontSize: 15 }}
           />

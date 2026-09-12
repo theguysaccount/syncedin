@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 export default async function NotificationSettingsPage({
   searchParams
 }: {
-  searchParams: { saved?: string };
+  searchParams: { saved?: string; error?: string; detail?: string };
 }) {
   const supabase = createClient();
   const {
@@ -33,6 +33,11 @@ export default async function NotificationSettingsPage({
 
   const initial = {
     email_address: prefs?.email_address ?? profile?.email ?? "",
+    phone_number:
+      (prefs as any)?.phone_number ?? "",
+    on_text_notifications: (prefs as any)?.on_text_notifications ?? true,
+    preferred_messaging_service:
+      (prefs as any)?.preferred_messaging_service ?? "iMessage",
     on_new_connection: prefs?.on_new_connection ?? true,
     on_new_message: prefs?.on_new_message ?? true,
     on_agreement_accepted: prefs?.on_agreement_accepted ?? true,
@@ -47,20 +52,28 @@ export default async function NotificationSettingsPage({
 
   return (
     <AppShell>
-      <h1 className="retro-h1 text-2xl">Email notifications</h1>
+      <h1 className="retro-h1 text-2xl">Notifications</h1>
       <p className="mt-1 retro-dim text-sm">
-        Pick what reaches your inbox. Everything else stays on SyncedIn so your
-        twin can keep doing the work without flooding you.
+        Pick what reaches your phone and inbox. Phone is the primary route for
+        high-signal SyncedIn moments.
       </p>
 
       {searchParams.saved === "1" && (
         <p className="mt-3 text-sm retro-green">✓ Saved.</p>
+      )}
+      {searchParams.error && (
+        <p className="mt-3 text-sm retro-red">
+          {searchParams.detail
+            ? searchParams.detail
+            : "Could not save notification settings."}
+        </p>
       )}
 
       <NotifPrefsForm
         initial={initial}
         action={saveNotificationPrefs}
         defaultEmail={profile?.email ?? ""}
+        defaultPhone={initial.phone_number}
       />
     </AppShell>
   );

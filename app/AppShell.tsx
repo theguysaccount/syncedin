@@ -104,7 +104,8 @@ export async function AppShell({
   // === Unread counts for the sidebar's red badges ===
   // Three counts: /messages (a message from the other side arrived
   // after my last_read), /poll (a poll exists I haven't responded
-  // to), /proposals (a conversation has a summary I haven't acted on).
+  // to), and pending proposals (folded into /messages since proposals
+  // now live inside the merged inbox).
   //
   // Parallelized May 2026 (Jack: "jitteriness when clicking around
   // the menu and it's like reloading items"). Previously these three
@@ -208,12 +209,12 @@ export async function AppShell({
     computePollUnread(),
     computeProposalsUnread()
   ]);
-  if (msgRes.status === "fulfilled" && msgRes.value > 0)
-    unreadCounts["/messages"] = msgRes.value;
+  const messageUnread =
+    (msgRes.status === "fulfilled" ? msgRes.value : 0) +
+    (propRes.status === "fulfilled" ? propRes.value : 0);
+  if (messageUnread > 0) unreadCounts["/messages"] = messageUnread;
   if (pollRes.status === "fulfilled" && pollRes.value > 0)
     unreadCounts["/poll"] = pollRes.value;
-  if (propRes.status === "fulfilled" && propRes.value > 0)
-    unreadCounts["/proposals"] = propRes.value;
 
   // === SYNC METER inputs ===
   // Pulled INTO AppShell (was per-page via sidebarExtra) so the meter

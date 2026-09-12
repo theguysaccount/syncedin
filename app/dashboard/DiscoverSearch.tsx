@@ -4,6 +4,11 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { startConversationWithUser } from "./actions";
 import { DotsLoader } from "../DotsLoader";
+import { Globe, MapPin, Pencil, RotateCw, Trash2 } from "lucide-react";
+import { ConnectionNoteEditor } from "./ConnectionNoteEditor";
+import { capConnectionNote, CONNECTION_REASON_LIMIT, parseOutreachContext, type OutreachContext } from "@/lib/outreach-context";
+import { discoveryCacheKey, discoveryQuery, matchesCity, type SearchScope } from "@/lib/discovery-search";
+import { connectionDraftKey, connectionDraftStorageKey, restoreConnectionDrafts, serializeConnectionDrafts, type ConnectionDraft } from "@/lib/connection-drafts";
 
 /**
  * Deterministic "cool default avatar" generator for directory rows
@@ -131,6 +136,7 @@ type DirectoryUser = {
   /** Signup timestamp in ms. Used to render a "NEW" pill on rows
    *  created within the last 14 days. */
   created_at_ms?: number;
+  location?: string | null;
 };
 type ExaPerson = { title: string; url: string; highlights: string[] };
 type FindResponse = {
@@ -175,48 +181,70 @@ function looksLikeRealBio(s: string | null | undefined): boolean {
  *   Web matches get "Draft invite" → your twin writes the outreach.
  */
 export function DiscoverSearch({
-  directory
+  directory, userId, defaultLocation = ""
 }: {
   directory: DirectoryUser[];
+  userId: string;
+  defaultLocation?: string;
 }) {
   const [q, setQ] = useState("");
+  const [connectionReason, setConnectionReason] = useState("");
+  const [searchScope, setSearchScope] = useState<SearchScope>("global");
+  const [searchLocation, setSearchLocation] = useState(defaultLocation);
+  const [settingsReady, setSettingsReady] = useState(false);
+  const [searchError, setSearchError] = useState("");
+  const settingsKey = `syncedin.discoverySettings.v1:${userId}`;
+  const draftsKey = connectionDraftStorageKey(userId);
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(settingsKey) || "null");
+      if (saved?.scope === "local" || saved?.scope === "global") setSearchScope(saved.scope);
+      if (typeof saved?.location === "string") setSearchLocation(saved.location.slice(0, 120));
+      if (typeof saved?.query === "string") setQ(saved.query.slice(0, 500));
+      if (typeof saved?.reason === "string") setConnectionReason(saved.reason.slice(0, CONNECTION_REASON_LIMIT));
+    } catch { /* Keep defaults when storage is unavailable. */ }
+    try { setDrafts(restoreConnectionDrafts(localStorage.getItem(draftsKey))); } catch { /* Browser storage may be disabled. */ }
+    setSettingsReady(true);
+  }, [settingsKey, draftsKey]);
+  useEffect(() => {
+    if (!settingsReady) return;
+    try { localStorage.setItem(settingsKey, JSON.stringify({ scope: searchScope, location: searchLocation, query: q, reason: connectionReason })); } catch { /* Optional persistence. */ }
+  }, [settingsKey, settingsReady, searchScope, searchLocation, q, connectionReason]);
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<FindResponse>({
     sync_users: [],
     exa_people: []
   });
-  /**
-   * Per-person draft state. The Discover panel previously held ONE
-   * `draftFor` / `draftText` / `shortText` / `inviteUrl` state at a time,
-   * which meant clicking "Draft invite" on a second person silently
-   * cancelled the first person's drafts. The user wants to be able to
-   * have multiple drafts in flight at once and tab between them — so we
-   * key everything by person.url.
-   */
-  type DraftState = {
-    draftText: string;
-    shortText: string;
-    inviteUrl: string;
-    generating: boolean;
-  };
-  const [drafts, setDrafts] = useState<Map<string, DraftState>>(new Map());
+  const [resultsQuery, setResultsQuery] = useState("");
+  // Keep the approved learning context with the note, even as the search changes.
+  const [drafts, setDrafts] = useState<Map<string, ConnectionDraft>>(new Map());
+  useEffect(() => {
+    if (!settingsReady) return;
+    try { localStorage.setItem(draftsKey, serializeConnectionDrafts(drafts)); } catch { /* Editing still works without browser storage. */ }
+  }, [drafts, draftsKey, settingsReady]);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const debounce = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  function getDraft(url: string): DraftState | undefined {
-    return drafts.get(url);
+  function noteContext(p: ExaPerson, searchQuery: string): OutreachContext {
+    return parseOutreachContext({ person_title: p.title, person_url: p.url, person_background: p.highlights.join("\n"), search_query: searchQuery, connection_reason: connectionReason });
   }
-  function setDraft(url: string, patch: Partial<DraftState>) {
+  function getDraft(p: ExaPerson, searchQuery: string): ConnectionDraft | undefined {
+    return drafts.get(connectionDraftKey(noteContext(p, searchQuery)));
+  }
+  function setDraft(context: OutreachContext, patch: Partial<ConnectionDraft>) {
     setDrafts((prev) => {
       const next = new Map(prev);
+      const key = connectionDraftKey(context);
       const current =
-        prev.get(url) ?? {
-          draftText: "",
+        prev.get(key) ?? {
+          context,
           shortText: "",
-          inviteUrl: "",
-          generating: false
+          originalShortText: "",
+          generating: false,
+          error: "",
+          updatedAt: Date.now()
         };
-      next.set(url, { ...current, ...patch });
+      next.set(key, { ...current, ...patch, updatedAt: Date.now() });
       return next;
     });
   }
@@ -231,98 +259,99 @@ export function DiscoverSearch({
   }
 
   useEffect(() => {
+    if (!settingsReady) return;
     if (debounce.current) clearTimeout(debounce.current);
+    setSearchError("");
+    setResults({ sync_users: [], exa_people: [] });
     if (!q.trim()) {
       setResults({ sync_users: [], exa_people: [] });
+      setResultsQuery("");
+      setLoading(false);
       return;
     }
+    if (searchScope === "local" && !searchLocation.trim() && !isEmail(q)) {
+      setSearchError("Enter a city for a local search.");
+      setLoading(false);
+      return;
+    }
+    const controller = new AbortController();
     setLoading(true);
     debounce.current = setTimeout(async () => {
       try {
         const r = await fetch("/api/find-counterpart", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ query: q.trim() })
+          body: JSON.stringify({ query: q.trim(), search_scope: searchScope, search_location: searchScope === "local" ? searchLocation : "", connection_reason: connectionReason }),
+          signal: controller.signal
         });
-        const j = (await r.json()) as FindResponse;
+        const j = await r.json();
+        if (!r.ok) throw new Error(j.detail || j.error || "Search failed. Please try again.");
+        if (controller.signal.aborted) return;
+        setResultsQuery(discoveryQuery(q.trim(), { scope: searchScope, location: searchLocation }));
         setResults({
           sync_users: j.sync_users ?? [],
           exa_people: j.exa_people ?? []
         });
-      } catch {
-        setResults({ sync_users: [], exa_people: [] });
+      } catch (cause) {
+        if (!controller.signal.aborted) setSearchError(cause instanceof Error ? cause.message : "Search failed. Please try again.");
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     }, 350);
     return () => {
+      controller.abort();
       if (debounce.current) clearTimeout(debounce.current);
     };
-  }, [q]);
+  }, [q, searchScope, searchLocation, settingsReady, connectionReason]);
 
-  async function draftOutreach(p: ExaPerson) {
-    // Seed the draft state for THIS person without disturbing any other
-    // in-flight draft. The LinkedIn connection note no longer needs the
-    // invite URL inline (LinkedIn flags notes containing URLs as spam +
-    // the URL goes in the follow-up DM after connection accept anyway).
-    setDraft(p.url, {
-      draftText: "",
-      shortText: "",
-      inviteUrl: "",
-      generating: true
+  async function draftOutreach(p: ExaPerson, searchQuery: string) {
+    const context = noteContext(p, searchQuery);
+    if (drafts.get(connectionDraftKey(context))?.generating) return;
+    setDraft(context, {
+      generating: true,
+      error: ""
     });
     try {
       const r = await fetch("/api/exa-draft-outreach", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          person_title: p.title,
-          person_url: p.url,
-          highlights: p.highlights
+          ...context,
+          mode: "connection_note",
+          highlights: p.highlights,
         })
       });
       const j = await r.json();
-      const url = (j.invite_url ?? "") as string;
-      let short = (j.short_message ?? "") as string;
-      // LinkedIn caps free-tier connection notes at 200 characters. Hard
-      // truncate so the copy-to-clipboard text is paste-safe everywhere.
-      if (short.length > 200) {
-        short = short.slice(0, 197).trimEnd() + "…";
-      }
-      setDraft(p.url, {
-        draftText: j.message ?? "",
+      if (!r.ok) throw new Error(j.detail || j.error || "Could not draft a note.");
+      if (typeof j.short_message !== "string" || !j.short_message.trim()) throw new Error("No connection note returned. Please try again.");
+      const short = capConnectionNote(j.short_message);
+      setDraft(context, {
         shortText: short,
-        inviteUrl: url,
+        originalShortText: short,
+        context: parseOutreachContext({ ...context, person_background: j.person_background || context.person_background }),
         generating: false
       });
-    } catch {
-      setDraft(p.url, { generating: false });
+    } catch (cause) {
+      setDraft(context, { generating: false, error: cause instanceof Error ? cause.message : "Could not draft a note." });
     }
   }
 
-  const copy = (text: string) => navigator.clipboard?.writeText(text);
   const searching = q.trim().length > 0;
 
-  /**
-   * Open the recipient's LinkedIn profile in a new tab with the
-   * connection note copied to clipboard. LinkedIn deliberately doesn't
-   * expose a public URL scheme that pre-fills the connect-with-note
-   * modal (would be too easy to abuse), so the best we can do is:
-   *   1. Copy the note to clipboard.
-   *   2. Open the profile so the user clicks Connect → Add a note → Paste.
-   * That's still a single keyboard shortcut for the actual send.
-   */
-  function openLinkedInWithNote(profileUrl: string, note: string) {
-    if (!profileUrl) return;
-    try {
-      navigator.clipboard?.writeText(note);
-    } catch {
-      /* clipboard may be blocked — user can still paste their last copy */
-    }
-    window.open(profileUrl, "_blank", "noopener,noreferrer");
+  function noteEditor(p: ExaPerson, searchQuery: string) {
+    const draft = getDraft(p, searchQuery);
+    if (!draft) return null;
+    return renderNote(draft);
   }
-  const isLinkedInUrl = (url: string) =>
-    /linkedin\.com\/(?:in|pub)\//i.test(url || "");
+
+  function renderNote(draft: ConnectionDraft) {
+    return <ConnectionNoteEditor
+      key={connectionDraftKey(draft.context)}
+      context={draft.context}
+      draft={draft}
+      onChange={(shortText) => setDraft(draft.context, { shortText })}
+    />;
+  }
 
   // Twin-suggested connections.
   type Suggestion = {
@@ -334,6 +363,10 @@ export function DiscoverSearch({
   const [suggestions, setSuggestions] = useState<Suggestion[] | null>(null);
   const [intent, setIntent] = useState("");
   const [lastIntent, setLastIntent] = useState("");
+  const [suggestionError, setSuggestionError] = useState("");
+  const suggestionRequest = useRef<AbortController | null>(null);
+  const searchContext = useRef({ intent, reason: connectionReason });
+  searchContext.current = { intent, reason: connectionReason };
   // Locally-persisted set of user IDs the viewer has dismissed from the
   // "already on SyncedIn" directory. Stored in localStorage so dismissals
   // stay hidden across page loads without needing a server table.
@@ -377,17 +410,27 @@ export function DiscoverSearch({
   // time the user lands on the dashboard. 60-min TTL: long enough that
   // they get instant paint on repeat visits, short enough that new
   // signups feed back into the suggestions on the same day.
-  const FIND_CACHE_KEY = "syncedin.findPeople.v1";
   const FIND_TTL_MS = 60 * 60 * 1000;
 
   async function askTwin(useIntent: string, useCache = false) {
+    suggestionRequest.current?.abort();
+    const controller = new AbortController();
+    suggestionRequest.current = controller;
+    setSuggestionError("");
+    setSuggestions(null);
+    if (searchScope === "local" && !searchLocation.trim()) {
+      setSuggestionError("Enter a city for a local search.");
+      setSuggesting(false);
+      return;
+    }
+    const reason = searchContext.current.reason;
+    const cacheKey = discoveryCacheKey(userId, { scope: searchScope, location: searchLocation }, reason);
     setSuggesting(true);
-    setLastIntent(useIntent);
     // Cache check (only for the empty-intent auto-load case — if the
     // user typed a specific intent we always hit the server fresh).
     if (useCache && !useIntent) {
       try {
-        const raw = localStorage.getItem(FIND_CACHE_KEY);
+        const raw = localStorage.getItem(cacheKey);
         if (raw) {
           const parsed = JSON.parse(raw) as {
             at: number;
@@ -399,6 +442,7 @@ export function DiscoverSearch({
             Array.isArray(parsed.suggestions)
           ) {
             setSuggestions(parsed.suggestions);
+            setLastIntent(useIntent);
             setSuggesting(false);
             return;
           }
@@ -411,55 +455,95 @@ export function DiscoverSearch({
       const r = await fetch("/api/twin-suggest-connections", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify(useIntent ? { intent: useIntent } : {})
+        body: JSON.stringify({ intent: useIntent, search_scope: searchScope, search_location: searchScope === "local" ? searchLocation : "", connection_reason: reason }),
+        signal: controller.signal
       });
       const j = await r.json();
+      if (controller.signal.aborted) return;
+      if (!r.ok) throw new Error(j.detail || j.error || "Could not find people. Please try again.");
       const fresh = j.suggestions ?? [];
       setSuggestions(fresh);
+      setLastIntent(useIntent);
       // Only cache the no-intent default suggestions — intent-specific
       // queries are too varied to keep around.
       if (!useIntent) {
         try {
           localStorage.setItem(
-            FIND_CACHE_KEY,
+            cacheKey,
             JSON.stringify({ at: Date.now(), suggestions: fresh })
           );
         } catch {
           /* storage full or disabled — non-fatal */
         }
       }
-    } catch {
-      setSuggestions([]);
+    } catch (cause) {
+      if (!controller.signal.aborted) {
+        setSuggestions([]);
+        setSuggestionError(cause instanceof Error ? cause.message : "Could not find people. Please try again.");
+      }
     } finally {
-      setSuggesting(false);
+      if (!controller.signal.aborted) setSuggesting(false);
     }
   }
 
-  // Auto-fire Find People the first time the dashboard mounts so the
-  // user lands on a populated set of suggestions — the primary CTA we
-  // want them clicking. Skip if suggestions already loaded (HMR reload)
-  // or the user is actively searching by name.
-  const autoFired = useRef(false);
+  // Refresh recommendations when the geographic scope changes; cancel stale requests.
   useEffect(() => {
-    if (autoFired.current) return;
-    if (suggestions !== null) return;
-    if (searching) return;
-    autoFired.current = true;
-    askTwin("", true);
+    if (!settingsReady || searching) return;
+    setSuggestions(null);
+    setSuggestionError("");
+    const timer = setTimeout(() => askTwin(searchContext.current.intent, true), 400);
+    return () => { clearTimeout(timer); suggestionRequest.current?.abort(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [settingsReady, searchScope, searchLocation, searching]);
+
+  const visibleDirectory = directory.filter((person) => !dismissed.has(person.id) &&
+    (searchScope === "global" || matchesCity(person.location, searchLocation)))
+    .sort((a, b) => (b.connection_score || 0) - (a.connection_score || 0));
+
+  const visibleNoteKeys = new Set(searching
+    ? results.exa_people.map((person) => connectionDraftKey(noteContext(person, resultsQuery)))
+    : (suggestions || []).flatMap((suggestion) => suggestion.people.slice(0, 4).map((person) =>
+      connectionDraftKey(noteContext(person, discoveryQuery(lastIntent || suggestion.search_query, { scope: searchScope, location: searchLocation }))))));
+  const otherDrafts = Array.from(drafts.entries()).filter(([key]) => !visibleNoteKeys.has(key))
+    .sort((a, b) => b[1].updatedAt - a[1].updatedAt);
 
   return (
     <section>
       <div className="flex items-baseline justify-between">
         <div className="retro-label">discover</div>
         <div className="retro-dim text-xs">
-          {searching ? "searching SyncedIn + web…" : `${directory.length} ready to sync`}
+          {loading ? "Searching..." : `${visibleDirectory.length} ready to sync`}
         </div>
       </div>
 
-      <div className="mt-3 relative">
+      <div className="mt-3 flex flex-wrap items-center gap-3">
+        <fieldset className="inline-flex shrink-0 gap-1 rounded-lg border p-1" style={{ borderColor: "var(--border-bright)" }}>
+          <legend className="sr-only">Search scope</legend>
+          {(["global", "local"] as const).map((scope) => (
+            <label key={scope} className="relative cursor-pointer">
+              <input type="radio" name="discover-scope" value={scope} checked={searchScope === scope}
+                onChange={() => setSearchScope(scope)} className="peer sr-only" disabled={!settingsReady} />
+              <span className="inline-flex h-9 w-24 items-center justify-center gap-2 rounded-md text-sm peer-focus-visible:outline peer-focus-visible:outline-2"
+                style={{ background: searchScope === scope ? "var(--amber-bright)" : "transparent", color: searchScope === scope ? "white" : "var(--text)" }}>
+                {scope === "global" ? <Globe size={16} /> : <MapPin size={16} />}
+                {scope === "global" ? "Global" : "Local"}
+              </span>
+            </label>
+          ))}
+        </fieldset>
+        {searchScope === "local" ? <label className="flex min-w-0 flex-1 items-center gap-2 text-xs" style={{ minWidth: 200 }}>
+          <span className="retro-dim shrink-0">Near</span>
+          <input aria-label="Local search city" value={searchLocation} maxLength={120}
+            onChange={(event) => setSearchLocation(event.target.value)} placeholder="City or metro area" className="retro-input min-w-0" />
+        </label> : <span className="retro-dim text-xs">Best fit, anywhere</span>}
+      </div>
+
+      <div className="mt-3 grid items-start gap-3 md:grid-cols-2">
+      <div className="min-w-0">
+        <label htmlFor="discover-search" className="retro-label block mb-1">Find someone</label>
+        <div className="relative">
         <input
+          id="discover-search"
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Search by name. Find them on SyncedIn or anywhere on the web."
@@ -486,7 +570,46 @@ export function DiscoverSearch({
             × clear
           </button>
         )}
+        </div>
       </div>
+
+      <div className="min-w-0">
+        <label htmlFor="discover-reason" className="retro-label block mb-1">Reason for connecting <span className="retro-dim normal-case">(optional)</span></label>
+        <textarea
+          id="discover-reason"
+          value={connectionReason}
+          onChange={(event) => setConnectionReason(event.target.value)}
+          placeholder="e.g. Invite climate founders to a research dinner"
+          className="retro-input text-sm"
+          rows={2}
+          maxLength={CONNECTION_REASON_LIMIT}
+        />
+      </div>
+      </div>
+      {searchError && <p role="alert" className="retro-red text-sm mt-2">{searchError}</p>}
+      {!searching && searchScope === "local" && searchLocation.trim() && !visibleDirectory.length && (
+        <p className="retro-dim text-sm mt-3">No SyncedIn matches near {searchLocation.trim()}.</p>
+      )}
+
+      {otherDrafts.length > 0 && <details className="mt-4 border-y py-3" style={{ borderColor: "var(--border)" }}>
+        <summary className="cursor-pointer text-sm font-semibold">Saved notes ({otherDrafts.length})</summary>
+        <div className="divide-y" style={{ borderColor: "var(--border)" }}>
+          {otherDrafts.map(([key, draft]) => <article key={key} className="py-4 min-w-0">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <h3 className="text-sm font-semibold break-words">{draft.context.person_title}</h3>
+                <p className="retro-dim text-xs break-words">{draft.context.search_query}</p>
+              </div>
+              <button type="button" className="retro-btn shrink-0" style={{ width: 44, height: 44, padding: 0 }}
+                disabled={draft.generating} aria-label={`Delete note for ${draft.context.person_title}`} title="Delete saved note"
+                onClick={() => setDrafts((previous) => { const next = new Map(previous); next.delete(key); return next; })}>
+                <Trash2 size={16} className="mx-auto" />
+              </button>
+            </div>
+            {renderNote(draft)}
+          </article>)}
+        </div>
+      </details>}
 
       {/* Platform-users directory — Jack's call: ALREADY-ON-SYNCEDIN users
           render ABOVE the Find People (Exa) block. They're a higher-value
@@ -494,7 +617,7 @@ export function DiscoverSearch({
           before the "your twin says" recommendations. Each row shows the
           connection score on the right. */}
       {!searching && (() => {
-        const visible = directory.filter((p) => !dismissed.has(p.id));
+        const visible = visibleDirectory;
         if (visible.length === 0) return null;
         return (
           <div className="mt-4">
@@ -655,7 +778,7 @@ export function DiscoverSearch({
             <button
               type="button"
               onClick={() => askTwin(intent.trim())}
-              disabled={suggesting}
+              disabled={suggesting || !settingsReady || (searchScope === "local" && !searchLocation.trim())}
               className="retro-btn retro-btn-primary shrink-0"
             >
               {suggesting ? (
@@ -691,7 +814,8 @@ export function DiscoverSearch({
               : "Leave it blank to let your twin pick. Or type any intent — your twin combines it with your own context to find the right people."}
           </div>
 
-          {suggestions && suggestions.length === 0 && !suggesting && (
+          {suggestionError && <p role="alert" className="retro-red text-sm mt-2">{suggestionError}</p>}
+          {suggestions && suggestions.length === 0 && !suggesting && !suggestionError && (
             <p className="retro-dim text-sm mt-3">
               Your twin didn&apos;t surface any matches. Try adding more
               context to your twin in onboarding.
@@ -796,6 +920,8 @@ export function DiscoverSearch({
                   ) : (
                     <ul className="mt-2 space-y-2">
                       {s.people.slice(0, 4).map((p) => {
+                        const searchQuery = discoveryQuery(lastIntent || s.search_query, { scope: searchScope, location: searchLocation });
+                        const draft = getDraft(p, searchQuery);
                         const isOpen = expanded.has(p.url);
                         const preview = p.highlights[0]
                           ? p.highlights[0].length > 140
@@ -809,7 +935,7 @@ export function DiscoverSearch({
                             onClick={() => toggleExpand(p.url)}
                             style={{ cursor: "pointer" }}
                           >
-                            <div className="flex items-start justify-between gap-3">
+                            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                               <div className="text-left flex-1 min-w-0">
                                 <div className="font-semibold text-sm">
                                   {p.title}
@@ -833,7 +959,7 @@ export function DiscoverSearch({
                                 )}
                               </div>
                               <div
-                                className="flex items-center gap-2 shrink-0"
+                                className="flex flex-wrap items-center gap-2"
                                 onClick={(e) => e.stopPropagation()}
                               >
                                 <button
@@ -862,23 +988,27 @@ export function DiscoverSearch({
                                 </button>
                                 <button
                                   type="button"
-                                  onClick={() => draftOutreach(p)}
-                                  disabled={!!getDraft(p.url)?.generating}
+                                  onClick={() => draftOutreach(p, searchQuery)}
+                                  disabled={!!draft?.generating}
                                   // Primary CTA — promote the "draft invite"
                                   // action so it's visually the strongest
                                   // affordance on the row, not the equal
                                   // weight retro-btn it was.
-                                  className="retro-btn retro-btn-primary text-sm"
+                                  className="retro-btn retro-btn-primary inline-flex items-center gap-2 text-sm"
                                   style={{ whiteSpace: "nowrap" }}
                                 >
-                                  {getDraft(p.url)?.generating ? (
+                                  {draft?.generating ? (
                                     <DotsLoader label="Drafting" />
-                                  ) : getDraft(p.url)?.draftText ? (
-                                    "Redraft"
+                                  ) : draft?.shortText ? (
+                                    <><RotateCw size={14} /> Redraft</>
                                   ) : (
-                                    "✎ Draft invite"
+                                    <><Pencil size={14} /> Draft invite</>
                                   )}
                                 </button>
+                                {!draft && <button type="button" onClick={() => setDraft(noteContext(p, searchQuery), {})}
+                                  className="retro-btn inline-flex items-center gap-1 text-xs" title="Write or paste a connection note">
+                                  <Pencil size={14} /> Write note
+                                </button>}
                               </div>
                             </div>
                             {isOpen && p.highlights.length > 0 && (
@@ -888,100 +1018,7 @@ export function DiscoverSearch({
                                 ))}
                               </div>
                             )}
-                            {(() => {
-                              const d = getDraft(p.url);
-                              if (!d || !d.draftText) return null;
-                              return (
-                                <div
-                                  className="mt-3"
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  {/* Find People rows previously rendered both
-                                      a short LinkedIn connection note AND a
-                                      long DM with the invite URL. Jack's call
-                                      to drop the long DM: these recipients
-                                      haven't connected on LinkedIn yet, so a
-                                      long DM isn't actionable — the
-                                      connection-note path IS the move.
-                                      Mobile-friendly two-button row keeps
-                                      everything on one line. */}
-                                  {d.shortText && (
-                                    <div>
-                                      <div
-                                        className="retro-label"
-                                        style={{
-                                          color: "var(--amber-bright)"
-                                        }}
-                                      >
-                                        connection note · {d.shortText.length}/200
-                                      </div>
-                                      <textarea
-                                        value={d.shortText}
-                                        onChange={(e) =>
-                                          setDraft(p.url, {
-                                            shortText: e.target.value.slice(
-                                              0,
-                                              200
-                                            )
-                                          })
-                                        }
-                                        rows={3}
-                                        className="retro-input mt-1 text-sm"
-                                        maxLength={200}
-                                        onClick={(e) => e.stopPropagation()}
-                                      />
-                                      <div className="flex items-center gap-2 mt-2 flex-nowrap">
-                                        <button
-                                          type="button"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            copy(d.shortText);
-                                          }}
-                                          className="retro-btn text-sm"
-                                          style={{ flex: "1 1 auto", minWidth: 0 }}
-                                        >
-                                          Copy connection note
-                                        </button>
-                                        {isLinkedInUrl(p.url) && (
-                                          <button
-                                            type="button"
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              openLinkedInWithNote(
-                                                p.url,
-                                                d.shortText
-                                              );
-                                            }}
-                                            className="retro-btn retro-btn-primary text-sm"
-                                            title="Note copied. LinkedIn opens — click Connect → Add a note → Paste"
-                                            aria-label="Open LinkedIn profile"
-                                            style={{
-                                              flex: "0 0 auto",
-                                              display: "inline-flex",
-                                              alignItems: "center",
-                                              gap: 6,
-                                              padding: "8px 12px"
-                                            }}
-                                          >
-                                            <img
-                                              src="https://www.google.com/s2/favicons?domain=linkedin.com&sz=32"
-                                              alt=""
-                                              width={16}
-                                              height={16}
-                                              style={{
-                                                display: "block",
-                                                borderRadius: 3
-                                              }}
-                                            />
-                                            <span>Open profile</span>
-                                          </button>
-                                        )}
-                                      </div>
-                                    </div>
-                                  )}
-                                </div>
-                              );
-                            })()}
+                            {noteEditor(p, searchQuery)}
                           </li>
                         );
                       })}
@@ -1013,7 +1050,7 @@ export function DiscoverSearch({
       )}
 
       {/* Search results — capped so the chats below stay reachable */}
-      {searching && (
+      {searching && !searchError && (
         <div
           className="mt-4 space-y-5"
           style={{
@@ -1081,6 +1118,7 @@ export function DiscoverSearch({
               ) : (
                 <ul className="mt-2 space-y-2">
                   {results.exa_people.map((p) => {
+                    const draft = getDraft(p, resultsQuery);
                     const isOpen = expanded.has(p.url);
                     const preview = p.highlights[0]
                       ? p.highlights[0].length > 140
@@ -1094,7 +1132,7 @@ export function DiscoverSearch({
                         onClick={() => toggleExpand(p.url)}
                         style={{ cursor: "pointer" }}
                       >
-                        <div className="flex items-start justify-between gap-3">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                           <div className="text-left flex-1 min-w-0">
                             <div
                               className="text-left font-semibold text-sm"
@@ -1120,7 +1158,7 @@ export function DiscoverSearch({
                               </div>
                             )}
                           </div>
-                          <div className="flex items-center gap-2 shrink-0">
+                          <div className="flex flex-wrap items-center gap-2">
                             <button
                               type="button"
                               onClick={(e) => {
@@ -1135,19 +1173,23 @@ export function DiscoverSearch({
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                draftOutreach(p);
+                                draftOutreach(p, resultsQuery);
                               }}
-                              disabled={!!getDraft(p.url)?.generating}
-                              className="retro-btn text-sm"
+                              disabled={!!draft?.generating}
+                              className="retro-btn inline-flex items-center gap-2 text-sm"
                             >
-                              {getDraft(p.url)?.generating ? (
+                              {draft?.generating ? (
                                 <DotsLoader label="Drafting" />
-                              ) : getDraft(p.url)?.draftText ? (
-                                "Redraft"
+                              ) : draft?.shortText ? (
+                                <><RotateCw size={14} /> Redraft</>
                               ) : (
-                                "Draft invite"
+                                <><Pencil size={14} /> Draft invite</>
                               )}
                             </button>
+                            {!draft && <button type="button" onClick={(event) => { event.stopPropagation(); setDraft(noteContext(p, resultsQuery), {}); }}
+                              className="retro-btn inline-flex items-center gap-1 text-xs" title="Write or paste a connection note">
+                              <Pencil size={14} /> Write note
+                            </button>}
                           </div>
                         </div>
 
@@ -1159,98 +1201,7 @@ export function DiscoverSearch({
                           </div>
                         )}
 
-                        {(() => {
-                          const d = getDraft(p.url);
-                          if (!d || !d.draftText) return null;
-                          return (
-                            <div
-                              className="mt-3 space-y-3"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              {d.shortText && (
-                                <div>
-                                  <div
-                                    className="retro-label flex items-center justify-between"
-                                    style={{ color: "var(--amber-bright)" }}
-                                  >
-                                    <span>
-                                      connection note ·{" "}
-                                      {d.shortText.length}/200
-                                    </span>
-                                  </div>
-                                  <textarea
-                                    value={d.shortText}
-                                    onChange={(e) =>
-                                      setDraft(p.url, {
-                                        shortText: e.target.value.slice(
-                                          0,
-                                          300
-                                        )
-                                      })
-                                    }
-                                    rows={3}
-                                    className="retro-input mt-1 text-sm"
-                                    maxLength={200}
-                                    onClick={(e) => e.stopPropagation()}
-                                  />
-                                  <div className="flex items-center gap-2 mt-2 flex-nowrap">
-                                    <button
-                                      type="button"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        copy(d.shortText);
-                                      }}
-                                      className="retro-btn text-sm"
-                                      style={{ flex: "1 1 auto", minWidth: 0 }}
-                                    >
-                                      Copy connection note
-                                    </button>
-                                    {isLinkedInUrl(p.url) && (
-                                      <button
-                                        type="button"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          openLinkedInWithNote(
-                                            p.url,
-                                            d.shortText
-                                          );
-                                        }}
-                                        className="retro-btn retro-btn-primary text-sm"
-                                        title="Note copied. LinkedIn opens — click Connect → Add a note → Paste"
-                                        aria-label="Open LinkedIn profile"
-                                        style={{
-                                          flex: "0 0 auto",
-                                          display: "inline-flex",
-                                          alignItems: "center",
-                                          gap: 6,
-                                          padding: "8px 12px"
-                                        }}
-                                      >
-                                        <img
-                                          src="https://www.google.com/s2/favicons?domain=linkedin.com&sz=32"
-                                          alt=""
-                                          width={16}
-                                          height={16}
-                                          style={{
-                                            display: "block",
-                                            borderRadius: 3
-                                          }}
-                                        />
-                                        <span>Open profile</span>
-                                      </button>
-                                    )}
-                                  </div>
-                                </div>
-                              )}
-                              {/* Long DM section removed: recipients in
-                                  Find People haven't connected on LinkedIn
-                                  yet, so a full DM with the invite URL
-                                  isn't actionable until after they accept
-                                  the connection. The connection note IS
-                                  the entire move. */}
-                            </div>
-                          );
-                        })()}
+                        {noteEditor(p, resultsQuery)}
                       </li>
                     );
                   })}

@@ -17,6 +17,7 @@ import { createServiceClient } from "@/lib/supabase/server";
 import { sendEmail, renderEmailHtml } from "@/lib/email";
 import { computePairScore, type TwinSnapshot } from "@/lib/pair-score";
 import { sendPushToUser } from "@/lib/push";
+import { sendClawMessage } from "@/lib/claw-messenger";
 
 // Minimal entity escape — names + emails can contain & < > " '
 // which would break the HTML if interpolated directly.
@@ -36,6 +37,9 @@ const APP_URL =
 type Prefs = {
   user_id: string;
   email_address: string | null;
+  phone_number: string | null;
+  on_text_notifications: boolean;
+  preferred_messaging_service: string;
   on_new_connection: boolean;
   on_new_message: boolean;
   on_agreement_accepted: boolean;
@@ -70,6 +74,10 @@ async function loadRecipient(
   const effectivePrefs: Prefs = {
     user_id: userId,
     email_address: prefs?.email_address ?? null,
+    phone_number: prefs?.phone_number ?? null,
+    on_text_notifications: prefs?.on_text_notifications ?? true,
+    preferred_messaging_service:
+      prefs?.preferred_messaging_service ?? "iMessage",
     on_new_connection: prefs?.on_new_connection ?? true,
     on_new_message: prefs?.on_new_message ?? true,
     on_agreement_accepted: prefs?.on_agreement_accepted ?? true,
@@ -86,6 +94,14 @@ async function loadRecipient(
   return { profile: profile as ProfileRow, prefs: effectivePrefs };
 }
 
+function phoneRoute(recipient: { profile: ProfileRow; prefs: Prefs }) {
+  return {
+    phone: recipient.prefs.phone_number,
+    textEnabled: recipient.prefs.on_text_notifications,
+    textService: recipient.prefs.preferred_messaging_service
+  };
+}
+
 async function logAndSend(args: {
   userId: string;
   kind: string;
@@ -95,17 +111,28 @@ async function logAndSend(args: {
   subject: string;
   text: string;
   html: string;
+  phone?: string | null;
+  textEnabled?: boolean;
+  textService?: string;
+  smsText?: string;
 }): Promise<void> {
   const service = createServiceClient();
-  // Reserve the dedupe slot first. If insert fails on unique constraint, we've
-  // already sent this notification.
-  const { error: logErr } = await service.from("notification_log").insert({
+  const shouldText = !!args.phone && args.textEnabled !== false;
+  // Reserve an attempt before sending. A reservation is not a delivery receipt.
+  const entry = {
     user_id: args.userId,
     kind: args.kind,
     subject_id: args.subjectId ?? null,
     dedupe_key: args.dedupeKey,
     email_address: args.to
+  };
+  let { error: logErr } = await service.from("notification_log").insert({
+    ...entry,
+    phone_number: args.phone ?? null,
+    sent_channels: []
   });
+  const legacyLog = logErr?.code === "42703" || logErr?.code === "PGRST204";
+  if (legacyLog) ({ error: logErr } = await service.from("notification_log").insert(entry));
   if (logErr) {
     // Duplicate (already sent) is the common case; quietly skip.
     if (!/duplicate|unique/i.test(logErr.message || "")) {
@@ -113,14 +140,29 @@ async function logAndSend(args: {
     }
     return;
   }
-  const result = await sendEmail({
-    to: args.to,
-    subject: args.subject,
-    text: args.text,
-    html: args.html
-  });
-  if (!result.ok) {
-    console.warn("[notify] send failed", args.kind, result.error);
+  const acceptedChannels: string[] = [];
+  try {
+    const result = await sendEmail({ to: args.to, subject: args.subject, text: args.text, html: args.html });
+    if (result.ok && !result.skipped) acceptedChannels.push("email");
+    if (!result.ok) console.warn("[notify] send failed", args.kind, result.error);
+  } catch (error) {
+    console.warn("[notify] email threw", args.kind, error);
+  }
+  if (shouldText) {
+    const smsText = (args.smsText ?? args.text).replace(/\u2014/g, "-");
+    try {
+      const sms = await sendClawMessage({ to: args.phone, text: smsText, service: args.textService });
+      if (sms.ok && !sms.skipped) acceptedChannels.push("phone");
+      if (!sms.ok && !sms.skipped) console.warn("[notify] claw send failed", args.kind, sms.error);
+    } catch (error) {
+      console.warn("[notify] claw threw", args.kind, error);
+    }
+  }
+  if (!legacyLog) {
+    // This records provider acceptance only, not inbox or handset delivery.
+    const { error } = await service.from("notification_log").update({ sent_channels: acceptedChannels })
+      .eq("user_id", args.userId).eq("dedupe_key", args.dedupeKey);
+    if (error) console.warn("[notify] channel status update failed", args.kind, error.message);
   }
 }
 
@@ -299,7 +341,8 @@ async function notifyOneNewConnection(
     to,
     subject,
     text,
-    html
+    html,
+    ...phoneRoute(recipient)
   });
 }
 
@@ -402,7 +445,8 @@ export async function notifyNewMessage(opts: {
       to,
       subject,
       text,
-      html
+      html,
+      ...phoneRoute(recipient)
     });
   } catch (e) {
     console.warn("[notify] new-message threw", e);
@@ -489,7 +533,8 @@ async function sendAgreementOne(
     to,
     subject,
     text,
-    html
+    html,
+    ...phoneRoute(recipient)
   });
 }
 
@@ -574,7 +619,8 @@ ${convUrl}
       to,
       subject,
       text,
-      html
+      html,
+      ...phoneRoute(recipient)
     });
   } catch (e) {
     console.warn("[notify] acceptance-nudge threw", e);
@@ -621,7 +667,8 @@ export async function notifyCallScheduled(opts: {
       to,
       subject,
       text,
-      html
+      html,
+      ...phoneRoute(recipient)
     });
   } catch (e) {
     console.warn("[notify] call-scheduled threw", e);
@@ -767,7 +814,8 @@ export async function notifyNewMatch(opts: {
         to,
         subject,
         text,
-        html
+        html,
+        ...phoneRoute(recipient)
       });
     }
   } catch (e) {

@@ -1,0 +1,17 @@
+.git
+.github
+.vercel
+.next
+node_modules
+.env
+.env.*
+android
+ios
+fastlane
+.DS_Store
+*.log
+*.tsbuildinfo
+*.bak
+*.bak.bak
+Gemfile
+push.command

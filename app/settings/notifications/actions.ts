@@ -3,6 +3,8 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
+import { registerClawRoute } from "@/lib/claw-messenger";
+import { normalizePhoneNumber, phonePreferencePatch } from "@/lib/phone";
 
 export async function saveNotificationPrefs(formData: FormData) {
   const supabase = createClient();
@@ -12,6 +14,22 @@ export async function saveNotificationPrefs(formData: FormData) {
   if (!user) redirect("/login");
 
   const email = String(formData.get("email_address") ?? "").trim() || null;
+  const rawPhone = String(formData.get("phone_number") ?? "").trim();
+  const phone = rawPhone ? normalizePhoneNumber(rawPhone) : null;
+  if (rawPhone && !phone) {
+    redirect(
+      `/settings/notifications?error=invalid_phone&detail=${encodeURIComponent(
+        "Enter a valid phone number with area code."
+      )}`
+    );
+  }
+  const preferred_messaging_service = [
+    "iMessage",
+    "RCS",
+    "SMS"
+  ].includes(String(formData.get("preferred_messaging_service") ?? ""))
+    ? String(formData.get("preferred_messaging_service"))
+    : "iMessage";
   const thresholdRaw = parseInt(
     String(formData.get("match_threshold") ?? "65"),
     10
@@ -22,6 +40,9 @@ export async function saveNotificationPrefs(formData: FormData) {
   const row = {
     user_id: user.id,
     email_address: email,
+    ...phonePreferencePatch(rawPhone, "notification_settings"),
+    on_text_notifications: formData.get("on_text_notifications") === "on",
+    preferred_messaging_service,
     on_new_connection: formData.get("on_new_connection") === "on",
     on_new_message: formData.get("on_new_message") === "on",
     on_agreement_accepted: formData.get("on_agreement_accepted") === "on",
@@ -39,6 +60,12 @@ export async function saveNotificationPrefs(formData: FormData) {
   if (error) {
     console.error("[notif prefs] upsert failed", error);
     redirect("/settings/notifications?error=save");
+  }
+  if (phone) {
+    const route = await registerClawRoute(phone);
+    if (!route.ok && !route.skipped) {
+      console.warn("[notif prefs] claw route registration failed", route.error);
+    }
   }
 
   revalidatePath("/settings/notifications");

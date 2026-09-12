@@ -159,7 +159,7 @@ export function PendingProposalsRail() {
               }`}
         </span>
         <Link
-          href="/proposals"
+          href="/messages"
           onClick={(e) => e.stopPropagation()}
           style={{
             fontSize: 11,

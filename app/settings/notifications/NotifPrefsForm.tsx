@@ -4,6 +4,9 @@ import { useState } from "react";
 
 type Initial = {
   email_address: string;
+  phone_number: string;
+  on_text_notifications: boolean;
+  preferred_messaging_service: string;
   on_new_connection: boolean;
   on_new_message: boolean;
   on_agreement_accepted: boolean;
@@ -22,12 +25,19 @@ type Toggle = {
     | "on_call_scheduled"
     | "on_new_match"
     | "on_weekly_digest"
+    | "on_text_notifications"
   >;
   label: string;
   blurb: string;
 };
 
 const TOGGLES: Toggle[] = [
+  {
+    name: "on_text_notifications",
+    label: "iMessage / SMS alerts",
+    blurb:
+      "Send the important moments to your phone first. Email stays available as backup."
+  },
   {
     name: "on_new_connection",
     label: "New connection",
@@ -69,29 +79,70 @@ const TOGGLES: Toggle[] = [
 export function NotifPrefsForm({
   initial,
   action,
-  defaultEmail
+  defaultEmail,
+  defaultPhone
 }: {
   initial: Initial;
   action: (formData: FormData) => void;
   defaultEmail: string;
+  defaultPhone: string;
 }) {
   const [state, setState] = useState<Initial>(initial);
 
   return (
     <form action={action} className="mt-6 space-y-5">
-      <div>
-        <label className="retro-label">Send notifications to</label>
-        <input
-          type="email"
-          name="email_address"
-          defaultValue={state.email_address || defaultEmail}
-          className="mt-2 w-full retro-input"
-          placeholder={defaultEmail || "you@example.com"}
-        />
-        <p className="mt-1 retro-dim text-xs">
-          Defaults to the email on your account. Override here if you want
-          notifications to land in a different inbox.
-        </p>
+      <div className="grid gap-4 md:grid-cols-2">
+        <div>
+          <label className="retro-label">Phone for iMessage / SMS</label>
+          <input
+            type="tel"
+            name="phone_number"
+            defaultValue={state.phone_number || defaultPhone}
+            className="mt-2 w-full retro-input"
+            placeholder="+1 415 555 0123"
+            autoComplete="tel"
+          />
+          <p className="mt-1 retro-dim text-xs">
+            Used for urgent, high-signal moments your twin should not bury in
+            email.
+          </p>
+        </div>
+        <div>
+          <label className="retro-label">Preferred phone route</label>
+          <select
+            name="preferred_messaging_service"
+            value={state.preferred_messaging_service}
+            onChange={(e) =>
+              setState((s) => ({
+                ...s,
+                preferred_messaging_service: e.target.value
+              }))
+            }
+            className="mt-2 w-full retro-input"
+          >
+            <option value="iMessage">iMessage</option>
+            <option value="RCS">RCS</option>
+            <option value="SMS">SMS</option>
+          </select>
+          <p className="mt-1 retro-dim text-xs">
+            Claw Messenger will try this service for outbound phone alerts.
+          </p>
+        </div>
+        <div className="md:col-span-2">
+          <label className="retro-label">Backup email</label>
+          <input
+            type="email"
+            name="email_address"
+            defaultValue={state.email_address || defaultEmail}
+            className="mt-2 w-full retro-input"
+            placeholder={defaultEmail || "you@example.com"}
+            autoComplete="email"
+          />
+          <p className="mt-1 retro-dim text-xs">
+            Defaults to the email on your account. Override here if you want
+            backup notifications somewhere else.
+          </p>
+        </div>
       </div>
 
       <div className="retro-panel divide-y" style={{ borderColor: "var(--border)" }}>

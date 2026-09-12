@@ -8,6 +8,8 @@ import { scrapePublicProfile } from "@/lib/scrape";
 import { notifyNewMatch, notifyNewConnection } from "@/lib/notify";
 import { pickBestFirstMatch } from "@/lib/matchmaking";
 import { assignConversationSlug } from "@/lib/conversationSlugServer";
+import { registerClawRoute } from "@/lib/claw-messenger";
+import { normalizePhoneNumber, phonePreferencePatch } from "@/lib/phone";
 
 function s(v: FormDataEntryValue | null): string | null {
   if (v === null) return null;
@@ -24,6 +26,15 @@ export async function saveTwin(formData: FormData) {
 
   const display_name = s(formData.get("display_name"));
   const avatar_url = s(formData.get("avatar_url"));
+  const rawPhone = String(formData.get("phone_number") ?? "").trim();
+  const phone_number = normalizePhoneNumber(rawPhone);
+  if (!phone_number) {
+    redirect(
+      `/onboarding?error=missing_phone&detail=${encodeURIComponent(
+        "Add a valid phone number before saving your twin."
+      )}`
+    );
+  }
   const fields: Record<string, any> = {
     user_id: user.id,
     goals: s(formData.get("goals")),
@@ -41,6 +52,9 @@ export async function saveTwin(formData: FormData) {
   const profileUpdate: Record<string, string | null> = {};
   if (display_name !== null) profileUpdate.display_name = display_name;
   if (avatar_url !== null) profileUpdate.avatar_url = avatar_url;
+  const { error: phoneError } = await supabase.from("notification_preferences")
+    .upsert({ user_id: user.id, ...phonePreferencePatch(rawPhone, "onboarding") }, { onConflict: "user_id" });
+  if (phoneError) redirect(`/onboarding?error=phone_save&detail=${encodeURIComponent("Your phone number could not be saved. Please try again shortly.")}`);
 
   // Auto-generate the portfolio handle (URL slug for /u/<handle>) if the
   // user doesn't have one yet. Best-effort uniqueness — fall back to a
@@ -77,6 +91,8 @@ export async function saveTwin(formData: FormData) {
       .update(profileUpdate)
       .eq("id", user.id);
   }
+  const route = await registerClawRoute(phone_number);
+  if (!route.ok && !route.skipped) console.warn("[onboarding] claw route registration failed", route.error);
 
   // Try the full upsert (includes the new `achievements` column).
   // Fall back to the legacy field set if the column isn't migrated on

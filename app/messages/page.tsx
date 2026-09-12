@@ -17,7 +17,11 @@ export const metadata = {
   title: "Messages · SyncedIn"
 };
 
-export default async function MessagesPage() {
+export default async function MessagesPage({
+  searchParams
+}: {
+  searchParams?: { blocked?: string; owed?: string };
+}) {
   const supabase = createClient();
   const {
     data: { user }
@@ -308,6 +312,11 @@ export default async function MessagesPage() {
     return null;
   }
 
+  const blockedByPending = searchParams?.blocked === "pending";
+  const owedCount = Math.max(0, Number(searchParams?.owed ?? 0) || 0);
+  const owedLabel =
+    owedCount === 1 ? "1 proposal" : `${owedCount || "some"} proposals`;
+
   return (
     <AppShell>
       <h1 className="retro-h1 text-3xl">Messages</h1>
@@ -316,6 +325,16 @@ export default async function MessagesPage() {
         one landed: accepted, denied, changed, or still negotiating. Sorted
         by Sync score, so the highest-leverage ones surface first.
       </p>
+
+      {blockedByPending && (
+        <div className="retro-panel mt-5 p-4 text-sm">
+          <div className="font-semibold">Reply to pending proposals first.</div>
+          <div className="retro-dim mt-1">
+            You have {owedLabel} waiting. Accept, deny, or edit the proposal
+            before starting more conversations.
+          </div>
+        </div>
+      )}
 
       {sorted.length === 0 ? (
         // Empty state — replace the dead-end "go to dashboard" CTA with

@@ -1,6 +1,7 @@
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { FeedbackList } from "./FeedbackList";
 import { AppShell } from "../AppShell";
+import { Wordmark } from "../Wordmark";
 
 export const metadata = {
   title: "Feedback & Requests · SyncedIn",
@@ -89,8 +90,8 @@ export default async function FeedbackPage() {
     }))
     .sort((a, b) => b.score - a.score || b.created_at.localeCompare(a.created_at));
 
-  return (
-    <AppShell>
+  const content = (
+    <>
       <section className="mt-4">
         <div className="retro-label">feedback &amp; requests</div>
         <h1 className="retro-h1 text-4xl mt-3 leading-tight">
@@ -114,6 +115,22 @@ export default async function FeedbackPage() {
         isAdmin={isAdmin}
         posts={ranked}
       />
-    </AppShell>
+    </>
+  );
+
+  if (user) {
+    return <AppShell>{content}</AppShell>;
+  }
+
+  return (
+    <main className="max-w-5xl mx-auto px-5 py-8">
+      <header className="flex items-center justify-between gap-4 mb-8">
+        <Wordmark size="md" href="/" />
+        <a href="/login" className="retro-btn retro-btn-primary text-sm">
+          Sign in
+        </a>
+      </header>
+      {content}
+    </main>
   );
 }

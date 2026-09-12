@@ -34,7 +34,7 @@ Each user builds a digital twin by uploading any combination of LinkedIn data, C
 - [Build my twin](${SITE_URL}/login) — onboarding flow (3 minutes)
 - [Talk to your twin](${SITE_URL}/twin) — chat directly with your own AI clone
 - [Dashboard](${SITE_URL}/dashboard) — your matched conversations + sync scores
-- [Proposals](${SITE_URL}/proposals) — every twin-to-twin agreement awaiting your decision
+- [Proposals](${SITE_URL}/messages) — every twin-to-twin agreement awaiting your decision
 - [Hypernetwork](${SITE_URL}/hypernetwork) — visualization of who your twin is connected to
 - [Personal Intelligence](${SITE_URL}/personal-intelligence) — AI-generated insights about yourself
 

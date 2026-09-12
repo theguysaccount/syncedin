@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { exaPeopleSearch, type ExaPerson } from "@/lib/exa";
+import { discoveryOptions, discoveryQuery, matchesCity, rankDiscoveryPeople } from "@/lib/discovery-search";
 
 /**
  * Find a person to start a conversation with — by name OR email.
@@ -21,19 +22,29 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  let body: { query?: string };
+  let body: Record<string, unknown>;
   try {
     body = await req.json();
+    if (!body || typeof body !== "object" || Array.isArray(body)) throw new Error();
   } catch {
     return NextResponse.json({ error: "invalid_json" }, { status: 400 });
   }
-  const query = (body.query ?? "").trim();
+  const query = typeof body.query === "string" ? body.query.trim().slice(0, 500) : "";
   if (!query) {
     return NextResponse.json({ error: "missing_query" }, { status: 400 });
   }
 
   const service = createServiceClient();
   const isEmail = query.includes("@") && query.includes(".");
+  // Keep the existing new-conversation finder local unless it explicitly opts out.
+  let options = discoveryOptions(body, null, "local");
+  if (!isEmail && options.scope === "local" && !options.location) {
+    const { data: twin } = await service.from("twin_profiles").select("hometown,current_city").eq("user_id", user.id).maybeSingle();
+    options = discoveryOptions(body, twin, "local");
+  }
+  if (!isEmail && body.search_scope === "local" && !options.location) {
+    return NextResponse.json({ error: "missing_location", detail: "Enter a city for a local search." }, { status: 400 });
+  }
 
   // ── SyncedIn search ────────────────────────────────────────────────
   type SyncUser = {
@@ -61,54 +72,24 @@ export async function POST(req: Request) {
     sync_users = (data ?? []) as SyncUser[];
   }
 
+  if (!isEmail && body.search_scope === "local" && options.location && sync_users.length) {
+    const { data: twins } = await service.from("twin_profiles").select("user_id,current_city,hometown").in("user_id", sync_users.map((person) => person.id));
+    const localIds = new Set((twins || []).filter((twin) => matchesCity(twin.current_city || twin.hometown, options.location)).map((twin) => twin.user_id));
+    sync_users = sync_users.filter((person) => localIds.has(person.id));
+  }
+
   // ── Exa fallback for context / discovery ────────────────────────────
-  // Location-aware: pull the searcher's hometown + current city and use them
-  // to (a) bias the Exa query string and (b) re-rank results by mention.
   let exa_people: ExaPerson[] = [];
   if (!isEmail) {
-    const { data: twin } = await service
-      .from("twin_profiles")
-      .select("hometown, current_city")
-      .eq("user_id", user.id)
-      .maybeSingle();
-    const cities = [twin?.current_city, twin?.hometown]
-      .filter((c): c is string => Boolean(c && c.trim()))
-      .map((c) => c.trim());
-
     try {
-      // Augment the query with the user's location signals so Exa weighs
-      // locally-relevant results higher.
-      const augmented =
-        cities.length > 0
-          ? `${query} (location: ${cities.join(" or ")})`
-          : query;
-      exa_people = await exaPeopleSearch(augmented, 20);
-
-      // Re-rank: any result whose snippet or title mentions one of the
-      // cities floats to the top. Stable sort otherwise.
-      if (cities.length > 0) {
-        const norm = (s: string) => s.toLowerCase();
-        const cityKeys = cities.map(norm);
-        exa_people = exa_people
-          .map((p, idx) => {
-            const hay =
-              norm(p.title || "") + " " + (p.highlights || []).map(norm).join(" ");
-            const hit = cityKeys.some((c) => hay.includes(c));
-            return { p, idx, score: hit ? 1 : 0 };
-          })
-          .sort((a, b) =>
-            b.score - a.score === 0 ? a.idx - b.idx : b.score - a.score
-          )
-          .slice(0, 15)
-          .map(({ p }) => p);
-      } else {
-        exa_people = exa_people.slice(0, 15);
-      }
+      const reason = typeof body.connection_reason === "string" ? body.connection_reason : "";
+      const people = await exaPeopleSearch(discoveryQuery(query, options, reason), 20);
+      exa_people = rankDiscoveryPeople(people, options).slice(0, 15);
     } catch (e) {
       // Non-fatal — Exa is a "nice to have" here.
       console.error("exa lookup in find-counterpart failed", e);
     }
   }
 
-  return NextResponse.json({ sync_users, exa_people });
+  return NextResponse.json({ sync_users, exa_people, search_scope: options.scope, search_location: options.location });
 }

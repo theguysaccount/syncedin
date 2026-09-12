@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { authDestination } from "@/lib/auth-return";
 
 // Google "G" logo — official multi-color inline SVG.
 function GoogleLogo() {
@@ -68,11 +69,7 @@ export function OAuthButtons({
     const origin =
       typeof window !== "undefined" ? window.location.origin : "";
     const params = new URLSearchParams();
-    if (invite && /^[a-z0-9-]+$/i.test(invite)) {
-      params.set("next", `/claim/${invite.toLowerCase()}`);
-    } else if (conference && /^[a-z0-9-]+$/i.test(conference)) {
-      params.set("next", `/conferences/${conference.toLowerCase()}/join`);
-    }
+    params.set("next", authDestination({ invite, conference }));
     const qs = params.toString();
     return `${origin}/auth/callback${qs ? `?${qs}` : ""}`;
   }

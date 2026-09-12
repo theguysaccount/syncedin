@@ -73,9 +73,7 @@ export default async function LoginPage({
 }) {
   const sent = searchParams.sent === "1";
   const exists = searchParams.exists === "1";
-  const detail = searchParams.detail
-    ? decodeURIComponent(searchParams.detail)
-    : null;
+  const detail = searchParams.detail || null;
 
   // Pull up to 8 existing SyncedIn members with real photos so prospects
   // see who's actually inside before signing up. Jack: "we can add value
@@ -129,10 +127,10 @@ export default async function LoginPage({
       <div className="mt-2 retro-panel retro-shadow p-4 sm:p-5">
         {/* Compact header */}
         <div className="flex flex-col items-center text-center">
-          <Wordmark size="lg" />
+          <Wordmark size="md" />
           <h1
-            className="retro-h1 text-xl sm:text-2xl mt-2 leading-tight"
-            style={{ letterSpacing: "-0.02em" }}
+            className="retro-h1 text-xl sm:text-2xl mt-1 leading-tight"
+            style={{ letterSpacing: 0 }}
           >
             Join the platform of the future
           </h1>
@@ -140,7 +138,7 @@ export default async function LoginPage({
             className="mt-1 text-xs sm:text-sm"
             style={{ color: "var(--text-dim)" }}
           >
-            Google sign-in is the fastest path — or use email + magic link.
+            Find people who share your interests.
           </p>
         </div>
 
@@ -176,6 +174,7 @@ export default async function LoginPage({
           <input
             name="email"
             type="email"
+            aria-label="Email for magic link"
             required
             autoComplete="email"
             placeholder="you@domain.com"
@@ -214,7 +213,7 @@ export default async function LoginPage({
         </div>
 
         {/* Email + password as the third option */}
-        <form className="space-y-2">
+        <form className="grid gap-2 sm:grid-cols-2">
           <input type="hidden" name="invite" value={searchParams.invite ?? ""} />
           <input
             type="hidden"
@@ -224,19 +223,29 @@ export default async function LoginPage({
           <input
             name="email"
             type="email"
+            aria-label="Email for password sign-in"
             required
             autoComplete="email"
             placeholder="you@domain.com"
             className="retro-input"
           />
           <input
-            name="password"
-            type="password"
-            autoComplete="current-password"
-            placeholder="password (8+ characters)"
+            name="phone_number"
+            type="tel"
+            aria-label="Phone number for new account"
+            autoComplete="tel"
+            placeholder="phone for new accounts"
             className="retro-input"
           />
-          <div className="flex gap-2">
+          <input
+            name="password"
+            type="password"
+            aria-label="Password"
+            autoComplete="current-password"
+            placeholder="password (8+ characters)"
+            className="retro-input sm:col-span-2"
+          />
+          <div className="flex gap-2 sm:col-span-2">
             <button
               formAction={signInWithPassword}
               className="retro-btn flex-1"

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { phonePreferencePatch } from "@/lib/phone";
 
 /**
  * Auto-save the onboarding wizard draft. Fires on a debounce as the user
@@ -19,6 +20,7 @@ export async function POST(req: Request) {
 
   let body: {
     display_name?: string;
+    phone_number?: string;
     avatar_url?: string;
     goals?: string;
     deal_preferences?: string;
@@ -31,6 +33,7 @@ export async function POST(req: Request) {
   };
   try {
     body = await req.json();
+    if (!body || typeof body !== "object" || Array.isArray(body) || Object.values(body).some((value) => value !== undefined && typeof value !== "string")) throw new Error();
   } catch {
     return NextResponse.json({ error: "invalid_json" }, { status: 400 });
   }
@@ -40,10 +43,19 @@ export async function POST(req: Request) {
 
   // Profile fields (display_name, avatar_url)
   const profileUpdate: Record<string, string | null> = {};
+  let phoneSaveFailed = false;
   if (body.display_name !== undefined)
     profileUpdate.display_name = clean(body.display_name);
   if (body.avatar_url !== undefined)
     profileUpdate.avatar_url = clean(body.avatar_url);
+  if (body.phone_number !== undefined) {
+    const phonePatch = phonePreferencePatch(body.phone_number, "onboarding_draft");
+    if (phonePatch) {
+      const { error } = await supabase.from("notification_preferences")
+        .upsert({ user_id: user.id, ...phonePatch }, { onConflict: "user_id" });
+      phoneSaveFailed = !!error;
+    }
+  }
   if (Object.keys(profileUpdate).length > 0) {
     await supabase.from("profiles").update(profileUpdate).eq("id", user.id);
   }
@@ -73,5 +85,6 @@ export async function POST(req: Request) {
       .upsert(minus, { onConflict: "user_id" });
   }
 
+  if (phoneSaveFailed) return NextResponse.json({ error: "Your phone number could not be saved. Please try again shortly." }, { status: 503 });
   return NextResponse.json({ ok: true });
 }

@@ -357,6 +357,35 @@ create index if not exists edit_deltas_user_idx
 alter table public.edit_deltas
   add column if not exists reason text;
 
+create table if not exists public.outreach_examples (
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  context_key text not null,
+  person_title text not null,
+  person_url text not null,
+  person_background text not null default '',
+  search_query text not null default '',
+  connection_reason text not null default '',
+  original_draft text not null default '',
+  edited_text text not null check (char_length(btrim(edited_text)) between 1 and 300),
+  edit_magnitude real,
+  change_tags text[] not null default '{}',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  primary key (user_id, context_key)
+);
+
+create index if not exists outreach_examples_user_updated_idx
+  on public.outreach_examples (user_id, updated_at desc);
+
+alter table public.outreach_examples enable row level security;
+grant select, insert, update, delete on public.outreach_examples to authenticated;
+
+drop policy if exists outreach_examples_own on public.outreach_examples;
+create policy outreach_examples_own on public.outreach_examples
+  for all to authenticated
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
 -- Location signals — used to bias Exa results toward people in the user's
 -- geographic orbit (hometown + current city).
 alter table public.twin_profiles
@@ -551,9 +580,13 @@ security definer
 set search_path = public
 as $$
 begin
-  insert into public.profiles (id, email)
-  values (new.id, new.email)
-  on conflict (id) do nothing;
+  insert into public.profiles (id, email) values (new.id, new.email)
+  on conflict (id) do update set email = excluded.email;
+  if (new.raw_user_meta_data->>'phone_number') ~ '^\+[0-9]{10,15}$' then
+    insert into public.notification_preferences (user_id, phone_number, phone_consent_at, phone_consent_source)
+    values (new.id, new.raw_user_meta_data->>'phone_number', now(), 'signup')
+    on conflict (user_id) do nothing;
+  end if;
   return new;
 end;
 $$;
@@ -1146,10 +1179,13 @@ create policy "scoring_prompts_update_own" on public.scoring_prompts
 create table if not exists public.notification_preferences (
   user_id uuid primary key references public.profiles(id) on delete cascade,
   email_address text, -- nullable: defaults to profiles.email
+  phone_number text, -- private contact information, protected by owner-only RLS
   on_new_connection boolean not null default true,
   on_new_message boolean not null default true,
   on_agreement_accepted boolean not null default true,
   on_call_scheduled boolean not null default true,
+  on_text_notifications boolean not null default true,
+  preferred_messaging_service text not null default 'iMessage',
   updated_at timestamptz not null default now()
 );
 
@@ -1169,6 +1205,18 @@ alter table public.notification_preferences
 -- summary of proposals with buttons so you can click right into those."
 alter table public.notification_preferences
   add column if not exists on_weekly_digest boolean not null default true;
+alter table public.notification_preferences
+  add column if not exists phone_number text;
+alter table public.notification_preferences
+  add column if not exists phone_number_verified_at timestamptz;
+alter table public.notification_preferences
+  add column if not exists phone_consent_at timestamptz;
+alter table public.notification_preferences
+  add column if not exists phone_consent_source text;
+alter table public.notification_preferences
+  add column if not exists on_text_notifications boolean not null default true;
+alter table public.notification_preferences
+  add column if not exists preferred_messaging_service text not null default 'iMessage';
 
 alter table public.notification_preferences enable row level security;
 
@@ -1192,8 +1240,15 @@ create table if not exists public.notification_log (
   dedupe_key text not null,
   sent_at timestamptz not null default now(),
   email_address text,
+  phone_number text,
+  sent_channels text[],
   unique (user_id, dedupe_key)
 );
+
+alter table public.notification_log
+  add column if not exists phone_number text;
+alter table public.notification_log
+  add column if not exists sent_channels text[];
 
 create index if not exists notification_log_user_idx
   on public.notification_log (user_id, sent_at desc);

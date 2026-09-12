@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "test:outreach": "node --test scripts/test-outreach.mjs",
     "seed:personas": "node --env-file=.env.local scripts/seed-test-personas.mjs",
     "cap:init": "npx cap init SyncedIn org.syncedin.app --web-dir=public",
     "cap:add:ios": "npx cap add ios",
@@ -26,7 +27,8 @@
     "@capacitor/share": "^6.0.2",
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.45.4",
-    "next": "14.2.15",
+    "lucide-react": "^1.44.0",
+    "next": "14.2.35",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
@@ -37,8 +39,11 @@
     "@types/react": "^18.3.5",
     "@types/react-dom": "^18.3.0",
     "autoprefixer": "^10.4.20",
-    "postcss": "^8.4.47",
+    "postcss": "^8.5.28",
     "tailwindcss": "^3.4.13",
     "typescript": "^5.6.2"
+  },
+  "overrides": {
+    "postcss": "$postcss"
   }
 }

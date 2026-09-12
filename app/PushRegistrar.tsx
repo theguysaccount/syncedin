@@ -10,7 +10,7 @@ import { usePathname } from "next/navigation";
  * No-spam policy extends to the permission ASK itself:
  *  - Never prompt on first launch. Only prompt on surfaces where a
  *    push would obviously matter (/messages, /conversations,
- *    /proposals), and only ONCE ever.
+ *    /messages), and only ONCE ever.
  *  - If permission is already granted, register silently anywhere.
  *
  * Tapping a push deep-links to the conversation via the `url` field in
@@ -37,7 +37,7 @@ export function PushRegistrar() {
         let status = perm.receive;
 
         if (status !== "granted") {
-          const valueSurface = /^\/(messages|conversations|proposals)/.test(
+          const valueSurface = /^\/(messages|conversations)/.test(
             pathname || ""
           );
           if (!valueSurface) return;

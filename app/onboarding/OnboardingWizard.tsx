@@ -9,6 +9,7 @@ import { SelfDiscovery } from "./SelfDiscovery";
 import { saveTwin } from "./actions";
 import { GoalFollowUpQuestions } from "./GoalFollowUpQuestions";
 import { LoadingScreen } from "../LoadingScreen";
+import { phoneLooksComplete } from "@/lib/phone";
 
 // Parse existing ai_export_blob back into structured snippets so the wizard
 // can rehydrate URL-sourced context across page reloads. Snippets were
@@ -53,6 +54,7 @@ function serializeBlob(snippets: Snippet[], aiDump: string): string {
 
 type Initial = {
   display_name: string;
+  phone_number: string;
   goals: string;
   deal_preferences: string;
   communication_style: string;
@@ -106,6 +108,7 @@ export function OnboardingWizard({
     (initial.ai_export_blob || "").trim().length > 80;
   const set = <K extends keyof Initial>(k: K, v: Initial[K]) =>
     setState((s) => ({ ...s, [k]: v }));
+  const phoneReady = phoneLooksComplete(state.phone_number);
 
   // Cinematic pacing: every step change starts at the top of the page
   // with a fresh entrance (also fixes landing mid-page via scroll
@@ -276,6 +279,7 @@ export function OnboardingWizard({
   useEffect(() => {
     const payload = JSON.stringify({
       display_name: state.display_name,
+      phone_number: state.phone_number,
       avatar_url: state.avatar_url,
       goals: composedGoals,
       deal_preferences: state.deal_preferences,
@@ -355,7 +359,7 @@ export function OnboardingWizard({
   const canAdvance = (() => {
     switch (STEPS[step].key) {
       case "you":
-        return state.display_name.trim().length > 0;
+        return state.display_name.trim().length > 0 && phoneReady;
       case "sources":
         return state.goals.trim().length > 0;
       default:
@@ -371,6 +375,7 @@ export function OnboardingWizard({
       case "you":
         return (
           state.display_name.trim().length > 0 ||
+          state.phone_number.trim().length > 0 ||
           !!state.avatar_url ||
           state.current_city.trim().length > 0 ||
           state.hometown.trim().length > 0
@@ -432,7 +437,12 @@ export function OnboardingWizard({
       ) : (
         <button
           type="submit"
-          disabled={!state.display_name.trim() || !state.goals.trim() || !state.deal_preferences.trim()}
+          disabled={
+            !state.display_name.trim() ||
+            !phoneReady ||
+            !state.goals.trim() ||
+            !state.deal_preferences.trim()
+          }
           className={
             compact
               ? "retro-btn retro-btn-primary text-xs"
@@ -492,6 +502,7 @@ export function OnboardingWizard({
         </div>
       )}
       <input type="hidden" name="display_name" value={state.display_name} />
+      <input type="hidden" name="phone_number" value={state.phone_number} />
       <input type="hidden" name="goals" value={composedGoals} />
       <input
         type="hidden"
@@ -694,7 +705,10 @@ export function OnboardingWizard({
               key="save-twin-top"
               type="submit"
               disabled={
-                !state.display_name.trim() || !state.goals.trim() || !state.deal_preferences.trim()
+                !state.display_name.trim() ||
+                !phoneReady ||
+                !state.goals.trim() ||
+                !state.deal_preferences.trim()
               }
               className="retro-btn retro-btn-primary text-xs"
               style={{ padding: "6px 14px" }}
@@ -712,8 +726,8 @@ export function OnboardingWizard({
             <div className="retro-label">step 1 of 4</div>
             <h2 className="retro-h1 text-2xl mt-2">Let&apos;s start with you.</h2>
             <p className="text-sm mt-2" style={{ color: "var(--text-dim)" }}>
-              Photo on the left, where you live and where you&apos;re from
-              on the right. All quick.
+              Phone gets your twin out of the email trap. Add it here for
+              iMessage, RCS, or SMS alerts when something important happens.
             </p>
 
             <label className="block mt-5">
@@ -730,6 +744,34 @@ export function OnboardingWizard({
                 placeholder="Jane Doe"
                 className="retro-input mt-1"
               />
+            </label>
+            <label className="block mt-3">
+              <div
+                className="text-sm font-semibold"
+                style={{ color: "var(--text)" }}
+              >
+                Phone for iMessage or SMS
+              </div>
+              <input
+                value={state.phone_number}
+                onChange={(e) => set("phone_number", e.target.value)}
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                placeholder="+1 415 555 0123"
+                className="retro-input mt-1"
+              />
+              <p
+                className="text-xs mt-1"
+                style={{ color: "var(--text-dim)" }}
+              >
+                Required for high-signal updates. Email stays as backup.
+              </p>
+              {state.phone_number.trim() && !phoneReady && (
+                <p className="text-xs mt-1 retro-red">
+                  Enter a valid phone number with area code.
+                </p>
+              )}
             </label>
 
             {/* Photo + locations row — Jack's call: kill the "Choose Photo"
@@ -1082,7 +1124,10 @@ export function OnboardingWizard({
                 key="save-twin-final"
                 type="submit"
                 disabled={
-                  !state.display_name.trim() || !state.goals.trim() || !state.deal_preferences.trim()
+                  !state.display_name.trim() ||
+                  !phoneReady ||
+                  !state.goals.trim() ||
+                  !state.deal_preferences.trim()
                 }
                 className="retro-btn retro-btn-primary"
                 style={{ padding: "10px 18px", marginTop: 6 }}

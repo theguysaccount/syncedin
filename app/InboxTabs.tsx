@@ -1,16 +1,13 @@
 import Link from "next/link";
 
 /**
- * InboxTabs — shared segmented control that unifies /messages and
- * /proposals into one "Inbox" surface with two views (Jack: "merge the
- * messages and proposals page"). Rendered at the top of both pages; the
- * `active` prop highlights the current view. Kept as a server component
- * (pure links) so it adds zero client JS and works identically on both.
+ * Legacy segmented control from the old messages/proposals split.
+ * Proposal clicks stay on /messages now that the surfaces are merged.
  */
 export function InboxTabs({ active }: { active: "messages" | "proposals" }) {
   const tabs = [
     { key: "messages" as const, href: "/messages", icon: "💬", label: "Conversations" },
-    { key: "proposals" as const, href: "/proposals", icon: "🤝", label: "Proposals" }
+    { key: "proposals" as const, href: "/messages", icon: "🤝", label: "Proposals" }
   ];
   return (
     <div

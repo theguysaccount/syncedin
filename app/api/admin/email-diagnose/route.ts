@@ -7,7 +7,7 @@ import { sendEmail, renderEmailHtml } from "@/lib/email";
  *
  * Returns a single JSON blob with:
  *   - env_ok: { has_resend_key, has_from, has_cron_secret, has_unsub_secret }
- *   - last_log: most recent notification_log entries (kind, channel, created_at)
+ *   - last_log: most recent notification_log entries (kind, channels, sent_at)
  *   - my_prefs: the admin's current notification_preferences row
  *   - send_probe (when ?probe=1): actually attempts a send to jack's address
  *     so we can see the Resend response surfaced.
@@ -29,6 +29,7 @@ export async function GET(req: Request) {
 
   const env_ok = {
     has_resend_key: !!process.env.RESEND_API_KEY,
+    has_claw_key: !!process.env.CLAW_MESSENGER_API_KEY,
     has_from: !!process.env.NOTIFICATION_FROM_EMAIL,
     has_cron_secret: !!process.env.CRON_SECRET,
     has_unsub_secret: !!process.env.NOTIFY_HMAC_SECRET,
@@ -41,8 +42,8 @@ export async function GET(req: Request) {
   try {
     const { data } = await service
       .from("notification_log")
-      .select("user_id, kind, channel, created_at")
-      .order("created_at", { ascending: false })
+      .select("user_id, kind, sent_channels, email_address, phone_number, sent_at")
+      .order("sent_at", { ascending: false })
       .limit(25);
     last_log = (data ?? []) as any[];
   } catch (e: any) {

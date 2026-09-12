@@ -58,7 +58,7 @@ async function openConversationBetween(userId: string, otherId: string) {
 
   // BEFORE creating a brand-new conversation, enforce the dead-weight
   // guard. If the user has ≥10 proposals waiting on them, block new
-  // creation and surface a friendly redirect to /proposals.
+  // creation and surface a friendly redirect to the merged messages inbox.
   const owed = await countOwedProposals(userId);
   if (owed >= PENDING_LIMIT) {
     return { blocked: "pending_limit" as const, owed };
@@ -111,7 +111,7 @@ export async function startConversation(formData: FormData) {
   const result = await openConversationBetween(user.id, other.id);
   if (!result) redirect("/conversations/new?error=create");
   if (typeof result === "object" && "blocked" in result) {
-    redirect(`/proposals?blocked=pending&owed=${result.owed}`);
+    redirect(`/messages?blocked=pending&owed=${result.owed}`);
   }
   redirect(`/conversations/${result}`);
 }
@@ -133,7 +133,7 @@ export async function startConversationByUserId(formData: FormData) {
   const result = await openConversationBetween(user.id, otherId);
   if (!result) redirect("/conversations/new?error=create");
   if (typeof result === "object" && "blocked" in result) {
-    redirect(`/proposals?blocked=pending&owed=${result.owed}`);
+    redirect(`/messages?blocked=pending&owed=${result.owed}`);
   }
   redirect(`/conversations/${result}`);
 }

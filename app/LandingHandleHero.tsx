@@ -174,7 +174,7 @@ export function LandingHandleHero({
         `/login?next=${encodeURIComponent("/onboarding?welcome=1")}`
       );
     } catch (e: any) {
-      setErr(e?.message || "Something went wrong — try again.");
+      setErr(e?.message || "Something went wrong. Try again.");
     } finally {
       setBusy(false);
     }
@@ -186,8 +186,6 @@ export function LandingHandleHero({
         .lh-hero {
           max-width: 860px;
           margin: 0 auto;
-          /* Pull the hero up + give it room to breathe wide — Jack: "still
-             so much white space ... maximize that first landing view." */
           padding: 24px 24px 72px;
           color: var(--text);
         }

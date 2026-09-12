@@ -1,7 +1,10 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
+import { registerClawRoute } from "@/lib/claw-messenger";
+import { normalizePhoneNumber, phonePreferencePatch } from "@/lib/phone";
+import { authDestination, loginReturnUrl } from "@/lib/auth-return";
 
 function origin() {
   return (
@@ -17,15 +20,15 @@ function origin() {
  * or `/conferences/<slug>/join` (membership upsert) instead of dashboard.
  */
 function nextFromForm(formData: FormData): string {
-  const inv = String(formData.get("invite") ?? "").trim().toLowerCase();
-  if (inv && /^[a-z0-9-]+$/.test(inv)) {
-    return `/claim/${encodeURIComponent(inv)}`;
-  }
-  const conf = String(formData.get("conference") ?? "").trim().toLowerCase();
-  if (conf && /^[a-z0-9-]+$/.test(conf)) {
-    return `/conferences/${encodeURIComponent(conf)}/join`;
-  }
-  return "/dashboard";
+  return authDestination(formContext(formData));
+}
+
+function formContext(formData: FormData) {
+  return { invite: String(formData.get("invite") ?? ""), conference: String(formData.get("conference") ?? "") };
+}
+
+function returnToLogin(formData: FormData, status: Record<string, string>): never {
+  redirect(loginReturnUrl(formContext(formData), status));
 }
 
 function callbackUrl(formData: FormData): string {
@@ -33,42 +36,82 @@ function callbackUrl(formData: FormData): string {
   return `${origin()}/auth/callback?next=${encodeURIComponent(next)}`;
 }
 
+function phoneFromForm(formData: FormData, required = false): string | null {
+  const raw = String(formData.get("phone_number") ?? "").trim();
+  if (!raw) {
+    if (required) {
+      returnToLogin(formData, { error: "missing_phone", detail: "Phone number is required for new accounts." });
+    }
+    return null;
+  }
+  const phone = normalizePhoneNumber(raw);
+  if (!phone) {
+    returnToLogin(formData, { error: "invalid_phone", detail: "Enter a valid phone number with area code." });
+  }
+  return phone;
+}
+
+async function persistPhoneForUser(
+  userId: string | undefined,
+  phone: string | null,
+  source: string
+) {
+  if (!userId || !phone) return;
+  try {
+    const service = createServiceClient();
+    const { error } = await service.from("notification_preferences")
+      .upsert({ user_id: userId, ...phonePreferencePatch(phone, source) }, { onConflict: "user_id" });
+    if (error) {
+      console.warn("[login] private phone save failed", error);
+      return;
+    }
+    const route = await registerClawRoute(phone);
+    if (!route.ok && !route.skipped) {
+      console.warn("[login] claw route registration failed", route.error);
+    }
+  } catch (e) {
+    console.warn("[login] phone profile update failed", e);
+  }
+}
+
 // ── Magic link ────────────────────────────────────────────────────────────
 export async function login(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
-  if (!email) redirect("/login?error=missing_email");
+  if (!email) returnToLogin(formData, { error: "missing_email" });
+  const phone = phoneFromForm(formData);
 
   const supabase = createClient();
   const { error } = await supabase.auth.signInWithOtp({
     email,
-    options: { emailRedirectTo: callbackUrl(formData) }
+    options: {
+      emailRedirectTo: callbackUrl(formData),
+      data: phone ? { phone_number: phone } : undefined
+    }
   });
 
   if (error) {
     console.error("signInWithOtp error", error);
-    const detail = encodeURIComponent(
-      `${error.message}${error.status ? ` (status ${error.status})` : ""}`
-    );
-    redirect(`/login?error=send_failed&detail=${detail}`);
+    returnToLogin(formData, { error: "send_failed", detail: `${error.message}${error.status ? ` (status ${error.status})` : ""}` });
   }
-  redirect("/login?sent=1");
+  returnToLogin(formData, { sent: "1" });
 }
 
 // ── Password sign-in ──────────────────────────────────────────────────────
 export async function signInWithPassword(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
-  if (!email || !password) redirect("/login?error=missing_credentials");
+  if (!email || !password) returnToLogin(formData, { error: "missing_credentials" });
+  const phone = phoneFromForm(formData);
 
   const supabase = createClient();
-  const { error } = await supabase.auth.signInWithPassword({
+  const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password
   });
   if (error) {
-    const detail = encodeURIComponent(error.message);
-    redirect(`/login?error=password_failed&detail=${detail}`);
+    returnToLogin(formData, { error: "password_failed", detail: error.message });
   }
+  await persistPhoneForUser(data.user?.id, phone, "password_signin");
   redirect(nextFromForm(formData));
 }
 
@@ -79,20 +122,20 @@ export async function signInWithPassword(formData: FormData) {
 export async function signUpWithPassword(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
-  if (!email || !password) redirect("/login?error=missing_credentials");
+  if (!email || !password) returnToLogin(formData, { error: "missing_credentials" });
+  const phone = phoneFromForm(formData, true);
   if (password.length < 8) {
-    redirect(
-      `/login?error=password_failed&detail=${encodeURIComponent(
-        "Password must be at least 8 characters."
-      )}`
-    );
+    returnToLogin(formData, { error: "password_failed", detail: "Password must be at least 8 characters." });
   }
 
   const supabase = createClient();
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { emailRedirectTo: callbackUrl(formData) }
+    options: {
+      emailRedirectTo: callbackUrl(formData),
+      data: phone ? { phone_number: phone } : undefined
+    }
   });
 
   // ── Existing-account recovery (task #328) ─────────────────────────────────
@@ -117,55 +160,50 @@ export async function signUpWithPassword(formData: FormData) {
     (data.user.identities?.length ?? 0) === 0;
 
   if (existsByError || existsBySilence) {
-    // Best-effort recovery link — ignore its result so we never dead-end.
-    await supabase.auth.signInWithOtp({
+    const { error: recoveryError } = await supabase.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: callbackUrl(formData) }
+      options: {
+        emailRedirectTo: callbackUrl(formData),
+        data: phone ? { phone_number: phone } : undefined
+      }
     });
-    redirect("/login?exists=1");
+    if (recoveryError) returnToLogin(formData, { error: "send_failed", detail: "We couldn't send the sign-in link. Try again or use your password." });
+    returnToLogin(formData, { exists: "1" });
   }
 
   if (error) {
-    const detail = encodeURIComponent(error.message);
-    redirect(`/login?error=password_failed&detail=${detail}`);
+    returnToLogin(formData, { error: "password_failed", detail: error.message });
   }
+  if (data.session) await persistPhoneForUser(data.user?.id, phone, "signup");
   // If a session came back immediately, email confirmation is off — go in.
   if (data.session) redirect(nextFromForm(formData));
   // Otherwise they need to confirm via email first.
-  redirect("/login?sent=1");
+  returnToLogin(formData, { sent: "1" });
 }
 
 // ── OAuth (Google / Apple) ────────────────────────────────────────────────
 // These require the provider to be enabled in Supabase → Auth → Providers
 // with OAuth credentials. The code is ready; the provider config is not.
-export async function signInWithGoogle() {
+export async function signInWithGoogle(formData: FormData) {
   const supabase = createClient();
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
-    options: { redirectTo: `${origin()}/auth/callback` }
+    options: { redirectTo: callbackUrl(formData) }
   });
   if (error || !data.url) {
-    redirect(
-      `/login?error=oauth_failed&detail=${encodeURIComponent(
-        error?.message ?? "Google sign-in is not configured yet."
-      )}`
-    );
+    returnToLogin(formData, { error: "oauth_failed", detail: error?.message ?? "Google sign-in is not configured yet." });
   }
   redirect(data.url);
 }
 
-export async function signInWithApple() {
+export async function signInWithApple(formData: FormData) {
   const supabase = createClient();
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "apple",
-    options: { redirectTo: `${origin()}/auth/callback` }
+    options: { redirectTo: callbackUrl(formData) }
   });
   if (error || !data.url) {
-    redirect(
-      `/login?error=oauth_failed&detail=${encodeURIComponent(
-        error?.message ?? "Apple sign-in is not configured yet."
-      )}`
-    );
+    returnToLogin(formData, { error: "oauth_failed", detail: error?.message ?? "Apple sign-in is not configured yet." });
   }
   redirect(data.url);
 }

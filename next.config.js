@@ -28,6 +28,7 @@ const nextConfig = {
   // should all land there too.
   async redirects() {
     return [
+      { source: "/proposals", destination: "/messages", permanent: false },
       { source: "/press", destination: "/article", permanent: false },
       { source: "/launch", destination: "/article", permanent: false },
       { source: "/story", destination: "/article", permanent: false },

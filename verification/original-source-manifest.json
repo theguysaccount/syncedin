@@ -1350,96 +1350,12 @@
       "sha256": "335299879d76993128cd39f2b6bca3ab5224dc799b2b434e67bfcf4dca434a4b"
     },
     {
-      "file": "public/app-icons/android/ic_launcher_144.png",
-      "sha256": "248fe9607eb70d24f7af638c39af930d1c038c8912f3e588d38cd5cce0455cf3"
-    },
-    {
-      "file": "public/app-icons/android/ic_launcher_192.png",
-      "sha256": "d1be764dc67b2ffdde1e97ee5412e2dac4a3b2d22df6343f2ba06f1e6f5fa4ac"
-    },
-    {
-      "file": "public/app-icons/android/ic_launcher_48.png",
-      "sha256": "1d0681d68606f469cda067bbc60b3bd6daa1f72edc4f05b0e22d3abb6cbd84c0"
-    },
-    {
-      "file": "public/app-icons/android/ic_launcher_512.png",
-      "sha256": "7862b347e098470141df0514dcbe16a83e87c71b2849b011829b2f9477868a87"
-    },
-    {
-      "file": "public/app-icons/android/ic_launcher_72.png",
-      "sha256": "e23740381ca850fceacf7748d235cd03b7adbc29c2250932540783a34421e8bb"
-    },
-    {
-      "file": "public/app-icons/android/ic_launcher_96.png",
-      "sha256": "e0dda4d692d07f57a6d183687a43258e47df795bdf4b6dc2351e5df5f75c20a5"
-    },
-    {
-      "file": "public/app-icons/android/ic_launcher_background.png",
-      "sha256": "5a4c6f3a74a4e18f9084f566b6b0c028e3e43b259039a3a32b1aa23492f882cb"
-    },
-    {
-      "file": "public/app-icons/android/ic_launcher_background.svg",
-      "sha256": "7d9f054860ad59e9545dfcf5dbed66c9ae6b5b79104a9e17bda00184bc464b53"
-    },
-    {
-      "file": "public/app-icons/android/ic_launcher_foreground.png",
-      "sha256": "85e8cad855bcdee5e0e9ebc5797cfe0bda93139d5fdd81e630a33cdc96f02067"
-    },
-    {
-      "file": "public/app-icons/android/ic_launcher_foreground.svg",
-      "sha256": "f277d9f647d8da231972d19f1da49d6eb87ed277f582ed47277c934164a47237"
-    },
-    {
       "file": "public/app-icons/icon.master.png",
       "sha256": "bc2f538852067a1a253a5be29072abea537b9cac944f6863c540e72245dcf087"
     },
     {
       "file": "public/app-icons/icon.master.svg",
       "sha256": "b98328bd6422e9360c730be725ba475f908f0fadf54edd073b84ae65b8a7df62"
-    },
-    {
-      "file": "public/app-icons/ios/Icon-1024.png",
-      "sha256": "bc2f538852067a1a253a5be29072abea537b9cac944f6863c540e72245dcf087"
-    },
-    {
-      "file": "public/app-icons/ios/Icon-120.png",
-      "sha256": "4b353a578753da1f757930d99da1a18bbc1f2a92e7d7f715798466ab502cca66"
-    },
-    {
-      "file": "public/app-icons/ios/Icon-152.png",
-      "sha256": "7665d49949a4d7dd36c7e491eb24063a5ba5d0aa57bc6f46c43cabc22f934058"
-    },
-    {
-      "file": "public/app-icons/ios/Icon-167.png",
-      "sha256": "58c0b18264b7961716826997186e1c82b921a1c20fabdb6c1c5aabd8aa230a35"
-    },
-    {
-      "file": "public/app-icons/ios/Icon-180.png",
-      "sha256": "95740d59232bbd0ef579863d7475173d19d73147b1906acf0bee2d6d1cbbd415"
-    },
-    {
-      "file": "public/app-icons/ios/Icon-40.png",
-      "sha256": "4de71dfa3d8f6100c24beea40e6233eed502e0eaa527834e05759e0a024bdaf2"
-    },
-    {
-      "file": "public/app-icons/ios/Icon-58.png",
-      "sha256": "9fb41ce4c0d12a1ab2319d9c46921e345ed97ebbdfa6cb6b83a5356e5301f196"
-    },
-    {
-      "file": "public/app-icons/ios/Icon-60.png",
-      "sha256": "6c7d42551fa99d69431da893aeb7fb959f91e169eece092e4bb4696dea74e1de"
-    },
-    {
-      "file": "public/app-icons/ios/Icon-76.png",
-      "sha256": "4dcbd72f7188de3b9f612418d21bfa3fd747c18de9ea42429c91d7afe7efe846"
-    },
-    {
-      "file": "public/app-icons/ios/Icon-80.png",
-      "sha256": "1d84974226157e5122817f043e63508d749086aface644457a4562a42ef8e9e4"
-    },
-    {
-      "file": "public/app-icons/ios/Icon-87.png",
-      "sha256": "9c17bdb2def89f1144d2a1c4dafb323743dabb493cdf04a702aa8ee8b58d97f6"
     },
     {
       "file": "public/app-icons/screenshot-template.png",
@@ -1699,6 +1615,27 @@
     "fastlane/Appfile",
     "fastlane/Fastfile",
     "fastlane/Pluginfile",
-    "fastlane/metadata/android/en-US/images/icon.png"
+    "fastlane/metadata/android/en-US/images/icon.png",
+    "public/app-icons/android/ic_launcher_144.png",
+    "public/app-icons/android/ic_launcher_192.png",
+    "public/app-icons/android/ic_launcher_48.png",
+    "public/app-icons/android/ic_launcher_512.png",
+    "public/app-icons/android/ic_launcher_72.png",
+    "public/app-icons/android/ic_launcher_96.png",
+    "public/app-icons/android/ic_launcher_background.png",
+    "public/app-icons/android/ic_launcher_background.svg",
+    "public/app-icons/android/ic_launcher_foreground.png",
+    "public/app-icons/android/ic_launcher_foreground.svg",
+    "public/app-icons/ios/Icon-1024.png",
+    "public/app-icons/ios/Icon-120.png",
+    "public/app-icons/ios/Icon-152.png",
+    "public/app-icons/ios/Icon-167.png",
+    "public/app-icons/ios/Icon-180.png",
+    "public/app-icons/ios/Icon-40.png",
+    "public/app-icons/ios/Icon-58.png",
+    "public/app-icons/ios/Icon-60.png",
+    "public/app-icons/ios/Icon-76.png",
+    "public/app-icons/ios/Icon-80.png",
+    "public/app-icons/ios/Icon-87.png"
   ]
 }

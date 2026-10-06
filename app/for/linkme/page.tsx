@@ -1,3 +1,4 @@
+import { withPublicSEO } from '@/lib/public-seo';
 import type { Metadata } from "next";
 import { LinkmeImporter } from "./LinkmeImporter";
 
@@ -13,7 +14,7 @@ import { LinkmeImporter } from "./LinkmeImporter";
  * "Your Link.me is a static list. SyncedIn makes it speak for you."
  */
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withPublicSEO('/for/linkme', {
   title: "Turn your Link.me into an AI twin · SyncedIn",
   description:
     "Paste your Link.me URL — we'll build an AI version of you that visitors can talk to, routed to your existing links, with paid priority access when they need the real you.",
@@ -22,7 +23,7 @@ export const metadata: Metadata = {
     description:
       "Your Link.me already tells people who you are. SyncedIn makes it talk for you."
   }
-};
+});
 
 export default function LinkmeLandingPage() {
   return (

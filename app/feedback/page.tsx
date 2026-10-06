@@ -1,13 +1,14 @@
+import { withPublicSEO } from '@/lib/public-seo';
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { FeedbackList } from "./FeedbackList";
 import { AppShell } from "../AppShell";
 import { Wordmark } from "../Wordmark";
 
-export const metadata = {
+export const metadata = withPublicSEO('/feedback', {
   title: "Feedback & Requests · SyncedIn",
   description:
     "Submit a request, read what others are asking for, upvote what you want to see built. SyncedIn shipped by community signal."
-};
+});
 
 // Don't cache — vote totals should reflect within seconds.
 export const dynamic = "force-dynamic";

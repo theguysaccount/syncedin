@@ -1,0 +1,149 @@
+[
+  {
+    "path": "/article",
+    "file": "app/article/opengraph-image.png",
+    "twitterFile": "app/article/twitter-image.png",
+    "sha256": "cf66b46c0d9f71a0766d284e7b7e0d5533351541777db3e5f3992b35b0f750f9",
+    "alt": "SyncedIn \u2014 SyncedIn wants two AI agents to negotiate before two humans meet"
+  },
+  {
+    "path": "/blog",
+    "file": "app/blog/opengraph-image.png",
+    "twitterFile": "app/blog/twitter-image.png",
+    "sha256": "00022d16afdaeb03c23be87fec1b78af86dc492336e58d90a9d4ae429019411a",
+    "alt": "SyncedIn \u2014 Writing from inside the launch."
+  },
+  {
+    "path": "/vs/lemlist",
+    "file": "app/vs/lemlist/opengraph-image.png",
+    "twitterFile": "app/vs/lemlist/twitter-image.png",
+    "sha256": "dff25c74820a240333688e7c3aa81f153064eef963d0be2650d8c80ab6aa7e7d",
+    "alt": "SyncedIn \u2014 Looking for a Lemlist alternative ? SyncedIn flips the model."
+  },
+  {
+    "path": "/vs/clay",
+    "file": "app/vs/clay/opengraph-image.png",
+    "twitterFile": "app/vs/clay/twitter-image.png",
+    "sha256": "15599105e4229b7b47d0d3024463bf183c9b23f6516ff004c79c40f0b9c1fdbf",
+    "alt": "SyncedIn \u2014 Looking for a Clay alternative ? SyncedIn flips the model."
+  },
+  {
+    "path": "/vs/linkedin-dms",
+    "file": "app/vs/linkedin-dms/opengraph-image.png",
+    "twitterFile": "app/vs/linkedin-dms/twitter-image.png",
+    "sha256": "32deaf427c3b8362d0db2e002a08ebd6a53f7503741595a23a0cfed19ea38b33",
+    "alt": "SyncedIn \u2014 Looking for a LinkedIn DMs alternative ? SyncedIn flips the model."
+  },
+  {
+    "path": "/founders-vc",
+    "file": "app/founders-vc/opengraph-image.png",
+    "twitterFile": "app/founders-vc/twitter-image.png",
+    "sha256": "545f523b4ced349a8b47dd937d0feeffce4075d983b442e30dfa89fa35d31ee9",
+    "alt": "SyncedIn \u2014 Find the VCs who actually back your thesis."
+  },
+  {
+    "path": "/founders-cofounder",
+    "file": "app/founders-cofounder/opengraph-image.png",
+    "twitterFile": "app/founders-cofounder/twitter-image.png",
+    "sha256": "717eb2ed151d012653c313dba5d01f520bedeb789ad98eb44c15156264586e08",
+    "alt": "SyncedIn \u2014 Find a co-founder whose skills, values, and goals actually complement yours."
+  },
+  {
+    "path": "/hypernetwork",
+    "file": "app/hypernetwork/opengraph-image.png",
+    "twitterFile": "app/hypernetwork/twitter-image.png",
+    "sha256": "2deff578ff5036e474e5ee3f2da5942f8c02ea6bd94b4a65ca3505f03a17f50a",
+    "alt": "SyncedIn \u2014 A network of clones, finding the highest win-wins between every pair of humans."
+  },
+  {
+    "path": "/feedback",
+    "file": "app/feedback/opengraph-image.png",
+    "twitterFile": "app/feedback/twitter-image.png",
+    "sha256": "6135ce488ec9a3b0a7093174a3c5d326d053fdd7b5782468e17276c3dbbc56c6",
+    "alt": "SyncedIn \u2014 What should SyncedIn build next?"
+  },
+  {
+    "path": "/privacy",
+    "file": "app/privacy/opengraph-image.png",
+    "twitterFile": "app/privacy/twitter-image.png",
+    "sha256": "4eeb44185a0cd63209002e747ca68061ee7e464bc969fb65d2e24de18d854a46",
+    "alt": "SyncedIn \u2014 Your data, your twin, your call."
+  },
+  {
+    "path": "/terms",
+    "file": "app/terms/opengraph-image.png",
+    "twitterFile": "app/terms/twitter-image.png",
+    "sha256": "b876bf7401bb4c9f7371ac2465121a7e9b8dec608851f4b69b28162c068864af",
+    "alt": "SyncedIn \u2014 Plain-English terms."
+  },
+  {
+    "path": "/support",
+    "file": "app/support/opengraph-image.png",
+    "twitterFile": "app/support/twitter-image.png",
+    "sha256": "59d13e708aed2d8b97633099ecddd2a3784bb6eb3ad8184153d608fb12fca111",
+    "alt": "SyncedIn \u2014 Need help? We respond fast."
+  },
+  {
+    "path": "/faq",
+    "file": "app/faq/opengraph-image.png",
+    "twitterFile": "app/faq/twitter-image.png",
+    "sha256": "419f42e742593037af69046afe58cc1ad59a8ab2ef31c033d642a28f1f3af12c",
+    "alt": "SyncedIn \u2014 Frequently asked questions"
+  },
+  {
+    "path": "/child-safety",
+    "file": "app/child-safety/opengraph-image.png",
+    "twitterFile": "app/child-safety/twitter-image.png",
+    "sha256": "809c9971da5ac6f087a433a55b8296e4cdc1618a67b25e79ec12320f86622437",
+    "alt": "SyncedIn \u2014 Zero tolerance for CSAE. No exceptions."
+  },
+  {
+    "path": "/transformer",
+    "file": "app/transformer/opengraph-image.png",
+    "twitterFile": "app/transformer/twitter-image.png",
+    "sha256": "d15bcc80d65536012cf3435adf4c2bb1e6e5249ae1deb077a22946d9e1fed1d6",
+    "alt": "SyncedIn \u2014 The Attention Transformer for Humanity"
+  },
+  {
+    "path": "/wins",
+    "file": "app/wins/opengraph-image.png",
+    "twitterFile": "app/wins/twitter-image.png",
+    "sha256": "47822e2c5bfcb4269d8042ec11360578730255002b4bdea4faf20851c4be767b",
+    "alt": "SyncedIn \u2014 Proof, not promises."
+  },
+  {
+    "path": "/for/linkme",
+    "file": "app/for/linkme/opengraph-image.png",
+    "twitterFile": "app/for/linkme/twitter-image.png",
+    "sha256": "cc80f9944dfe7c7bf9afe3b101bf1ffb2a226b376d620c8a0b924444b4a78d73",
+    "alt": "SyncedIn \u2014 Your Link.me should speak for you."
+  },
+  {
+    "path": "/generate-free-portfolio",
+    "file": "app/generate-free-portfolio/opengraph-image.png",
+    "twitterFile": "app/generate-free-portfolio/twitter-image.png",
+    "sha256": "abc30f23fbce2a8a97002464450d0ea385c4db6c133bcc69424358d08b6029fc",
+    "alt": "SyncedIn \u2014 Paste who you are. Get your portfolio in seconds."
+  },
+  {
+    "path": "/ai-knows-me",
+    "file": "app/ai-knows-me/opengraph-image.png",
+    "twitterFile": "app/ai-knows-me/twitter-image.png",
+    "sha256": "74fef03698b31b3264a0de808b41d7436d2e8944154a3f03696a9b7660e9fccd",
+    "alt": "SyncedIn \u2014 Your AI already knows you. See what it says."
+  },
+  {
+    "path": "/alternatives/linkedin",
+    "file": "app/alternatives/linkedin/opengraph-image.png",
+    "twitterFile": "app/alternatives/linkedin/twitter-image.png",
+    "sha256": "b7d993d14496c0705cb3fe7bf161a046853ad66d9328cbc99037b9b4668a7e98",
+    "alt": "SyncedIn \u2014 The best LinkedIn alternative for AI networking ."
+  },
+  {
+    "path": "/paper",
+    "file": "app/paper/opengraph-image.png",
+    "twitterFile": "app/paper/twitter-image.png",
+    "sha256": "051ed5e03ab69d1fdb9dfa28bbb17418e386f82c298e8f66d06a66cddc664b1e",
+    "alt": "SyncedIn \u2014 Intention Is All You Need"
+  }
+]

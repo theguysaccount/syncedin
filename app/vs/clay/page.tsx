@@ -1,7 +1,8 @@
+import { withPublicSEO } from '@/lib/public-seo';
 import type { Metadata } from "next";
 import { VsPageShell } from "../VsPageShell";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withPublicSEO('/vs/clay', {
   title: "SyncedIn vs Clay: the AI alternative to enrichment-driven cold outreach",
   description:
     "Clay enriches contact data so your cold emails feel personal. SyncedIn skips cold email entirely — two AI twins negotiate the deal first. The honest comparison.",
@@ -20,7 +21,7 @@ export const metadata: Metadata = {
       "Two AI twins negotiate before two humans meet. The Clay alternative for high-leverage one-to-one networking."
   },
   alternates: { canonical: "https://syncedin.org/vs/clay" }
-};
+});
 
 export default function VsClayPage() {
   return (

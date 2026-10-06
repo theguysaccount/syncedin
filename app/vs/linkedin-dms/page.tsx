@@ -1,7 +1,8 @@
+import { withPublicSEO } from '@/lib/public-seo';
 import type { Metadata } from "next";
 import { VsPageShell } from "../VsPageShell";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withPublicSEO('/vs/linkedin-dms', {
   title: "SyncedIn vs LinkedIn DMs: why your cold DMs stopped working",
   description:
     "LinkedIn DMs used to convert. In 2026 they're at all-time-low response rates. SyncedIn replaces the cold-DM loop with two AI twins that actually negotiate. Side-by-side comparison.",
@@ -20,7 +21,7 @@ export const metadata: Metadata = {
       "Cold LinkedIn DMs don't work anymore. SyncedIn replaces the entire loop with two AI twins. Honest comparison."
   },
   alternates: { canonical: "https://syncedin.org/vs/linkedin-dms" }
-};
+});
 
 export default function VsLinkedInDmsPage() {
   return (

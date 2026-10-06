@@ -6,6 +6,8 @@ import { LandingHandleHero } from "./LandingHandleHero";
 import { LoomEmbed } from "./LoomEmbed";
 import { TrackBeacon } from "./TrackBeacon";
 
+export const metadata = { alternates: { canonical: process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "https://syncedin.org" } };
+
 /**
  * Public home page — completely redesigned May 2026 per Jack: "we
  * need to look more modern and elite." Replaces the retro-panel

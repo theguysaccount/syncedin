@@ -1,7 +1,8 @@
+import { withPublicSEO } from '@/lib/public-seo';
 import type { Metadata } from "next";
 import { VsPageShell } from "../VsPageShell";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withPublicSEO('/vs/lemlist', {
   title: "SyncedIn vs Lemlist: an AI alternative for cold outreach in 2026",
   description:
     "Lemlist personalizes the sender's cold email. SyncedIn skips the cold email entirely — two AI twins negotiate, and you only see the deal worth taking. The honest comparison.",
@@ -20,7 +21,7 @@ export const metadata: Metadata = {
       "Two AI twins negotiate before two humans meet. The Lemlist alternative for people who'd rather not write the cold email at all."
   },
   alternates: { canonical: "https://syncedin.org/vs/lemlist" }
-};
+});
 
 export default function VsLemlistPage() {
   return (

@@ -1,0 +1,14 @@
+{
+  "privacy": {
+    "date": "2026-06-10",
+    "commit": "217d080741349504918cabdf49828deba31db0e1"
+  },
+  "terms": {
+    "date": "2026-05-17",
+    "commit": "aa461dc7aa97d62ed9361ce1198601f4160a3bdc"
+  },
+  "child-safety": {
+    "date": "2026-06-01",
+    "commit": "140a0de8e53e11233a02629703bfa4dfc1b2d3ef"
+  }
+}

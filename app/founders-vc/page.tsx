@@ -1,10 +1,11 @@
+import { withPublicSEO } from '@/lib/public-seo';
 import { VerticalLandingShell } from "../(verticals)/VerticalLandingShell";
 
-export const metadata = {
+export const metadata = withPublicSEO('/founders-vc', {
   title: "SyncedIn for founders × VCs",
   description:
     "Find a VC who actually backs your thesis. Your twin reads every public note, post, and portfolio company they care about and surfaces the ones who would say yes immediately."
-};
+});
 
 /**
  * /founders-vc — top-of-funnel landing page for founders looking to match

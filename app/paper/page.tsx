@@ -1,7 +1,8 @@
+import { withPublicSEO } from '@/lib/public-seo';
 import Link from "next/link";
 import { NetworkDensity } from "../communities/NetworkDensity";
 
-export const metadata = {
+export const metadata = withPublicSEO('/paper', {
   title: "Intention Is All You Need · SyncedIn",
   description:
     "The attention transformer for humanity. An open protocol for world harmonization: why intention, routed at the speed of light, is the missing coordination layer that routes around Moloch.",
@@ -12,7 +13,7 @@ export const metadata = {
     url: "https://syncedin.org/paper",
     type: "article"
   }
-};
+});
 
 export const revalidate = 3600;
 

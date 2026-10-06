@@ -1,11 +1,12 @@
+import { withPublicSEO } from '@/lib/public-seo';
 import Link from "next/link";
 import { Wordmark } from "../Wordmark";
 
-export const metadata = {
+export const metadata = withPublicSEO('/support', {
   title: "Support · SyncedIn",
   description:
     "Get help with SyncedIn — bug reports, feature requests, privacy questions, and account issues. We respond fast."
-};
+});
 
 /**
  * /support — required by App Store Connect to submit an app (Support URL

@@ -41,15 +41,17 @@ export async function generateMetadata({
     .select("display_name, portfolio_about")
     .ilike("handle", params.handle)
     .maybeSingle();
-  if (!p) return {};
+  if (!p) return { robots: { index: false, follow: true } };
   const name = (p.display_name as string) || params.handle;
   const desc =
     ((p.portfolio_about as string) || "").slice(0, 180) ||
     `${name}'s portfolio on SyncedIn — what they're working on, what they're looking for, who their twin would love to talk to.`;
   return {
-    title: `${name} · SyncedIn`,
+    title: name,
     description: desc,
-    openGraph: { title: name, description: desc, type: "profile" }
+    alternates: { canonical: `https://syncedin.org/u/${encodeURIComponent(params.handle.toLowerCase())}` },
+    openGraph: { title: name, description: desc, type: "profile", url: `https://syncedin.org/u/${encodeURIComponent(params.handle.toLowerCase())}`, images: [{ url: "https://syncedin.org/social/syncedin-preview.gif", width: 600, height: 338, alt: "SyncedIn public portfolio", type: "image/gif" }] },
+    twitter: { card: "summary_large_image", title: name, description: desc, images: [{ url: "https://syncedin.org/social/syncedin-preview.gif", alt: "SyncedIn public portfolio" }] }
   };
 }
 

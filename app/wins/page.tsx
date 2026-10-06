@@ -1,3 +1,4 @@
+import { withPublicSEO } from '@/lib/public-seo';
 import type { Metadata } from "next";
 import Link from "next/link";
 import { createServiceClient } from "@/lib/supabase/server";
@@ -13,11 +14,11 @@ import { TrackBeacon } from "../TrackBeacon";
  */
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withPublicSEO('/wins', {
   title: "Win receipts · SyncedIn",
   description:
     "Real outcomes from twin-negotiated matches, published by the people who made them. Proof, not promises."
-};
+});
 
 type Receipt = {
   id: string;

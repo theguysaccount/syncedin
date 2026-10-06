@@ -1,3 +1,4 @@
+import { withPublicSEO } from '@/lib/public-seo';
 import Link from "next/link";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { Wordmark } from "../Wordmark";
@@ -7,11 +8,11 @@ import { AppShell } from "../AppShell";
 import { WorldRadarAnimation } from "./WorldRadarAnimation";
 import { LoomEmbed } from "../LoomEmbed";
 
-export const metadata = {
+export const metadata = withPublicSEO('/hypernetwork', {
   title: "Hypernetwork · SyncedIn",
   description:
     "The long-term vision: a hypernetwork of digital twins holding the topography of human intention and finding the highest win-wins between us."
-};
+});
 
 export const revalidate = 60;
 

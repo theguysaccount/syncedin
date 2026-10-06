@@ -1,3 +1,4 @@
+import { withPublicSEO } from '@/lib/public-seo';
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Wordmark } from "../Wordmark";
@@ -13,7 +14,7 @@ import { Wordmark } from "../Wordmark";
  * route folder. Keeps the surface tight, no database round-trip, and
  * fully static-renderable for SEO.
  */
-export const metadata: Metadata = {
+export const metadata: Metadata = withPublicSEO('/blog', {
   title: "Blog — SyncedIn",
   description:
     "Writing from SyncedIn on agent-to-agent networking, digital twins, AI-mediated outreach, and the future of cold intros.",
@@ -32,7 +33,7 @@ export const metadata: Metadata = {
       "Writing from SyncedIn on agent-to-agent networking, digital twins, and the future of cold intros."
   },
   alternates: { canonical: "https://syncedin.org/blog" }
-};
+});
 
 type Post = {
   slug: string;

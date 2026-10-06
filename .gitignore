@@ -9,3 +9,6 @@ node_modules
 next-env.d.ts
 *.bak
 *.bak.bak
+
+.qa/
+tsconfig.tsbuildinfo

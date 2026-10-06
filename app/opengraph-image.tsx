@@ -20,7 +20,7 @@
 export const runtime = "edge";
 export const alt =
   "SyncedIn — two twins finding the highest-leverage win-win between you.";
-export const size = { width: 1200, height: 630 };
+export const size = { width: 600, height: 338 };
 export const contentType = "image/gif";
 
 export default async function OG(): Promise<Response> {

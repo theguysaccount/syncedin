@@ -253,55 +253,19 @@ export default function RootLayout({
               "@type": "ItemList",
               name: "SyncedIn navigation",
               itemListElement: [
-                {
-                  "@type": "SiteNavigationElement",
-                  position: 1,
-                  name: "Dashboard",
-                  url: `${SITE_URL}/dashboard`
-                },
-                {
-                  "@type": "SiteNavigationElement",
-                  position: 2,
-                  name: "Talk to your twin",
-                  url: `${SITE_URL}/twin`
-                },
-                {
-                  "@type": "SiteNavigationElement",
-                  position: 3,
-                  name: "Hypernetwork",
-                  url: `${SITE_URL}/hypernetwork`
-                },
-                {
-                  "@type": "SiteNavigationElement",
-                  position: 4,
-                  name: "Sync a conference",
-                  url: `${SITE_URL}/conferences/new`
-                },
-                {
-                  "@type": "SiteNavigationElement",
-                  position: 5,
-                  name: "Sync a community",
-                  url: `${SITE_URL}/communities/new`
-                },
-                {
-                  "@type": "SiteNavigationElement",
-                  position: 6,
-                  name: "Personal Intelligence",
-                  url: `${SITE_URL}/personal-intelligence`
-                },
-                {
-                  "@type": "SiteNavigationElement",
-                  position: 7,
-                  name: "For Link.me creators",
-                  url: `${SITE_URL}/for/linkme`
-                },
-                {
-                  "@type": "SiteNavigationElement",
-                  position: 8,
-                  name: "Careers",
-                  url: `${SITE_URL}/careers`
-                }
-              ]
+  {
+    "@type": "SiteNavigationElement",
+    "position": 1,
+    "name": "Hypernetwork",
+    "url": "https://syncedin.org/hypernetwork"
+  },
+  {
+    "@type": "SiteNavigationElement",
+    "position": 2,
+    "name": "For Link.me creators",
+    "url": "https://syncedin.org/for/linkme"
+  }
+]
             })
           }}
         />

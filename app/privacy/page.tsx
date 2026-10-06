@@ -1,11 +1,12 @@
+import { withPublicSEO } from '@/lib/public-seo';
 import Link from "next/link";
 import { Wordmark } from "../Wordmark";
 
-export const metadata = {
+export const metadata = withPublicSEO('/privacy', {
   title: "Privacy · SyncedIn",
   description:
     "How SyncedIn handles your data, your twin, and your conversations."
-};
+});
 
 export default function PrivacyPage() {
   return (
@@ -21,7 +22,7 @@ export default function PrivacyPage() {
         <div className="retro-label">privacy policy</div>
         <h1 className="retro-h1 text-3xl mt-3">Your data, your twin, your call.</h1>
         <p className="retro-dim text-xs mt-2">
-          Last updated: {new Date().toISOString().slice(0, 10)}
+          Last updated: 2026-06-10
         </p>
       </section>
 

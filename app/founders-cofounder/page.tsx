@@ -1,10 +1,11 @@
+import { withPublicSEO } from '@/lib/public-seo';
 import { VerticalLandingShell } from "../(verticals)/VerticalLandingShell";
 
-export const metadata = {
+export const metadata = withPublicSEO('/founders-cofounder', {
   title: "SyncedIn for co-founder matching",
   description:
     "Find a co-founder whose stack of skills, values, and current goals genuinely complements yours. Your twin runs the search across the network so you spend your time on the conversations that matter."
-};
+});
 
 /**
  * /founders-cofounder — top-of-funnel landing page for solo founders /

@@ -1,0 +1,274 @@
+{
+  "baseline": "eb724bc0b051103031b580400daceb4120d63cac",
+  "files": [
+    {
+      "file": "app/[slug]/opengraph-image.tsx",
+      "sha256": "6768f7157ad267ef43aaeb009b6c8c307454286d714541f19a6188b3750b262d"
+    },
+    {
+      "file": "app/[slug]/page.tsx",
+      "sha256": "51c5e07bfdc1a18625ef82098657c12c4b0d5c6bb4d99f8bd84f3fb14a539fc4"
+    },
+    {
+      "file": "app/admin/reports/page.tsx",
+      "sha256": "f22220d740513faf90e3be69a9d9470256e2508f39ae63a21db05ecdbbaf96fd"
+    },
+    {
+      "file": "app/admin/status/page.tsx",
+      "sha256": "e3bbda384a4de0c9078ec042c326426994e246302410da5ed1a500413aec7b54"
+    },
+    {
+      "file": "app/admin/usage/page.tsx",
+      "sha256": "ac9c88ca9caee5a18b93dd5bb290e921021e5f2a649951790e00d3019a5a0dbd"
+    },
+    {
+      "file": "app/ai-knows-me/page.tsx",
+      "sha256": "33f42da2ebe62925b39ea94ecb4df9b0df4ff3717e5f91afe6f6416cc8065096"
+    },
+    {
+      "file": "app/alternatives/linkedin/page.tsx",
+      "sha256": "50d2d2c4bb0ae14e5533aef5e4d42cc4d8553d766daebd5fd271e85b685c00e8"
+    },
+    {
+      "file": "app/apple-icon.tsx",
+      "sha256": "a571e12f4c95d8c3cd6b679d9652da26465f0fa15ec30ded50b731ca0addfd08"
+    },
+    {
+      "file": "app/article/page.tsx",
+      "sha256": "681a5eded9638ed07e1e312cf0b1db5473893d596617276684f1263c629b314d"
+    },
+    {
+      "file": "app/blog/page.tsx",
+      "sha256": "dc69854d717485e7680f03a495da5e808fa70461b17ce793d4bfca4eab54e4be"
+    },
+    {
+      "file": "app/careers/page.tsx",
+      "sha256": "5b06c0f7d2c63bc3d4b4437a79b2538bee358a16e850b790cf3de3f69dc6c823"
+    },
+    {
+      "file": "app/child-safety/page.tsx",
+      "sha256": "96f32cf0a4161893f1f0b8cd91c5ffc654c4ba9010f279b9dd06f3a00cf58102"
+    },
+    {
+      "file": "app/communities/new/page.tsx",
+      "sha256": "3fe51711e012d61f5bee971ac164b6f78d45af643b870893dc04be316e5a5240"
+    },
+    {
+      "file": "app/conferences/[slug]/edit/page.tsx",
+      "sha256": "f8dbc20a1758c5f952616af9a287e9aa34e21b1fb03a16c614ae5fc5d7d3eed6"
+    },
+    {
+      "file": "app/conferences/[slug]/opengraph-image.tsx",
+      "sha256": "b7ca0add0302c64cf4c5817b6e7978a26da137bb4338754c962f08c2741341a0"
+    },
+    {
+      "file": "app/conferences/[slug]/page.tsx",
+      "sha256": "e7e7d6f280b499552fe2ab4d42196277156882c6be685b0060f04478e8f098e7"
+    },
+    {
+      "file": "app/conferences/new/page.tsx",
+      "sha256": "780769ed07ec47df72a7418293b7a16908863817b2871077ab0d77fff58700f1"
+    },
+    {
+      "file": "app/continuation/page.tsx",
+      "sha256": "124ddd6dfdfc2df113ce0b15e1888a9cb890add845c0e15a0f8850d6ab565bf0"
+    },
+    {
+      "file": "app/conversations/[id]/loading.tsx",
+      "sha256": "9a44f9824e58b41846b83ecb29e0896d6916028bf68fb6e1a61f260987b8737f"
+    },
+    {
+      "file": "app/conversations/[id]/page.tsx",
+      "sha256": "e6f6f97a9b4fe0225b8814b28a7203d854cfb886cb00ff69dea4bcf4477802ce"
+    },
+    {
+      "file": "app/conversations/new/NewConversationFinder.tsx",
+      "sha256": "7aad5f75906f8f4c81b9d0efe59cb3c330d6f2c7d32fa7c269403e9109d425b0"
+    },
+    {
+      "file": "app/conversations/new/page.tsx",
+      "sha256": "37fe112338b4e7a8e38e6b783efea7127e170ee94158a463c71fe6321ffc3c41"
+    },
+    {
+      "file": "app/dashboard/loading.tsx",
+      "sha256": "141fa508eec3fb52aedaa8660b47965701af2489fadc2fb3cfcd2d95fa2da672"
+    },
+    {
+      "file": "app/dashboard/page.tsx",
+      "sha256": "0921209f45e1aaf3f9ed314d60379ec7d17082ecc203e57fde973b6710c5b0b0"
+    },
+    {
+      "file": "app/dm/[handle]/page.tsx",
+      "sha256": "a21f5bfd21d5c06783731df30c7424ad3c219fc2e1d70569341acb04bd7856c6"
+    },
+    {
+      "file": "app/faq/page.tsx",
+      "sha256": "8ec5c8828674f192079a53baf2ab4777077b68d922f2c54046af1f2edb73c8d3"
+    },
+    {
+      "file": "app/feedback/page.tsx",
+      "sha256": "35bbed6d45f12e2092d99aa4162299d95cc5c5e85f26ffdfa76303aaf03bcefd"
+    },
+    {
+      "file": "app/for/linkme/page.tsx",
+      "sha256": "7db22ff47e0f78f92a88d29046bfdb30da9f00b7fc99f63df75c399478c6addb"
+    },
+    {
+      "file": "app/founders-cofounder/page.tsx",
+      "sha256": "820cf3472ae801ea9476746352e10815dd6d5fa238eb28b88e7f219d151ff6cd"
+    },
+    {
+      "file": "app/founders-vc/page.tsx",
+      "sha256": "33d75974ecb2ab0a5d13b3096ee2ecacbed1f039a571a44fa455fe163ea18ea6"
+    },
+    {
+      "file": "app/generate-free-portfolio/page.tsx",
+      "sha256": "1cde77bbdb38dec6f50ef1e4377639941493e0c86054df357822182c3172b110"
+    },
+    {
+      "file": "app/ghosts/page.tsx",
+      "sha256": "4ac03e3cd40267c79022e15b1c1e4be0d6170b693fb06665d5147201696391f8"
+    },
+    {
+      "file": "app/hypernetwork/page.tsx",
+      "sha256": "3adae2ccc8b7ba584bcbab3bc8f9658d83cdccbfc90c998260ca93be7498d275"
+    },
+    {
+      "file": "app/icon.tsx",
+      "sha256": "a571e12f4c95d8c3cd6b679d9652da26465f0fa15ec30ded50b731ca0addfd08"
+    },
+    {
+      "file": "app/invite/page.tsx",
+      "sha256": "43bc83a2ef0caa1472f9db3b7031fb45f30a6c86769d1735cc2f271488571a32"
+    },
+    {
+      "file": "app/landing-pages/page.tsx",
+      "sha256": "610112aea5d3298bc8bcf31fc9a08a7573a0754b0898d05b71b34778d6fbfc33"
+    },
+    {
+      "file": "app/layout.tsx",
+      "sha256": "6b3991b8d9966fb29db78ea36cdb1da32b7820fb23397920930acbf75744f56f"
+    },
+    {
+      "file": "app/login/page.tsx",
+      "sha256": "72fd40cbf550d0b104bee11e57f60452c9662dd07cc4153933c32bf62418beb1"
+    },
+    {
+      "file": "app/messages/page.tsx",
+      "sha256": "9fb043f7fd75bcbcc7e1355e30f09f896f203113cd17aef5ca99ea48d6485bdd"
+    },
+    {
+      "file": "app/not-found.tsx",
+      "sha256": "956b844238e57afc7d63933c26855146ae4845d68fb7672e5fe3095ee89a46dc"
+    },
+    {
+      "file": "app/onboarding/invite-gate/page.tsx",
+      "sha256": "2cff003afa95fcd6735ccd09756d3b41b3d0e382c5255c118d7156cd939796d7"
+    },
+    {
+      "file": "app/onboarding/page.tsx",
+      "sha256": "e9695f16d087b78a7ccda67c5dfa018d4395a0afd0647f8983ae8409cdcc8a13"
+    },
+    {
+      "file": "app/opengraph-image.tsx",
+      "sha256": "ca8f5571a81fdd9bf5c1d6f1983ebe4799193161a4b0412894a79611a3531259"
+    },
+    {
+      "file": "app/page.tsx",
+      "sha256": "4f3af87a6f85e9142bdf7dedd35731596e8b9815db303dd69671719bda721660"
+    },
+    {
+      "file": "app/paper/page.tsx",
+      "sha256": "70ae8c9d5fe44a8edc5f4f663bd334095e82f292d4478f571f722388391da673"
+    },
+    {
+      "file": "app/partners/linkme/page.tsx",
+      "sha256": "7836a699d75a9e6fea4136d49b8dab6b4a20f2c1b389694f679da738fc52df3f"
+    },
+    {
+      "file": "app/personal-intelligence/page.tsx",
+      "sha256": "4a3d8f9ea61fc4074c6e2d998a1839f402a05987c0f5c8c1dd6ba82ae5e7fbfa"
+    },
+    {
+      "file": "app/poll/[id]/page.tsx",
+      "sha256": "4008d35d7f470fd2c027b87d95a16fd7e1a8b5a3ec60625ff93e5a4ba2ee50ae"
+    },
+    {
+      "file": "app/poll/page.tsx",
+      "sha256": "217186798e8999eef456b8b2d548a56b420fb2e60ad1297684bb6cf892c85b7f"
+    },
+    {
+      "file": "app/privacy/page.tsx",
+      "sha256": "9560b69bf22d7fcfd06f83ce4c472c2e1ecc271ac3417deea0b5f659ac55ff98"
+    },
+    {
+      "file": "app/proposals/page.tsx",
+      "sha256": "eb9f1f9d3ec21e5668c9a6ec6e2f54909ffd84ecfbc83253bd1b566a18c8beb8"
+    },
+    {
+      "file": "app/settings/notifications/page.tsx",
+      "sha256": "3b0f2c25c3e32d73dc62f25dd8f45e3f0d78fc32587324f5a176d0b3b8ee2340"
+    },
+    {
+      "file": "app/settings/page.tsx",
+      "sha256": "9b6bd57973470c0a4ad4acebecb05f5857edaa61b908fb1a5572228717cde290"
+    },
+    {
+      "file": "app/support/page.tsx",
+      "sha256": "b2627d4cc4a88557a65910d98043d73962dae80944e891db671880a1a82840c6"
+    },
+    {
+      "file": "app/talk/page.tsx",
+      "sha256": "4bdcbddfa4018dd46a25af4d813463529158c18b7a217260b84cde6da4f2a097"
+    },
+    {
+      "file": "app/terms/page.tsx",
+      "sha256": "0be14f930b34920b6261bc0cb86d8c9cc88d8b75f840d2805843b98aa73dcbcd"
+    },
+    {
+      "file": "app/transformer/page.tsx",
+      "sha256": "e911d7f6ee9c2305e6ac70cd5728e2ded4213a460da990f6025cd46853ca5076"
+    },
+    {
+      "file": "app/twin/loading.tsx",
+      "sha256": "4155eef1be2c35c04c91835a3b9c3784d5aea793fbe0b8cee02f84b68251ca2a"
+    },
+    {
+      "file": "app/twin/page.tsx",
+      "sha256": "9951e56bec610c12fbc66bdcd8288de0d32af13d0d2cd7862449c337c2cb7140"
+    },
+    {
+      "file": "app/twitter-image.tsx",
+      "sha256": "8950e0787bb74f5a1fd8476d7c5b32002ae20ad016da8226884b80b5a13bc706"
+    },
+    {
+      "file": "app/u/[handle]/page.tsx",
+      "sha256": "11ace92068bdff860078db1a3593e36635237ca97d2b9551c74a5be74ab0f779"
+    },
+    {
+      "file": "app/vs/clay/page.tsx",
+      "sha256": "6011eeec22337c20ef1ac3c218f895380c938d6d5471892872e1a0cd96e1be8b"
+    },
+    {
+      "file": "app/vs/lemlist/page.tsx",
+      "sha256": "1b217e7613001f33c21e259679de5d07df78727e9766228a43488cb1433b8a5d"
+    },
+    {
+      "file": "app/vs/linkedin-dms/page.tsx",
+      "sha256": "a03073bff17cea52829c2f6f58249234bb3416cd5bcf7af8e55488088981bc91"
+    },
+    {
+      "file": "app/welcome/page.tsx",
+      "sha256": "a49ae8c3c9f9be8d2dd82452c82612e66b756c39755b6cc8347b6cb56c1ad744"
+    },
+    {
+      "file": "app/wins/page.tsx",
+      "sha256": "4f742a08dc075d0823fcbda7337e5e3b20cb470b093631f1e8cee72bda067ab8"
+    }
+  ],
+  "exceptions": [
+    "Talk: one invisible accessible H1",
+    "Policy dates: actual last content commit dates, wording/styles unchanged",
+    "Root head: navigation JSON-LD lists its two original public destinations; private destinations omitted"
+  ]
+}

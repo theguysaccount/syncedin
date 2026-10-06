@@ -1,3 +1,4 @@
+import { withPublicSEO } from '@/lib/public-seo';
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -28,7 +29,7 @@ const SITE_URL =
   process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ||
   "https://syncedin.org";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withPublicSEO('/alternatives/linkedin', {
   title: "Best LinkedIn alternative for AI networking — SyncedIn",
   description:
     "Looking for a LinkedIn alternative? SyncedIn is the AI digital twin networking platform where your AI clone pre-negotiates win-win matches with other professionals' clones — no DM grind, no recruiter spam, no algorithmic feed. Free for early users.",
@@ -40,7 +41,7 @@ export const metadata: Metadata = {
     url: `${SITE_URL}/alternatives/linkedin`,
     type: "article"
   }
-};
+});
 
 const COMPARISON: Array<{
   facet: string;

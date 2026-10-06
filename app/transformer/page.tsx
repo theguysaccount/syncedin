@@ -1,6 +1,7 @@
+import { withPublicSEO } from '@/lib/public-seo';
 import Link from "next/link";
 
-export const metadata = {
+export const metadata = withPublicSEO('/transformer', {
   title: "The Attention Transformer for Humanity · SyncedIn",
   description:
     "A companion to Intention Is All You Need. We read the Transformer architecture layer by layer and rebuild each component for people instead of tokens: encoder/decoder as twins, multi-head as multi-goal, positional encoding as timing, and why self-attention beats linear human search.",
@@ -11,7 +12,7 @@ export const metadata = {
     url: "https://syncedin.org/transformer",
     type: "article"
   }
-};
+});
 
 export const revalidate = 3600;
 

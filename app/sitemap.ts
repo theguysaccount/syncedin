@@ -8,8 +8,9 @@ import { createServiceClient } from "@/lib/supabase/server";
  *
  * Coverage:
  *   - All static marketing routes (home, /article, /blog, /vs/*,
- *     vertical landing pages, /privacy, /terms, /support, /careers,
- *     /poll, /communities, /conferences)
+ *     vertical landing pages, /privacy, /terms, /support, /talk,
+ *     /faq, /child-safety, /transformer, /wins, /for/linkme,
+ *     /generate-free-portfolio)
  *   - All public /u/<handle> portfolio pages with a real handle set
  *     (we cap at 5000 to keep the response under the sitemap-protocol
  *     size limit; if we ever cross that we'll paginate via
@@ -27,36 +28,44 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const APP_URL =
     process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ||
     "https://syncedin.org";
-  const now = new Date();
 
   const staticRoutes: MetadataRoute.Sitemap = [
     // === Top-level marketing ===
-    { url: `${APP_URL}/`, lastModified: now, changeFrequency: "daily", priority: 1.0 },
-    { url: `${APP_URL}/article`, lastModified: now, changeFrequency: "monthly", priority: 0.9 },
-    { url: `${APP_URL}/blog`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },
+    { url: `${APP_URL}/`, changeFrequency: "daily", priority: 1.0 },
+    { url: `${APP_URL}/article`, changeFrequency: "monthly", priority: 0.9 },
+    { url: `${APP_URL}/blog`, changeFrequency: "weekly", priority: 0.9 },
 
     // === Comparison pages (high-intent SEO) ===
-    { url: `${APP_URL}/vs/lemlist`, lastModified: now, changeFrequency: "monthly", priority: 0.8 },
-    { url: `${APP_URL}/vs/clay`, lastModified: now, changeFrequency: "monthly", priority: 0.8 },
-    { url: `${APP_URL}/vs/linkedin-dms`, lastModified: now, changeFrequency: "monthly", priority: 0.8 },
+    { url: `${APP_URL}/vs/lemlist`, changeFrequency: "monthly", priority: 0.8 },
+    { url: `${APP_URL}/vs/clay`, changeFrequency: "monthly", priority: 0.8 },
+    { url: `${APP_URL}/vs/linkedin-dms`, changeFrequency: "monthly", priority: 0.8 },
 
     // === Vertical landing pages ===
-    { url: `${APP_URL}/founders-vc`, lastModified: now, changeFrequency: "monthly", priority: 0.7 },
-    { url: `${APP_URL}/founders-cofounder`, lastModified: now, changeFrequency: "monthly", priority: 0.7 },
-    { url: `${APP_URL}/careers`, lastModified: now, changeFrequency: "monthly", priority: 0.6 },
+    { url: `${APP_URL}/founders-vc`, changeFrequency: "monthly", priority: 0.7 },
+    { url: `${APP_URL}/founders-cofounder`, changeFrequency: "monthly", priority: 0.7 },
 
     // === Community-shaped surfaces ===
-    { url: `${APP_URL}/hypernetwork`, lastModified: now, changeFrequency: "weekly", priority: 0.7 },
-    { url: `${APP_URL}/communities/new`, lastModified: now, changeFrequency: "monthly", priority: 0.5 },
-    { url: `${APP_URL}/conferences/new`, lastModified: now, changeFrequency: "monthly", priority: 0.5 },
+    { url: `${APP_URL}/hypernetwork`, changeFrequency: "weekly", priority: 0.7 },
 
     // === Open feedback board ===
-    { url: `${APP_URL}/feedback`, lastModified: now, changeFrequency: "daily", priority: 0.5 },
+    { url: `${APP_URL}/feedback`, changeFrequency: "daily", priority: 0.5 },
+
+    // Existing public pages discovered outside the original sitemap.
+    { url: `${APP_URL}/faq` },
+    { url: `${APP_URL}/child-safety` },
+    { url: `${APP_URL}/transformer` },
+    { url: `${APP_URL}/wins` },
+    { url: `${APP_URL}/talk` },
+    { url: `${APP_URL}/for/linkme` },
+    { url: `${APP_URL}/generate-free-portfolio` },
+    { url: `${APP_URL}/ai-knows-me` },
+    { url: `${APP_URL}/alternatives/linkedin` },
+    { url: `${APP_URL}/paper` },
 
     // === Trust / legal ===
-    { url: `${APP_URL}/privacy`, lastModified: now, changeFrequency: "yearly", priority: 0.3 },
-    { url: `${APP_URL}/terms`, lastModified: now, changeFrequency: "yearly", priority: 0.3 },
-    { url: `${APP_URL}/support`, lastModified: now, changeFrequency: "monthly", priority: 0.3 }
+    { url: `${APP_URL}/privacy`, changeFrequency: "yearly", priority: 0.3 },
+    { url: `${APP_URL}/terms`, changeFrequency: "yearly", priority: 0.3 },
+    { url: `${APP_URL}/support`, changeFrequency: "monthly", priority: 0.3 }
   ];
 
   // === Dynamic: public portfolio pages /u/<handle> ===
@@ -77,7 +86,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         .filter((r: any) => typeof r.handle === "string" && r.handle.trim())
         .map((r: any) => ({
           url: `${APP_URL}/u/${r.handle}`,
-          lastModified: r.updated_at ? new Date(r.updated_at) : now,
+          lastModified: r.updated_at ? new Date(r.updated_at) : undefined,
           changeFrequency: "weekly" as const,
           priority: 0.6
         }));

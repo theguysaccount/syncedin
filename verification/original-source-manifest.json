@@ -1174,22 +1174,6 @@
       "sha256": "e51907a187cf1de8d015d91185e8fefabeab9be61fe4f1e0ec4c4450a53ce851"
     },
     {
-      "file": "fastlane/Appfile",
-      "sha256": "59c30518a4e31ca06d5fc3d1dfe875f33c35db099682d1a02581ee1e5bcbfa93"
-    },
-    {
-      "file": "fastlane/Fastfile",
-      "sha256": "a77ea1206337af7e3b84543541e3d77f807dbd955f2d3ff14ee77adcf723fab8"
-    },
-    {
-      "file": "fastlane/Pluginfile",
-      "sha256": "cdcb5285602b79caa804c89fbfa491aac8eba08796c1626a037242e23de1541b"
-    },
-    {
-      "file": "fastlane/metadata/android/en-US/images/icon.png",
-      "sha256": "7aa72201b88afa176b722dc58fb47d114d160670e45eab2c4c98047ee741e5f0"
-    },
-    {
       "file": "lib/ai-exports.ts",
       "sha256": "783a2c5cfaeed3b3c3fa3eaa522745ce4d81ec77205a01d66626aa4af6d3b70f"
     },
@@ -1711,6 +1695,10 @@
     ".github/workflows/ci.yml",
     ".github/workflows/mobile-release.yml",
     "Gemfile",
-    "push.command"
+    "push.command",
+    "fastlane/Appfile",
+    "fastlane/Fastfile",
+    "fastlane/Pluginfile",
+    "fastlane/metadata/android/en-US/images/icon.png"
   ]
 }

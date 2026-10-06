@@ -1,3 +1,4 @@
+import { withPublicSEO } from '@/lib/public-seo';
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -13,7 +14,7 @@ import { GeneratePortfolioForm } from "./GeneratePortfolioForm";
  */
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withPublicSEO('/generate-free-portfolio', {
   title: "Generate your free portfolio · SyncedIn",
   description:
     "Paste anything about yourself and get a sharp professional portfolio in seconds — free. Then your AI twin starts finding win-wins for you.",
@@ -23,7 +24,7 @@ export const metadata: Metadata = {
       "Paste your ChatGPT/Claude memory or bio. We turn it into a clean portfolio, free.",
     type: "website"
   }
-};
+});
 
 export default async function GenerateFreePortfolioPage() {
   const supabase = createClient();

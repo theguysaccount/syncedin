@@ -1,3 +1,4 @@
+import { withPublicSEO } from '@/lib/public-seo';
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -17,7 +18,7 @@ import { AiKnowsMeFunnel } from "./AiKnowsMeFunnel";
  */
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withPublicSEO('/ai-knows-me', {
   title: "What does your AI actually know about you? · SyncedIn",
   description:
     "You've talked to ChatGPT or Claude for months. It has a picture of you. Copy one prompt, paste its answer, and see your Personal Intelligence decoded in seconds. Free.",
@@ -27,7 +28,7 @@ export const metadata: Metadata = {
       "The 60 second test: ask the AI you already use to describe you, paste its answer, and see your Personal Intelligence decoded.",
     type: "website"
   }
-};
+});
 
 export default async function AiKnowsMePage({
   searchParams

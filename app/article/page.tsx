@@ -1,3 +1,4 @@
+import { withPublicSEO } from '@/lib/public-seo';
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Wordmark } from "../Wordmark";
@@ -12,7 +13,7 @@ import { Wordmark } from "../Wordmark";
  * /public/articles/syncedin-launch.md with no route attached — visiting
  * /article returned 404. This file is the actual rendered route.
  */
-export const metadata: Metadata = {
+export const metadata: Metadata = withPublicSEO('/article', {
   title:
     "SyncedIn wants two AI agents to negotiate before two humans meet",
   description:
@@ -33,7 +34,7 @@ export const metadata: Metadata = {
     description:
       "The new networking layer where your digital twin does the cold outreach for you — and you only see the deals worth taking."
   }
-};
+});
 
 export default function LaunchArticlePage() {
   return (

@@ -15,3 +15,6 @@ fastlane
 *.bak.bak
 Gemfile
 push.command
+
+.qa/
+verification/card-previews/

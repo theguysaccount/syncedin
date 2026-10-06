@@ -1,3 +1,4 @@
+import { withPublicSEO } from '@/lib/public-seo';
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -21,12 +22,12 @@ const SITE_URL =
   process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ||
   "https://syncedin.org";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withPublicSEO('/faq', {
   title: "SyncedIn FAQ — how the AI networking agent works",
   description:
     "Frequently asked questions about SyncedIn: how your AI twin gets built, what data it uses, how the matchmaking works, pricing, privacy, and how it compares to LinkedIn / Lunchclub / paid-DM tools.",
   alternates: { canonical: `${SITE_URL}/faq` }
-};
+});
 
 const FAQS: Array<{ q: string; a: string }> = [
   {

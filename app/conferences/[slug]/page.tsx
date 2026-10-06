@@ -41,14 +41,15 @@ export async function generateMetadata({
     .eq("slug", slug)
     .maybeSingle();
   if (!conf) return {};
-  const title = `${conf.name} · SyncedIn`;
+  const title = conf.name;
   const description =
     conf.description ||
     `Inside-only twin networking for ${conf.name}. Your clone finds the highest win-wins among everyone in the room.`;
   return {
     title,
     description,
-    openGraph: { title, description, type: "website" },
+    alternates: { canonical: `https://syncedin.org/conferences/${encodeURIComponent(slug)}` },
+    openGraph: { title, description, type: "website", url: `https://syncedin.org/conferences/${encodeURIComponent(slug)}` },
     twitter: { card: "summary_large_image", title, description }
   };
 }

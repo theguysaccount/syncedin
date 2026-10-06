@@ -14,7 +14,9 @@
     "cap:add:android": "npx cap add android",
     "cap:sync": "npx cap sync",
     "cap:open:ios": "npx cap open ios",
-    "cap:open:android": "npx cap open android"
+    "cap:open:android": "npx cap open android",
+    "postbuild": "node verification/check-seo-release.mjs",
+    "check:seo": "node verification/check-seo-release.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.30.1",

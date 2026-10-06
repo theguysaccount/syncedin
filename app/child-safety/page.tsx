@@ -1,11 +1,12 @@
+import { withPublicSEO } from '@/lib/public-seo';
 import Link from "next/link";
 import { Wordmark } from "../Wordmark";
 
-export const metadata = {
+export const metadata = withPublicSEO('/child-safety', {
   title: "Child Safety Standards · SyncedIn",
   description:
     "SyncedIn's standards against child sexual abuse and exploitation (CSAE) — zero tolerance, in-app reporting, takedown SLA, and compliance contact."
-};
+});
 
 export default function ChildSafetyPage() {
   return (
@@ -23,7 +24,7 @@ export default function ChildSafetyPage() {
           Zero tolerance for CSAE. No exceptions.
         </h1>
         <p className="retro-dim text-xs mt-2">
-          Last updated: {new Date().toISOString().slice(0, 10)}
+          Last updated: 2026-06-01
         </p>
       </section>
 

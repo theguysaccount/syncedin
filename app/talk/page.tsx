@@ -1,3 +1,4 @@
+import { withHomeVariantSEO } from '@/lib/public-seo';
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Wordmark } from "../Wordmark";
@@ -19,11 +20,11 @@ import { createServiceClient } from "@/lib/supabase/server";
  *  - API: Claude Haiku w/ tool access (search_users, scrape_handle,
  *    match_preview, start_signup)
  */
-export const metadata: Metadata = {
+export const metadata: Metadata = withHomeVariantSEO('/talk', {
   title: "Chat with SyncedIn — find who you should talk to",
   description:
     "Talk to the SyncedIn master AI. See who's on the platform, get matched live, sign up only when you're ready."
-};
+});
 
 export default async function TalkLandingPage() {
   // Pull real platform users for the orbit + a count for the "N+
@@ -78,6 +79,7 @@ export default async function TalkLandingPage() {
         overflow: "hidden"
       }}
     >
+      <h1 className="sr-only">Chat with SyncedIn</h1>
       {/* Top bar — wordmark left, sign-in right. Kept thin so the
           chat surface dominates the viewport. */}
       <header

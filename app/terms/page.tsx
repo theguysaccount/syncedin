@@ -1,10 +1,11 @@
+import { withPublicSEO } from '@/lib/public-seo';
 import Link from "next/link";
 import { Wordmark } from "../Wordmark";
 
-export const metadata = {
+export const metadata = withPublicSEO('/terms', {
   title: "Terms · SyncedIn",
   description: "Terms of service for using SyncedIn."
-};
+});
 
 export default function TermsPage() {
   return (
@@ -20,7 +21,7 @@ export default function TermsPage() {
         <div className="retro-label">terms of service</div>
         <h1 className="retro-h1 text-3xl mt-3">Plain-English terms.</h1>
         <p className="retro-dim text-xs mt-2">
-          Last updated: {new Date().toISOString().slice(0, 10)}
+          Last updated: 2026-05-17
         </p>
       </section>
 

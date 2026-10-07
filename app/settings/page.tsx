@@ -59,50 +59,6 @@ export default async function SettingsPage() {
         }}
         className="settings-grid"
       >
-        <style>{`
-          @media (min-width: 900px) {
-            .settings-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-            .settings-grid > .settings-card-wide { grid-column: 1 / -1; }
-          }
-          .settings-card {
-            padding: 18px;
-            border-radius: 16px;
-            border: 1px solid var(--border);
-            background: var(--panel-solid);
-          }
-          .settings-card h2 {
-            font-size: 15px;
-            font-weight: 800;
-            letter-spacing: -0.005em;
-            margin: 0 0 6px;
-          }
-          .settings-card p.hint {
-            font-size: 13px;
-            line-height: 1.5;
-            color: var(--text-dim);
-            margin: 0 0 14px;
-          }
-          .settings-row-link {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 12px 14px;
-            border-radius: 10px;
-            background: var(--panel-2);
-            border: 1px solid var(--border);
-            text-decoration: none;
-            color: var(--text);
-            font-size: 13.5px;
-            font-weight: 600;
-            transition: border-color 0.15s ease;
-          }
-          .settings-row-link:hover { border-color: #1f8bff; }
-          .settings-row-link .arrow {
-            color: #1f8bff;
-            font-size: 16px;
-          }
-        `}</style>
-
         {/* Portfolio section removed — now lives on /personal-intelligence
             as the first card. One-click build there opens the page
             directly instead of routing back here. */}

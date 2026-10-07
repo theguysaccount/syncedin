@@ -92,6 +92,44 @@ test("mobile twin actions have accessible icons and pending approval is not repo
   assert(actions.includes('busy === "accept" ? "Accepting..." : "Accept"'));
   assert(!actions.includes('busy === "accept" ? "✓ accepted"'));
 });
+test("twin server markup keeps responsive rules in the stylesheet and rail failures stay visible", () => {
+  assert(!fs.readFileSync("app/twin/page.tsx", "utf8").includes("<style>"));
+  assert(!fs.readFileSync("app/settings/page.tsx", "utf8").includes("<style>"));
+  assert(fs.readFileSync("app/product.css", "utf8").includes("@media (min-width:900px)"));
+  const rail = fs.readFileSync("app/twin/PendingProposalsRail.tsx", "utf8");
+  assert(rail.includes('if (!res.ok) throw new Error("The proposal was not accepted.'));
+  assert(rail.includes('if (!res.ok) throw new Error("The proposal was not declined.'));
+  assert(rail.includes('role="alert"'));
+});
+function errorReporter(insert) {
+  return load("app/api/error-report/route.ts", {
+    "next/server": { NextResponse: { json: (body, options = {}) => ({ body, status: options.status ?? 200 }) } },
+    "@/lib/supabase/server": {
+      createClient: () => ({ auth: { getUser: async () => ({ data: { user: null } }) } }),
+      createServiceClient: () => ({ from: () => ({ insert }) })
+    }
+  });
+}
+test("automatic error reports reach databases without the optional grouping column", async () => {
+  const writes = [];
+  const reporter = errorReporter(async row => {
+    writes.push(row);
+    return { error: row.ack_signature ? { code: "PGRST204", message: "missing ack_signature column" } : null };
+  });
+  const result = await reporter.POST(new Request("https://example.test/api/error-report", {
+    method: "POST", body: JSON.stringify({ message: "Synthetic release error" })
+  }));
+  assert.equal(result.status, 200); assert.equal(writes.length, 2);
+  assert.equal(writes[1].message, "[auto-error] Synthetic release error");
+  assert.equal("ack_signature" in writes[1], false);
+});
+test("automatic error reports never claim delivery when persistence fails", async () => {
+  const reporter = errorReporter(async () => ({ error: { code: "unavailable" } }));
+  const result = await reporter.POST(new Request("https://example.test/api/error-report", {
+    method: "POST", body: JSON.stringify({ message: "Synthetic release error" })
+  }));
+  assert.equal(result.status, 503); assert.equal(result.body.ok, false);
+});
 // Hosted web uploads intentionally exclude native/signing files via .vercelignore.
 test("Android uploads meet protection minimum and signing never revokes certificates", {
   skip: process.env.VERCEL === "1" && (!fs.existsSync("android/variables.gradle") || !fs.existsSync("fastlane/Fastfile"))

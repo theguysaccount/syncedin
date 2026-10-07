@@ -94,26 +94,6 @@ export default async function TwinPage({
           </div>
         </div>
 
-        <style>{`
-          /* Drop breakpoint from 1024 → 900 so the right rail engages
-             on 13" laptops + smaller windows. Jack: "the whole right
-             side is empty — use that space." Below 900px the rail
-             stacks below the chat (mobile flow). */
-          @media (min-width: 900px) {
-            .twin-grid {
-              grid-template-columns: minmax(0, 1fr) 300px !important;
-            }
-          }
-          @media (max-width: 899px) {
-            .twin-rail { display: none; }
-          }
-          /* Composer is position:fixed at viewport bottom — pad the
-             chat column bottom so the last bubble + the chip strip
-             don't sit underneath the composer. */
-          .twin-grid > div:first-child {
-            padding-bottom: 0;
-          }
-        `}</style>
       </section>
     </AppShell>
   );

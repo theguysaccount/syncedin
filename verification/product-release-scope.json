@@ -39,9 +39,9 @@
     "app/messages/page.tsx": "00126a60a5e9f3b4e566894314d4698817d5d1e74bb88d1c80f2b58342cbbcb0",
     "app/onboarding/OnboardingWizard.tsx": "c4e3c6d4e13ded321f650d9a20cbcdd8b211f959cce6593f774d2d9bb90c8e94",
     "app/onboarding/actions.ts": "fa9e87a348e64d53cdcaff44234b77adbbef71df159fc8b607c75faa28fa9dcd",
-    "app/settings/page.tsx": "f6bdbcfd8b4e177a202e2aa8c46982551dfbc4111705d0a2fec40678da388b0a",
+    "app/settings/page.tsx": "1f8f51adf1da8757fdd05469fc23c99c86328464a97ea66ec512da714062892b",
     "app/twin/TwinChatUI.tsx": "acc83e02019663f538740f5403164c6f62ec13ade6c21e00ed7157a961c15347",
-    "app/twin/page.tsx": "4b83af90b3509909963cec0dbbb51831f6b48cac1dbc50add742fec07ce85470",
+    "app/twin/page.tsx": "115284e81604881a04fdfd874ecf51bb82446d29eccfa83f39e1675c95a18027",
     "capacitor.config.ts": "1984f332b6c427ad403ca0b76bf6293fdea8b0b9203b8810923d0bda1b86f52b",
     "lib/invite-stats.ts": "3394aff0d4f2ffb2375fe210d6a73f9f90e998c68eb84a4c94e5788b8ba2a14a",
     "lib/phone.ts": "1022de1f93a93d8c382bb44393842797c83bf711b918461a81144d1de4c34bf7",
@@ -50,7 +50,9 @@
     "app/api/save-twin-draft/route.ts": "fe7d0ed9e38c264954f29b698777a7fe7357172ba95ccd7c92e7bd8bf4f8f02c",
     "app/privacy/page.tsx": "82766b53508913cd6af9cd053ccaa0428d3e4286668b98760666bb0a61902d03",
     "app/layout.tsx": "7ae2d59a7d6180d784dcfb0f869db2a5d5952a4ff9e915201190226d29a08b09",
-    "app/messages/InlineActions.tsx": "6a0fd0b5b8975102e707828d8070e671c2b72590f5903981ac43dbd8426aa0dd"
+    "app/messages/InlineActions.tsx": "6a0fd0b5b8975102e707828d8070e671c2b72590f5903981ac43dbd8426aa0dd",
+    "app/twin/PendingProposalsRail.tsx": "3c34b071c061ae3747ca2b9a64628df56d74bc85332e9b06b2e0b676948c95e0",
+    "app/api/error-report/route.ts": "8988f012e6b0af173983e3359f0501420c48bad58d4d4a7a6ffb09603e3a8f86"
   },
   "components": {
     "app/admin/reports/page.tsx": "7878461782d767a546da9261bc19b2d63ae15f6598ab38626f6da9fb39632193",
@@ -59,9 +61,9 @@
     "app/layout.tsx": "21e6045ce71762cae45a4ab4f970cfd923119431276dae82749392cb813ecb68",
     "app/login/page.tsx": "1aa7076823478b333342dc9c0d628112947814170b8d32143325c960451e2ec7",
     "app/messages/page.tsx": "a94f2275e19eacb936907a11ea214db61ad43d32850faffcd97d3969e592421a",
-    "app/settings/page.tsx": "68cddb7b4bf85da0931187225b19a900176066826e92c325b23a5b00b48a886d",
+    "app/settings/page.tsx": "5d71bb2959faaa5ce8a34172f8d77ed900f8a81f3279fff447325cd0753017bf",
     "app/terms/page.tsx": "330e2e3d60e7e282ad3adca30a36df5c11f1e744f97a87387d8d18703abee142",
-    "app/twin/page.tsx": "bbf65fe6accb04aef62c3b9b1d98b892dbec6dbc3ea9afcfc22c02b2982448c9",
+    "app/twin/page.tsx": "9fdb3be23cc79e5fa278f2cf6ee40921937a160a32fe135b46189124a925823b",
     "app/u/[handle]/page.tsx": "6d4579786d90ce295c003509634e7ec7aba5e92e25c80f6432e7ad584a9bef64",
     "app/privacy/page.tsx": "2070a967e28fd78afd5a56f9534886403755e5fa9922a41946daf94a7047074a"
   }

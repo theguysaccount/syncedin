@@ -84,18 +84,24 @@ export async function POST(req: Request) {
     .slice(0, 220);
 
   const service = createServiceClient();
-  const { error } = await service.from("feedback").insert({
+  const report = {
     user_id: user?.id ?? null,
     message: composed,
     image_data_url: null,
     surface,
     user_agent: userAgent,
     ack_signature: sigInput
-  });
+  };
+  let { error } = await service.from("feedback").insert(report);
+  if (error?.code === "PGRST204" && error.message?.includes("ack_signature")) {
+    // Older databases can still capture errors without the grouping column.
+    const { ack_signature: _signature, ...compatibleReport } = report;
+    ({ error } = await service.from("feedback").insert(compatibleReport));
+  }
   if (error) {
-    // Log server-side but don't surface to client — we don't want the
-    // error reporter itself to throw an error.
+    // The client reporter handles failures silently; do not claim delivery.
     console.error("[error-report] insert failed", error);
+    return NextResponse.json({ ok: false, error: "report_unavailable" }, { status: 503 });
   }
   return NextResponse.json({ ok: true });
 }

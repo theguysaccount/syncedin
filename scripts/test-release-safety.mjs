@@ -72,7 +72,10 @@ test("blocks guard generated and directly inserted messages, and cannot be self-
   assert(sql.includes("revoke all on public.user_blocks from anon, authenticated"));
   assert(sql.includes("Only moderators can change suspension status"));
 });
-test("Android uploads meet protection minimum and signing never revokes certificates", () => {
+// Hosted web uploads intentionally exclude native/signing files via .vercelignore.
+test("Android uploads meet protection minimum and signing never revokes certificates", {
+  skip: process.env.VERCEL === "1" && (!fs.existsSync("android/variables.gradle") || !fs.existsSync("fastlane/Fastfile"))
+}, () => {
   assert(fs.readFileSync("android/variables.gradle", "utf8").includes("minSdkVersion = 24"));
   assert(!fs.readFileSync("fastlane/Fastfile", "utf8").includes("delete_certificate"));
 });

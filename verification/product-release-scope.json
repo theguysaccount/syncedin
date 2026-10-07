@@ -52,7 +52,9 @@
     "app/layout.tsx": "7ae2d59a7d6180d784dcfb0f869db2a5d5952a4ff9e915201190226d29a08b09",
     "app/messages/InlineActions.tsx": "6a0fd0b5b8975102e707828d8070e671c2b72590f5903981ac43dbd8426aa0dd",
     "app/twin/PendingProposalsRail.tsx": "3c34b071c061ae3747ca2b9a64628df56d74bc85332e9b06b2e0b676948c95e0",
-    "app/api/error-report/route.ts": "8988f012e6b0af173983e3359f0501420c48bad58d4d4a7a6ffb09603e3a8f86"
+    "app/api/error-report/route.ts": "8988f012e6b0af173983e3359f0501420c48bad58d4d4a7a6ffb09603e3a8f86",
+    "package.json": "dccdefcc04cd51c07e3c0a076d6148276880c3ba380805d30e95d1683ee0c9b3",
+    "package-lock.json": "ffc72a5014d8de51ea16401b2f37e6defdc8e8e41aead561b17b016631e91778"
   },
   "components": {
     "app/admin/reports/page.tsx": "7878461782d767a546da9261bc19b2d63ae15f6598ab38626f6da9fb39632193",

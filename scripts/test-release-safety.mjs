@@ -3,6 +3,14 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import vm from "node:vm";
 import ts from "typescript";
+test("mobile releases resolve the patched Capacitor WebView runtime", () => {
+  const lock = JSON.parse(fs.readFileSync("package-lock.json", "utf8"));
+  for (const name of ["core", "ios", "android", "cli"]) {
+    const [major, minor, patch] = lock.packages[`node_modules/@capacitor/${name}`].version.split(".").map(Number);
+    assert.equal(major, 6, "Revalidate native compatibility before a major upgrade");
+    assert(minor > 2 || (minor === 2 && patch >= 2), `@capacitor/${name} requires the 6.2.2 security patch`);
+  }
+});
 function load(file, mocks) {
   const module = { exports: {} };
   const source = ts.transpileModule(fs.readFileSync(file, "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 } }).outputText;

@@ -1,5 +1,5 @@
 PODS:
-  - Capacitor (6.2.1):
+  - Capacitor (6.2.2):
     - CapacitorCordova
   - CapacitorApp (6.0.3):
     - Capacitor
@@ -7,7 +7,7 @@ PODS:
     - Capacitor
   - CapacitorCommunityContacts (6.1.1):
     - Capacitor
-  - CapacitorCordova (6.2.1)
+  - CapacitorCordova (6.2.2)
   - CapacitorPushNotifications (6.0.5):
     - Capacitor
   - CapacitorShare (6.0.4):
@@ -39,11 +39,11 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/@capacitor/share"
 
 SPEC CHECKSUMS:
-  Capacitor: c95400d761e376be9da6be5a05f226c0e865cebf
+  Capacitor: 6591a78b923b7e6dde28506ffeea820356e68013
   CapacitorApp: a19ccb4f5f32d2534be5c6f524d5a9b614a1e8a7
   CapacitorBrowser: 825163a1d6adce944ac7b9e3cab101146b5a9df8
   CapacitorCommunityContacts: 9cde99c2cd212f6594677aae542436e2174c4ef2
-  CapacitorCordova: 8d93e14982f440181be7304aa9559ca631d77fff
+  CapacitorCordova: c2c76283b5c00cf6073bab0b1311e3b10bd17254
   CapacitorPushNotifications: 35abece14371c57172e8321c9ccc8b6fa35fabfe
   CapacitorShare: 77ff779e3b7c6ae9fb5461e52cf7ef805d429491
 

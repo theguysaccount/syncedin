@@ -433,6 +433,8 @@ test("phone capture never writes to the publicly readable profile", async () => 
         update(row) { writes.push({ table, row }); return query; },
         eq() { return query; },
         upsert(row) { writes.push({ table, row }); return query; },
+        select() { return query; },
+        maybeSingle: async () => ({ data: null, error: null }),
         then(resolve, reject) { return Promise.resolve({ error: null }).then(resolve, reject); }
       };
       return query;
@@ -440,13 +442,16 @@ test("phone capture never writes to the publicly readable profile", async () => 
   };
   const handler = load("app/api/save-twin-draft/route.ts", {
     "next/server": { NextResponse: { json: (data, init) => Response.json(data, init) } },
-    "@/lib/supabase/server": { createClient: () => client }
+    "@/lib/supabase/server": { createClient: () => client },
+    "@/lib/content-safety": { contentSafetyResponse: async () => null }
   }).POST;
   const response = await handler(request({ display_name: "Owner", phone_number: "+12025550123", goals: "Discuss research" }));
   assert.equal(response.status, 200);
   const phoneWrite = writes.find((write) => write.row.phone_number);
   assert.equal(phoneWrite.table, "notification_preferences");
   assert.equal(phoneWrite.row.user_id, "owner");
+  assert.equal(phoneWrite.row.phone_consent_at, null);
+  assert.equal(phoneWrite.row.on_text_notifications, false);
   assert.ok(writes.filter((write) => write.table === "profiles").every((write) => !("phone_number" in write.row)));
   assert.equal((await handler(request({ phone_number: 123 }))).status, 400);
 });

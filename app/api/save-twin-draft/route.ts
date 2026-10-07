@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { phonePreferencePatch } from "@/lib/phone";
+import { contentSafetyResponse } from "@/lib/content-safety";
 
 /**
  * Auto-save the onboarding wizard draft. Fires on a debounce as the user
@@ -40,6 +41,8 @@ export async function POST(req: Request) {
 
   const clean = (s?: string) =>
     s && s.trim().length > 0 ? s : null;
+  const safety = await contentSafetyResponse([body.display_name, body.goals, body.achievements].filter(Boolean).join("\n"), user.id);
+  if (safety) return safety;
 
   // Profile fields (display_name, avatar_url)
   const profileUpdate: Record<string, string | null> = {};
@@ -49,10 +52,13 @@ export async function POST(req: Request) {
   if (body.avatar_url !== undefined)
     profileUpdate.avatar_url = clean(body.avatar_url);
   if (body.phone_number !== undefined) {
-    const phonePatch = phonePreferencePatch(body.phone_number, "onboarding_draft");
+    const phonePatch = phonePreferencePatch(body.phone_number, "onboarding_draft", false);
     if (phonePatch) {
+      const { data: existing, error: readError } = await supabase.from("notification_preferences").select("phone_number").eq("user_id", user.id).maybeSingle();
+      if (readError) return NextResponse.json({ error: "Your phone number could not be saved. Please try again shortly." }, { status: 503 });
+      const storedPatch = existing?.phone_number === phonePatch.phone_number ? { phone_number: phonePatch.phone_number } : { ...phonePatch, on_text_notifications: false };
       const { error } = await supabase.from("notification_preferences")
-        .upsert({ user_id: user.id, ...phonePatch }, { onConflict: "user_id" });
+        .upsert({ user_id: user.id, ...storedPatch }, { onConflict: "user_id" });
       phoneSaveFailed = !!error;
     }
   }

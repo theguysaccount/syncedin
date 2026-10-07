@@ -9,6 +9,7 @@ import { SyncMeter } from "./SyncMeter";
 import { ThemeSync } from "./ThemeSync";
 import { PushRegistrar } from "./PushRegistrar";
 import { signOut } from "./login/actions";
+import { hiddenUserIds } from "@/lib/user-safety";
 
 /**
  * AppShell — wraps every signed-in page with the persistent left sidebar.
@@ -114,6 +115,7 @@ export async function AppShell({
   // every page navigation. Now Promise.allSettled fires them in
   // parallel so the shell renders in one round-trip's time.
   const unreadCounts: Record<string, number> = {};
+  const hidden = await hiddenUserIds(userId);
 
   async function computeMessagesUnread(): Promise<number> {
     const { data: convs } = await supabase
@@ -122,7 +124,7 @@ export async function AppShell({
         "id, participant_a, participant_b, last_read_a, last_read_b, created_at"
       )
       .or(`participant_a.eq.${userId},participant_b.eq.${userId}`);
-    const myConvs = (convs ?? []) as any[];
+    const myConvs = (convs ?? []).filter(c => !hidden.has(c.participant_a === userId ? c.participant_b : c.participant_a));
     const convIds = myConvs.map((c) => c.id);
     if (convIds.length === 0) return 0;
     const { data: msgs } = await supabase
@@ -192,7 +194,7 @@ export async function AppShell({
       .select("id, participant_a, participant_b, summary")
       .or(`participant_a.eq.${userId},participant_b.eq.${userId}`)
       .not("summary", "is", null);
-    const convIds = ((convs ?? []) as any[]).map((c) => c.id);
+    const convIds = (convs ?? []).filter(c => !hidden.has(c.participant_a === userId ? c.participant_b : c.participant_a)).map(c => c.id);
     if (convIds.length === 0) return 0;
     const { data: myResps } = await supabase
       .from("agreement_responses")

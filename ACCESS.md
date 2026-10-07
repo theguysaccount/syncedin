@@ -23,3 +23,17 @@ Release QA uses two isolated test personas; local credentials stay in ignored `.
 iOS bundle org.syncedin.app, App Store Connect app 6771601887, team XCUTNS56DG. Native sign-in uses the in-app email/password service; third-party OAuth and magic links are web-only. The mobile workflow uploads iOS to TestFlight and Android to Play Internal Testing, not public store release. Android must use minSdk 24 or newer. Never revoke shared distribution certificates to make CI pass.
 
 Apple's June review requests a physical-device video demonstrating terms acceptance, reporting, and blocking. A simulator recording does not fulfill that requirement. Confirm the uploaded build is selected and review notes explain the actual fixes before resubmission. Founder reviews reports at `/admin/safety`; action overdue reports within 24 hours. Text notifications require explicit signup opt-in; capturing a phone is not itself consent.
+
+## October 7 Release Status
+
+The product redesign is live. Supabase migrations 0008 and 0009 were applied to rlccoomlndwmwpjawkzv and eight live safety/ownership checks passed using only two isolated test personas. Native iPad simulator sign-in and signup screens were visually verified; this is not physical-device evidence or a completed terms-acceptance test.
+
+GitHub mobile run 37570086542 successfully uploaded and processed iOS 1.0 (8) in TestFlight and uploaded Android to Google Play Internal Testing. The App Store version has equivalent native build 1.0 (7) selected and saved, with export-compliance classification completed. Description, promotional text, and review notes were corrected and saved. These are preparation and testing states, not public store approval or final resubmission.
+
+Final Apple resubmission still requires the requested physical iPhone/iPad recording of terms acceptance, report, and block, plus approval to share the isolated reviewer login. The old saved reviewer credentials failed validation. Do not submit them again. Do not accept terms on the owner's behalf without action-time confirmation. Private QA credentials remain only in ignored `.qa/`; never put them in source or release reports.
+
+The live UI block/unblock test was limited to the two synthetic test accounts and generated a normal founder safety alert. No real customer was blocked or contacted. The fixture block was reversed. Authenticated test sessions must be cleared after browser QA.
+
+Run `node verification/check-public-release.mjs https://syncedin.org` after promotion to verify all 21 page-specific cards in both formats, anonymous login/admin protection, replay text masking, and current privacy disclosures. No provider protection or credentials need to be weakened.
+
+Next retention work should prioritize source-grounded twin drafts: a synthetic conversation invented a newsletter/introduction offer not present in the supplied profile. An approval boundary for promises and a measurable edit-to-next-draft loop are more important than increasing notification frequency. Actual iMessage delivery and group messaging remain unverified by this release.

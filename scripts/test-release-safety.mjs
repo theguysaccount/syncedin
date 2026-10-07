@@ -64,6 +64,13 @@ test("required phone capture is distinct from permission to text", () => {
   const sql = fs.readFileSync("supabase/migrations/0009_release_preferences.sql", "utf8");
   assert(sql.includes("case when opted_in then now() else null end"));
 });
+test("privacy disclosures cover phone messaging and mask replay text", () => {
+  const privacy = fs.readFileSync("app/privacy/page.tsx", "utf8");
+  assert(privacy.includes("Claw Messenger"));
+  assert(privacy.includes("we do not promise zero retention"));
+  assert(privacy.includes("Saving a"));
+  assert(fs.readFileSync("app/layout.tsx", "utf8").includes('data-clarity-mask="True"'));
+});
 test("blocks guard generated and directly inserted messages, and cannot be self-cleared", () => {
   const sql = fs.readFileSync("supabase/migrations/0008_user_safety.sql", "utf8");
   assert(sql.includes("messages_block_guard before insert or update"));
@@ -71,6 +78,11 @@ test("blocks guard generated and directly inserted messages, and cannot be self-
   assert(sql.includes("language plpgsql security definer"));
   assert(sql.includes("revoke all on public.user_blocks from anon, authenticated"));
   assert(sql.includes("Only moderators can change suspension status"));
+});
+test("blocked and suspended accounts cannot leave phantom inbox badges", () => {
+  const shell = fs.readFileSync("app/AppShell.tsx", "utf8");
+  assert(shell.includes("const hidden = await hiddenUserIds(userId)"));
+  assert.equal(shell.split(".filter(c => !hidden.has(c.participant_a === userId ? c.participant_b : c.participant_a))").length - 1, 2);
 });
 // Hosted web uploads intentionally exclude native/signing files via .vercelignore.
 test("Android uploads meet protection minimum and signing never revokes certificates", {

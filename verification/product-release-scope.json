@@ -2,7 +2,7 @@
   "release": "2026-10-06 product and store-review fixes",
   "reason": "Scoped authenticated navigation, discovery, messaging, in-app auth, consent, moderation, and release safeguards. Original marketing assets remain protected.",
   "files": {
-    "app/AppShell.tsx": "d2b04bf347a4e623dd34fc357d88f68f8177dd15160e1da6f827599ddb44cb7e",
+    "app/AppShell.tsx": "561fb3f9b46e2c73b73787fb168228ba8d6a8d43de3b2e62353298e40cfb21a4",
     "app/FeedbackBubble.tsx": "0af52deb4020749ee98a25fbc8e61b603c080e5f59979cdcefa34d8f168bbc07",
     "app/Footer.tsx": "b8ab1ed9fdbec7319c9f6b39b797d705037c3bcd97e9fe0199e03772cd540cad",
     "app/MobileShell.tsx": "4a80f8628087b9c11eb02173425a3d410cdbb4feb7239a169e28c9e6628c2a7b",
@@ -47,18 +47,21 @@
     "lib/phone.ts": "1022de1f93a93d8c382bb44393842797c83bf711b918461a81144d1de4c34bf7",
     "scripts/test-outreach.mjs": "047fc98e52dd081d7f59e9c7322ff4bb0c5b09e140798bdb1cf395c1f32f6275",
     "supabase/schema.sql": "21215b715ab729182ca614de9d1a72d1af2eccd7becce9136e9b66a229af5399",
-    "app/api/save-twin-draft/route.ts": "fe7d0ed9e38c264954f29b698777a7fe7357172ba95ccd7c92e7bd8bf4f8f02c"
+    "app/api/save-twin-draft/route.ts": "fe7d0ed9e38c264954f29b698777a7fe7357172ba95ccd7c92e7bd8bf4f8f02c",
+    "app/privacy/page.tsx": "82766b53508913cd6af9cd053ccaa0428d3e4286668b98760666bb0a61902d03",
+    "app/layout.tsx": "7ae2d59a7d6180d784dcfb0f869db2a5d5952a4ff9e915201190226d29a08b09"
   },
   "components": {
     "app/admin/reports/page.tsx": "7878461782d767a546da9261bc19b2d63ae15f6598ab38626f6da9fb39632193",
     "app/conversations/[id]/page.tsx": "d18b7c02e4a341557173791e96b45ac7f9d3a79cb41ad7182792e13ef3c5d090",
     "app/dashboard/page.tsx": "3ac1faf1729c370463d2155a11c5dda40d8cdf14ab143c55aac22dc16e210ed4",
-    "app/layout.tsx": "6b3991b8d9966fb29db78ea36cdb1da32b7820fb23397920930acbf75744f56f",
+    "app/layout.tsx": "21e6045ce71762cae45a4ab4f970cfd923119431276dae82749392cb813ecb68",
     "app/login/page.tsx": "1aa7076823478b333342dc9c0d628112947814170b8d32143325c960451e2ec7",
     "app/messages/page.tsx": "a94f2275e19eacb936907a11ea214db61ad43d32850faffcd97d3969e592421a",
     "app/settings/page.tsx": "68cddb7b4bf85da0931187225b19a900176066826e92c325b23a5b00b48a886d",
     "app/terms/page.tsx": "330e2e3d60e7e282ad3adca30a36df5c11f1e744f97a87387d8d18703abee142",
     "app/twin/page.tsx": "bbf65fe6accb04aef62c3b9b1d98b892dbec6dbc3ea9afcfc22c02b2982448c9",
-    "app/u/[handle]/page.tsx": "6d4579786d90ce295c003509634e7ec7aba5e92e25c80f6432e7ad584a9bef64"
+    "app/u/[handle]/page.tsx": "6d4579786d90ce295c003509634e7ec7aba5e92e25c80f6432e7ad584a9bef64",
+    "app/privacy/page.tsx": "2070a967e28fd78afd5a56f9534886403755e5fa9922a41946daf94a7047074a"
   }
 }

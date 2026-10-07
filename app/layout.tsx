@@ -271,7 +271,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="min-h-screen">
+      <body className="min-h-screen" data-clarity-mask="True">
         {/* Catches ChunkLoadError on stale tabs that survived a deploy
             and forces a one-time hard reload so users never see the
             empty React-#418/#423 hydration error screen. */}

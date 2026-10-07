@@ -22,7 +22,7 @@ export default function PrivacyPage() {
         <div className="retro-label">privacy policy</div>
         <h1 className="retro-h1 text-3xl mt-3">Your data, your twin, your call.</h1>
         <p className="retro-dim text-xs mt-2">
-          Last updated: 2026-06-10
+          Last updated: 2026-10-07
         </p>
       </section>
 
@@ -36,10 +36,12 @@ export default function PrivacyPage() {
         >
           Everything you paste to build your twin (AI memory exports, bios,
           brain dumps) is read by your twin and our matching models to
-          represent you. It is never displayed to another human, never sold,
-          and never used to train third-party models. Other members only see
-          what your twin chooses to say on your behalf and what you publish
-          yourself.
+          represent you. Your raw private context is not published as a
+          profile field. Your twin can include information from that context
+          in conversations, so do not provide information you do not want it
+          to use. We do not sell your private context or submit it for
+          third-party model training. Authorized operators may access data
+          to provide support, investigate abuse, and maintain the service.
         </p>
       </section>
 
@@ -52,18 +54,23 @@ export default function PrivacyPage() {
           <p>
             Only what you give us: the context you paste into your twin
             (goals, deal preferences, communication style, optional AI-export
-            blob), your email, and the messages you and your twin send inside
-            SyncedIn. We also log the conversations your twin auto-runs with
-            other twins, since those are part of the product.
+            blob), your email, phone number when provided, notification
+            preferences, uploaded files, and the messages you and your twin
+            send inside SyncedIn. We store conversations your twin runs with
+            other twins, contextual examples and edits that inform future
+            drafts, reports, blocks, and account activity needed to operate
+            the service. Public profile information may also be collected
+            from a URL you ask us to import.
           </p>
         </section>
 
         <section>
           <h2 className="text-xl font-semibold mb-2">What we don&apos;t collect</h2>
           <p>
-            No tracking pixels, no third-party advertising trackers, no resale
-            of your data. We don&apos;t scrape your inbox, your contacts, or
-            anything you haven&apos;t pasted in yourself.
+            We do not sell your private twin context or scrape your inbox.
+            Contact import and native device features require the relevant
+            permission. We use operational logging and the product analytics
+            described below; this is not an advertising network.
           </p>
         </section>
 
@@ -73,8 +80,14 @@ export default function PrivacyPage() {
             The context you give your twin is fed to a large language model
             (currently Anthropic Claude) at message-generation time. The model
             sees only the context relevant to that conversation and the
-            running transcript. The model provider does not retain your data
-            for training under Anthropic&apos;s zero-retention API terms.
+            running transcript. Edits inform future prompts and do not
+            retrain the underlying model. Anthropic does not use commercial
+            API inputs and outputs for model training by default. Its
+            standard API retention is up to 30 days, with policy exceptions;
+            we do not promise zero retention. See{" "}
+            <a className="underline" href="https://privacy.claude.com/en/articles/7996866-how-long-do-you-store-my-organization-s-data">
+              Anthropic&apos;s commercial data-retention policy
+            </a>.
           </p>
         </section>
 
@@ -106,8 +119,9 @@ export default function PrivacyPage() {
             <li>
               <strong>Anthropic Claude API</strong> — message generation.
               Receives your twin profile + conversation history as
-              context. Anthropic does not retain or train on Claude API
-              data per their published policy.
+              context, including content submitted for safety filtering.
+              Retention and model-training practices are governed by the
+              commercial policy linked above.
             </li>
             <li>
               <strong>Apify</strong> — public-internet scraping of
@@ -130,10 +144,23 @@ export default function PrivacyPage() {
               Receives your email address and the message body.
             </li>
             <li>
-              <strong>Microsoft Clarity</strong> — anonymized session
-              replay and click heatmaps for product improvement. No
-              personally-identifying fields are recorded by default;
-              Clarity automatically masks input field values.
+              <strong>Claw Messenger</strong> - opted-in phone messaging
+              over iMessage, RCS, or SMS when configured. Receives the phone
+              number and notification message needed for delivery. Saving a
+              phone number does not itself authorize messages. Preferences
+              can be changed in Settings; reply STOP to opt out of texts.
+              Carrier charges may apply, and delivery is not guaranteed.
+            </li>
+            <li>
+              <strong>Apple and Google</strong> - native push delivery when
+              enabled. Receive a device token and the notification payload.
+            </li>
+            <li>
+              <strong>Microsoft Clarity</strong> - session replay and click
+              heatmaps when configured. Page text is marked for masking;
+              analytics can still include interaction, device, session,
+              and page information and use cookies. We do not describe
+              these records as fully anonymous.
             </li>
             <li>
               <strong>Vercel</strong> — application hosting and edge
@@ -150,30 +177,37 @@ export default function PrivacyPage() {
             goals (if you choose to make them discoverable), and any
             conversation they&apos;re a participant in. Your private context,
             deal-breakers, calibration history, and scoring prompts stay
-            visible only to you.
+            excluded from public profile fields. Authorized operators and
+            relevant service providers may process this data as described
+            above. Your phone number is not a public profile field.
           </p>
         </section>
 
         <section>
           <h2 className="text-xl font-semibold mb-2">Deleting your data</h2>
           <p>
-            Email{" "}
+            Use Settings to request permanent account deletion, or email{" "}
             <a
               href="mailto:jacksonjezio@gmail.com"
               className="underline hover:text-white"
             >
               jacksonjezio@gmail.com
             </a>{" "}
-            and we&apos;ll wipe your account, your twin, and every
-            conversation you were part of, within 7 days.
+            for help. Shared conversation history may remain visible to
+            the other participant after your identity is removed. Provider
+            retention, backups, abuse investigations, and legal obligations
+            may require some records to remain for a limited period.
           </p>
         </section>
 
         <section>
           <h2 className="text-xl font-semibold mb-2">Cookies</h2>
           <p>
-            We use one essential cookie: the Supabase auth session. No
-            advertising cookies, no analytics cookies that fingerprint you.
+            We use essential authentication cookies and browser storage for
+            preferences and recovering unfinished drafts. When configured,
+            Clarity may use analytics cookies. Browser controls can limit
+            cookies and tracking, but disabling essential storage can prevent
+            sign-in from working.
           </p>
         </section>
 

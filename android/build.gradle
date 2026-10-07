@@ -7,9 +7,8 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        // Bumped 8.2.1 → 8.6.0 alongside Gradle 8.10.2 (in gradle-wrapper.properties).
-        // 8.2.1 + modern JDK fails with "Unsupported class file major version 69".
-        classpath 'com.android.tools.build:gradle:8.6.0'
+        // API 36 support, compatible with the existing Gradle 8.13 wrapper.
+        classpath 'com.android.tools.build:gradle:8.11.1'
         classpath 'com.google.gms:google-services:4.4.0'
 
         // NOTE: Do not place your application dependencies here; they belong

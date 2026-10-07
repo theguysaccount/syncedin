@@ -1,10 +1,8 @@
 ext {
     minSdkVersion = 24
-    // Google Play requires targetSdkVersion ≥ 35 for new uploads (as of
-    // Aug 2025). compileSdkVersion bumped to match — Capacitor 6 + AGP
-    // 8.6 both support SDK 35.
-    compileSdkVersion = 35
-    targetSdkVersion = 35
+    // Google Play requires API 36 for new uploads starting August 2026.
+    compileSdkVersion = 36
+    targetSdkVersion = 36
     androidxActivityVersion = '1.8.0'
     androidxAppCompatVersion = '1.6.1'
     androidxCoordinatorLayoutVersion = '1.2.0'

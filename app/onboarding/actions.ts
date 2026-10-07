@@ -8,8 +8,8 @@ import { scrapePublicProfile } from "@/lib/scrape";
 import { notifyNewMatch, notifyNewConnection } from "@/lib/notify";
 import { pickBestFirstMatch } from "@/lib/matchmaking";
 import { assignConversationSlug } from "@/lib/conversationSlugServer";
-import { registerClawRoute } from "@/lib/claw-messenger";
 import { normalizePhoneNumber, phonePreferencePatch } from "@/lib/phone";
+import { contentSafetyResponse } from "@/lib/content-safety";
 
 function s(v: FormDataEntryValue | null): string | null {
   if (v === null) return null;
@@ -26,9 +26,14 @@ export async function saveTwin(formData: FormData) {
 
   const display_name = s(formData.get("display_name"));
   const avatar_url = s(formData.get("avatar_url"));
+  const safety = await contentSafetyResponse([display_name, s(formData.get("goals")), s(formData.get("achievements"))].filter(Boolean).join("\n"), user.id);
+  if (safety) {
+    const result = await safety.json();
+    redirect(`/onboarding?error=content_check&detail=${encodeURIComponent(result.error)}`);
+  }
   const rawPhone = String(formData.get("phone_number") ?? "").trim();
   const phone_number = normalizePhoneNumber(rawPhone);
-  if (!phone_number) {
+  if (!phone_number && (rawPhone || formData.get("native_app") !== "yes")) {
     redirect(
       `/onboarding?error=missing_phone&detail=${encodeURIComponent(
         "Add a valid phone number before saving your twin."
@@ -52,9 +57,13 @@ export async function saveTwin(formData: FormData) {
   const profileUpdate: Record<string, string | null> = {};
   if (display_name !== null) profileUpdate.display_name = display_name;
   if (avatar_url !== null) profileUpdate.avatar_url = avatar_url;
-  const { error: phoneError } = await supabase.from("notification_preferences")
-    .upsert({ user_id: user.id, ...phonePreferencePatch(rawPhone, "onboarding") }, { onConflict: "user_id" });
-  if (phoneError) redirect(`/onboarding?error=phone_save&detail=${encodeURIComponent("Your phone number could not be saved. Please try again shortly.")}`);
+  if (phone_number) {
+    const { data: existingPhone } = await supabase.from("notification_preferences").select("phone_number").eq("user_id", user.id).maybeSingle();
+    const patch = existingPhone?.phone_number === phone_number ? { phone_number } : { ...phonePreferencePatch(rawPhone, "onboarding", false), on_text_notifications: false };
+    const { error: phoneError } = await supabase.from("notification_preferences")
+      .upsert({ user_id: user.id, ...patch }, { onConflict: "user_id" });
+    if (phoneError) redirect(`/onboarding?error=phone_save&detail=${encodeURIComponent("Your phone number could not be saved. Please try again shortly.")}`);
+  }
 
   // Auto-generate the portfolio handle (URL slug for /u/<handle>) if the
   // user doesn't have one yet. Best-effort uniqueness — fall back to a
@@ -91,8 +100,7 @@ export async function saveTwin(formData: FormData) {
       .update(profileUpdate)
       .eq("id", user.id);
   }
-  const route = await registerClawRoute(phone_number);
-  if (!route.ok && !route.skipped) console.warn("[onboarding] claw route registration failed", route.error);
+  // Phone route registration happens only after an explicit notification opt-in.
 
   // Try the full upsert (includes the new `achievements` column).
   // Fall back to the legacy field set if the column isn't migrated on

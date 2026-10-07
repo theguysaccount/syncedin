@@ -1,5 +1,5 @@
 ext {
-    minSdkVersion = 22
+    minSdkVersion = 24
     // Google Play requires targetSdkVersion ≥ 35 for new uploads (as of
     // Aug 2025). compileSdkVersion bumped to match — Capacitor 6 + AGP
     // 8.6 both support SDK 35.

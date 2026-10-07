@@ -5,9 +5,11 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "prebuild": "node --test scripts/test-outreach.mjs scripts/test-release-safety.mjs",
     "start": "next start",
     "lint": "next lint",
     "test:outreach": "node --test scripts/test-outreach.mjs",
+    "test:release": "node --test scripts/test-release-safety.mjs",
     "seed:personas": "node --env-file=.env.local scripts/seed-test-personas.mjs",
     "cap:init": "npx cap init SyncedIn org.syncedin.app --web-dir=public",
     "cap:add:ios": "npx cap add ios",

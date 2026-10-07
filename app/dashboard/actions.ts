@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { connectionBlocked } from "@/lib/user-safety";
 import { revalidatePath } from "next/cache";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { notifyNewConnection } from "@/lib/notify";
@@ -108,6 +109,7 @@ export async function startConversationWithUser(formData: FormData) {
   const otherId = String(formData.get("userId") ?? "").trim();
   if (!otherId) redirect("/dashboard?error=missing_user");
   if (otherId === user.id) redirect("/dashboard?error=self");
+  if (await connectionBlocked(user.id, otherId)) redirect("/messages?blocked=account");
 
   const service = createServiceClient();
   const { data: other } = await service

@@ -21,7 +21,7 @@ export default function TermsPage() {
         <div className="retro-label">terms of service</div>
         <h1 className="retro-h1 text-3xl mt-3">Plain-English terms.</h1>
         <p className="retro-dim text-xs mt-2">
-          Last updated: 2026-05-17
+          Last updated: 2026-10-06
         </p>
       </section>
 
@@ -110,6 +110,11 @@ export default function TermsPage() {
             that violate these terms, especially around abuse, impersonation,
             or mass outreach.
           </p>
+        </section>
+
+        <section>
+          <h2 className="text-xl font-semibold mb-2">Community safety</h2>
+          <p>There is no tolerance for objectionable content or abusive users. Do not post hate speech, threats, harassment, sexually explicit content, exploitation, or scams. Content is checked before sharing. Use Report to flag a profile or conversation, or Block to immediately hide an account and stop messages between you. Blocking also notifies our moderation team. We review reports within 24 hours, remove content confirmed to violate these terms, and suspend offending accounts. Contact <a href="mailto:hi@syncedin.org" className="underline">hi@syncedin.org</a> for safety concerns.</p>
         </section>
 
         <section>

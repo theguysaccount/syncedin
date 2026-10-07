@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { connectionBlocked } from "@/lib/user-safety";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import {
   anthropic,
@@ -51,6 +52,7 @@ export async function POST(req: Request) {
   }
   const otherId =
     conv.participant_a === user.id ? conv.participant_b : conv.participant_a;
+  if (await connectionBlocked(user.id, otherId)) return NextResponse.json({ error: "This connection is blocked." }, { status: 403 });
 
   const [
     { data: selfProfile },

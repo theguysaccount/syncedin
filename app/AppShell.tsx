@@ -48,9 +48,10 @@ export async function AppShell({
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("display_name, avatar_url, email, handle")
+    .select("display_name, avatar_url, email, handle, is_suspended")
     .eq("id", userId)
     .maybeSingle();
+  if (profile?.is_suspended) redirect("/support");
 
   // Display name fallback chain. Jack: "It says Jackson J-E-Z-I-O,
   // but it should just say Jackson Jesionowski."
@@ -216,58 +217,8 @@ export async function AppShell({
   if (pollRes.status === "fulfilled" && pollRes.value > 0)
     unreadCounts["/poll"] = pollRes.value;
 
-  // === SYNC METER inputs ===
-  // Pulled INTO AppShell (was per-page via sidebarExtra) so the meter
-  // renders on EVERY signed-in page from one source — preloaded, no
-  // re-mount jitter on navigation, scrolls inside the sticky sidebar
-  // as one block. Jack: "SYNC AVATAR WEIRDLY SCROLLS TOO, IT SHOULD
-  // BE IN THE SAME SCROLL SECTION AS THE MENU."
-  const service = createServiceClient();
-  const [
-    { data: twinForMeter },
-    { data: myMsgsForMeter },
-    { count: agreedForMeter },
-    { count: editsForMeter }
-  ] = await Promise.all([
-    service
-      .from("twin_profiles")
-      .select(
-        "goals, ai_export_blob, deal_preferences, communication_style, deal_breakers, hometown, current_city"
-      )
-      .eq("user_id", userId)
-      .maybeSingle(),
-    service
-      .from("messages")
-      .select("conversation_id")
-      .eq("sender_user_id", userId),
-    service
-      .from("agreement_responses")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", userId)
-      .eq("response", "accepted"),
-    service
-      .from("edit_deltas")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", userId)
-  ]);
-  const completedConvs = new Set(
-    ((myMsgsForMeter ?? []) as Array<{ conversation_id: string }>).map(
-      (m) => m.conversation_id
-    )
-  ).size;
-  const syncInputs = {
-    name: displayName,
-    goals: (twinForMeter as any)?.goals ?? null,
-    ai_export_blob: (twinForMeter as any)?.ai_export_blob ?? null,
-    deal_preferences: (twinForMeter as any)?.deal_preferences ?? null,
-    comm_style: (twinForMeter as any)?.communication_style ?? null,
-    deal_breakers: (twinForMeter as any)?.deal_breakers ?? null,
-    hometown: (twinForMeter as any)?.hometown ?? null,
-    current_city: (twinForMeter as any)?.current_city ?? null,
-    completed_conversations: completedConvs,
-    accepted_agreements: agreedForMeter ?? 0,
-    edit_count: editsForMeter ?? 0
-  };
+  const { count: editCount } = await createServiceClient().from("edit_deltas")
+    .select("id", { count: "exact", head: true }).eq("user_id", userId);
 
   // Clone-sync card rendered INSIDE the Sidebar (passed via the new
   // `cloneCard` prop) so it sits inside the one sticky aside and
@@ -291,7 +242,7 @@ export async function AppShell({
         // it can't bleed into the nav.
       }}
     >
-      <SyncMeter inputs={syncInputs} size={110} />
+      <div className="text-xs retro-dim" style={{ width: "100%", padding: "8px 0" }}>{editCount ?? 0} refinements learned</div>
       <Link
         href="/onboarding"
         className="retro-btn retro-btn-primary text-center"
@@ -323,7 +274,7 @@ export async function AppShell({
   );
 
   return (
-    <>
+    <div className="app-frame">
       {/* Keeps the theme consistent across every navigation (no more
           light/dark flips between pages). */}
       <ThemeSync />
@@ -334,6 +285,7 @@ export async function AppShell({
           link to /settings (Jack: "right now I can't get to settings"
           on mobile). */}
       <MobileShell
+        unreadCounts={unreadCounts}
         userId={userId}
         displayName={displayName}
         avatarUrl={(profile as any)?.avatar_url ?? null}
@@ -379,7 +331,7 @@ export async function AppShell({
         // against any page-level content that briefly inflates before
         // its own min-w-0 catches up.
         style={{ maxWidth: "100vw", overflowX: "hidden" }}
-        className={`mx-auto px-4 lg:pl-4 lg:pr-5 pt-0 lg:pt-1 pb-6 grid lg:grid-cols-[200px_1fr] gap-4 lg:gap-6 items-start ${maxWidth} lg:max-w-none`}
+        className="app-main"
       >
         {/* Desktop sidebar — hidden on mobile, replaced by MobileShell drawer.
             Sticky on lg+ so it stays in view as the main content scrolls.
@@ -396,7 +348,7 @@ export async function AppShell({
           className="hidden lg:flex lg:flex-col"
           style={{
             position: "sticky",
-            top: 12,
+            top: 20,
             alignSelf: "start",
             // Establish a stacking context above the main content
             // column so the SyncMeter (i) hover tooltip — which lives
@@ -412,8 +364,8 @@ export async function AppShell({
               sticky aside. */}
         </div>
 
-        <div className="min-w-0">{children}</div>
+        <div className="app-content">{children}</div>
       </main>
-    </>
+    </div>
   );
 }

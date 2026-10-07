@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { anthropic, TWIN_MODEL } from "@/lib/anthropic";
+import { contentSafetyResponse } from "@/lib/content-safety";
 
 /**
  * Create a new platform-wide poll, generate one response per twin on the
@@ -202,6 +203,8 @@ export async function POST(req: Request) {
     );
   }
 
+  const safety = await contentSafetyResponse(`${question}\n${context}`, user.id);
+  if (safety) return safety;
   const service = createServiceClient();
 
   // 1) Create the poll row.

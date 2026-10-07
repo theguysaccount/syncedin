@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { hiddenUserIds } from "@/lib/user-safety";
+import { ReportAccountButton } from "../../ReportAccountButton";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
@@ -120,6 +122,8 @@ export default async function PortfolioPage({
   }
 
   if (!coreProfile) notFound();
+  const { data: safetyProfile } = await service.from("profiles").select("is_suspended").eq("id", coreProfile.id).maybeSingle();
+  if (safetyProfile?.is_suspended) notFound();
 
   // OPTIONAL columns — fetched separately so a missing column on prod
   // doesn't take down the whole page. These were added via later
@@ -199,6 +203,7 @@ export default async function PortfolioPage({
     data: { user: viewer }
   } = await supabase.auth.getUser();
   const isOwner = !!viewer && viewer.id === profile.id;
+  if (viewer && !isOwner && (await hiddenUserIds(viewer.id)).has(profile.id)) notFound();
 
   const theme: Theme = {
     ...defaultTheme(),
@@ -217,6 +222,7 @@ export default async function PortfolioPage({
   if (portfolio_page && portfolio_page.sections?.length > 0) {
     return (
       <>
+        {viewer && !isOwner && <div className="max-w-3xl mx-auto px-5 py-3"><ReportAccountButton reportedUserId={profile.id} reportedName={name} /></div>}
         <CustomSite
           page={portfolio_page}
           ownerId={profile.id}
@@ -265,6 +271,7 @@ export default async function PortfolioPage({
           <Link href="/" aria-label="SyncedIn">
             <Wordmark />
           </Link>
+          {viewer && !isOwner && <ReportAccountButton reportedUserId={profile.id} reportedName={name} />}
           {isOwner ? (
             <Link
               href="/dashboard"

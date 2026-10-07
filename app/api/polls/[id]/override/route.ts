@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
+import { contentSafetyResponse } from "@/lib/content-safety";
 
 /**
  * Override a poll response. Only the twin's owner can update their own row.
@@ -43,6 +44,8 @@ export async function POST(
   }
 
   const wasOverride = (row as any).was_overridden as boolean;
+  const safety = await contentSafetyResponse(text, user.id);
+  if (safety) return safety;
 
   // Update the row.
   const { error: updErr } = await service

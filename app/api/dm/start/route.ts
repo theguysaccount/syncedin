@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { contentSafetyResponse } from "@/lib/content-safety";
 import { createServiceClient } from "@/lib/supabase/server";
 import { anthropic, TWIN_MODEL } from "@/lib/anthropic";
 import { buildDmTwinSystemPrompt } from "@/lib/dm-twin-prompt";
@@ -48,6 +49,8 @@ export async function POST(req: Request) {
   }
 
   const service = createServiceClient();
+  const safety = await contentSafetyResponse(firstMessage);
+  if (safety) return safety;
 
   // Resolve creator by handle.
   const { data: creator } = await service

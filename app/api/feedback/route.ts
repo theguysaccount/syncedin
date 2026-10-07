@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
+import { contentSafetyResponse } from "@/lib/content-safety";
 
 /**
  * Submit a feedback post. Must be signed in.
@@ -31,6 +32,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "missing_title" }, { status: 400 });
   }
 
+  const safety = await contentSafetyResponse(`${title}\n${text}`, user.id);
+  if (safety) return safety;
   const service = createServiceClient();
   const { data: profile } = await service
     .from("profiles")

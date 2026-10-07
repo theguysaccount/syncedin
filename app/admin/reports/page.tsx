@@ -188,6 +188,7 @@ export default async function AdminReportsPage() {
         <Link href="/admin/status" className="retro-btn text-sm">
           system status →
         </Link>
+        <Link href="/admin/safety" className="retro-btn text-sm">Safety reports</Link>
       </div>
 
       <p className="mt-3 text-sm" style={{ color: "var(--text-dim)" }}>

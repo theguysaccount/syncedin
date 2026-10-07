@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Capacitor } from "@capacitor/core";
 import { createClient } from "@/lib/supabase/client";
 import { authDestination } from "@/lib/auth-return";
 
@@ -57,13 +58,17 @@ function AppleLogo() {
  */
 export function OAuthButtons({
   invite,
-  conference
+  conference,
+  acceptedTerms = false
 }: {
   invite?: string;
   conference?: string;
+  acceptedTerms?: boolean;
 }) {
   const [busy, setBusy] = useState<"google" | "apple" | null>(null);
   const [err, setErr] = useState<string>("");
+  const [web, setWeb] = useState(false);
+  useEffect(() => { setWeb(!Capacitor.isNativePlatform()); }, []);
 
   function callbackUrl(): string {
     const origin =
@@ -75,6 +80,7 @@ export function OAuthButtons({
   }
 
   async function go(provider: "google" | "apple") {
+    if (!acceptedTerms || Capacitor.isNativePlatform()) return;
     setErr("");
     setBusy(provider);
     try {
@@ -93,12 +99,13 @@ export function OAuthButtons({
     }
   }
 
+  if (!web) return null;
   return (
-    <div className="space-y-2">
+    <div className="space-y-2"><div className="auth-divider">or</div>
       <button
         type="button"
         onClick={() => go("google")}
-        disabled={busy !== null}
+        disabled={busy !== null || !acceptedTerms}
         className="retro-btn retro-btn-primary w-full flex items-center justify-center gap-3"
         style={{ background: "#ffffff", color: "#16182a", border: "1px solid var(--border-bright)", boxShadow: "0 6px 18px -8px rgba(0,0,0,0.18)" }}
       >

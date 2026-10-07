@@ -138,7 +138,7 @@ async function bonusReferralsFor(
   try {
     const { count: drafted } = await service
       .from("pending_invites")
-      .select("id", { count: "exact", head: true })
+      .select("slug", { count: "exact", head: true })
       .eq("inviter_user_id", userId);
     if ((drafted ?? 0) >= 50) {
       return 10;
@@ -189,14 +189,13 @@ export async function countReferrals(
     // that went through /claim/<slug>; the email + handle fallbacks
     // below catch the rest.
     type Row = {
-      id: string;
       slug: string;
       claimed_by_user_id: string | null;
       recipient_email: string | null;
     };
     const { data: rows, error } = await service
       .from("pending_invites")
-      .select("id, slug, claimed_by_user_id, recipient_email")
+      .select("slug, claimed_by_user_id, recipient_email")
       .eq("inviter_user_id", userId);
     if (error) {
       console.warn("[invite-stats] base query failed", error);

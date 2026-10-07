@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { contentSafetyResponse } from "@/lib/content-safety";
 import { createServiceClient } from "@/lib/supabase/server";
 import { anthropic, TWIN_MODEL } from "@/lib/anthropic";
 import { buildDmTwinSystemPrompt } from "@/lib/dm-twin-prompt";
@@ -50,6 +51,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
   const creatorId = (thread as any).creator_user_id as string;
+  const safety = await contentSafetyResponse(text);
+  if (safety) return safety;
 
   // Opportunistically capture email if the visitor provided one this turn.
   const newEmail = (body.visitor_email ?? "").trim() || null;

@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { connectionBlocked } from "@/lib/user-safety";
+import { contentSafetyResponse } from "@/lib/content-safety";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import {
   anthropic,
@@ -70,6 +72,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
 
+  if (await connectionBlocked(conv.participant_a, conv.participant_b)) return NextResponse.json({ error: "This connection is blocked." }, { status: 403 });
   const { data: messages } = await service
     .from("messages")
     .select("*")
@@ -246,6 +249,8 @@ export async function POST(req: Request) {
     );
   }
 
+  const safety = await contentSafetyResponse(text, turnUserId);
+  if (safety) return safety;
   const { data: message, error } = await service
     .from("messages")
     .insert({

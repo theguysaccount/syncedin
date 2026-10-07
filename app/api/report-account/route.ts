@@ -9,6 +9,7 @@ import { createClient, createServiceClient } from "@/lib/supabase/server";
 const VALID_CATEGORIES = new Set([
   "spam",
   "harassment",
+  "objectionable-content",
   "impersonation",
   "off-platform",
   "fake-profile",
@@ -35,7 +36,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "invalid_json" }, { status: 400 });
   }
 
-  const reported = (body.reported_user_id ?? "").trim();
+  if (!body || typeof body !== "object" || typeof body.reported_user_id !== "string" || (body.category !== undefined && typeof body.category !== "string") || (body.reason !== undefined && typeof body.reason !== "string")) {
+    return NextResponse.json({ error: "invalid_report" }, { status: 400 });
+  }
+  const reported = body.reported_user_id.trim();
   const category = (body.category ?? "other").trim();
   const reason = (body.reason ?? "").trim().slice(0, 2000);
 
@@ -68,8 +72,8 @@ export async function POST(req: Request) {
     );
   }
 
-  // Fire-and-forget email to Jack so reports get seen quickly.
-  void (async () => {
+  // Await the alert before the serverless request ends.
+  await (async () => {
     try {
       const { sendEmail } = await import("@/lib/email");
       const { data: reporterProf } = await service
@@ -96,8 +100,8 @@ export async function POST(req: Request) {
       await sendEmail({
         to: "jacksonjezio@gmail.com",
         subject: `[SyncedIn report] ${cat} — ${reportedName}`,
-        text: `Reporter: ${reporterName} (${user.id})\nReported: ${reportedName} (${reported})\nCategory: ${cat}\n\nReason:\n${reason || "(no reason given)"}\n\nReview at https://syncedin.org/admin/reports`,
-        html: `<p><strong>Category:</strong> ${cat}</p><p><strong>Reporter:</strong> ${reporterName} (${user.id})</p><p><strong>Reported:</strong> ${reportedName} (${reported})</p><p><strong>Reason:</strong></p><pre style="white-space:pre-wrap;font-family:inherit">${(reason || "(no reason given)").replace(/</g, "&lt;")}</pre><p style="font-size:12px;color:#888;margin-top:14px;">Review at <a href="https://syncedin.org/admin/reports">/admin/reports</a></p>`
+        text: `Reporter: ${reporterName} (${user.id})\nReported: ${reportedName} (${reported})\nCategory: ${cat}\n\nReason:\n${reason || "(no reason given)"}\n\nReview at https://syncedin.org/admin/safety`,
+        html: `<p><strong>Category:</strong> ${cat}</p><p><strong>Reporter:</strong> ${reporterName} (${user.id})</p><p><strong>Reported:</strong> ${reportedName} (${reported})</p><p><strong>Reason:</strong></p><pre style="white-space:pre-wrap;font-family:inherit">${(reason || "(no reason given)").replace(/</g, "&lt;")}</pre><p style="font-size:12px;color:#888;margin-top:14px;">Review at <a href="https://syncedin.org/admin/safety">/admin/safety</a></p>`
       });
     } catch (e) {
       console.warn("[report-account] notify email failed", e);

@@ -10,6 +10,7 @@ import { saveTwin } from "./actions";
 import { GoalFollowUpQuestions } from "./GoalFollowUpQuestions";
 import { LoadingScreen } from "../LoadingScreen";
 import { phoneLooksComplete } from "@/lib/phone";
+import { Capacitor } from "@capacitor/core";
 
 // Parse existing ai_export_blob back into structured snippets so the wizard
 // can rehydrate URL-sourced context across page reloads. Snippets were
@@ -108,7 +109,9 @@ export function OnboardingWizard({
     (initial.ai_export_blob || "").trim().length > 80;
   const set = <K extends keyof Initial>(k: K, v: Initial[K]) =>
     setState((s) => ({ ...s, [k]: v }));
-  const phoneReady = phoneLooksComplete(state.phone_number);
+  const [native, setNative] = useState(false);
+  useEffect(() => setNative(Capacitor.isNativePlatform()), []);
+  const phoneReady = phoneLooksComplete(state.phone_number) || (native && !state.phone_number.trim());
 
   // Cinematic pacing: every step change starts at the top of the page
   // with a fresh entrance (also fixes landing mid-page via scroll
@@ -503,6 +506,7 @@ export function OnboardingWizard({
       )}
       <input type="hidden" name="display_name" value={state.display_name} />
       <input type="hidden" name="phone_number" value={state.phone_number} />
+      <input type="hidden" name="native_app" value={native ? "yes" : "no"} />
       <input type="hidden" name="goals" value={composedGoals} />
       <input
         type="hidden"
@@ -765,7 +769,7 @@ export function OnboardingWizard({
                 className="text-xs mt-1"
                 style={{ color: "var(--text-dim)" }}
               >
-                Required for high-signal updates. Email stays as backup.
+                {native ? "Optional for phone updates. You can choose notification preferences in Settings." : "Private phone for connection updates. Notification preferences are in Settings."}
               </p>
               {state.phone_number.trim() && !phoneReady && (
                 <p className="text-xs mt-1 retro-red">

@@ -21,7 +21,8 @@ export function phoneLooksComplete(raw: string | null | undefined): boolean {
 
 export function phonePreferencePatch(
   raw: string | null | undefined,
-  source: string
+  source: string,
+  consent = true
 ): Record<string, string | null> | null {
   const value = (raw ?? "").trim();
   if (!value) {
@@ -38,7 +39,7 @@ export function phonePreferencePatch(
   return {
     phone_number: phone,
     phone_number_verified_at: null,
-    phone_consent_at: new Date().toISOString(),
+    phone_consent_at: consent ? new Date().toISOString() : null,
     phone_consent_source: source
   };
 }

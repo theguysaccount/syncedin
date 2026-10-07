@@ -1,4 +1,6 @@
 import { notFound, redirect } from "next/navigation";
+import { connectionBlocked } from "@/lib/user-safety";
+import { ThemeSync } from "../../ThemeSync";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { hasAgreement, MAX_AUTO_TURNS } from "@/lib/twin-prompt";
 import { assignConversationSlug } from "@/lib/conversationSlugServer";
@@ -9,7 +11,6 @@ import { MobileShell } from "../../MobileShell";
 import { SitewidePrefetch } from "../../SitewidePrefetch";
 import { signOut } from "../../login/actions";
 import { TopBar } from "../../TopBar";
-import { SyncMeter } from "../../SyncMeter";
 import Link from "next/link";
 import type { Message, AgreementResponse } from "@/lib/types";
 import { socialsFromBlob } from "@/lib/social-from-blob";
@@ -51,6 +52,7 @@ export default async function ConversationPage({
 
   const otherId =
     conv.participant_a === user.id ? conv.participant_b : conv.participant_a;
+  if (await connectionBlocked(user.id, otherId)) redirect("/messages");
 
   const service = createServiceClient();
   const [{ data: otherProfile }, { data: selfProfile }, { data: otherTwin }] =
@@ -236,19 +238,11 @@ export default async function ConversationPage({
     );
     return convIds.filter((id: string) => !respondedSet.has(id)).length;
   }
-  // Run the three remaining independent server workloads in parallel —
-  // conferences, the unread-badge counts, and the SyncMeter inputs — instead
-  // of three sequential phases. Jack: "every page loads fast besides the
-  // chat page; the caching isn't there." This collapses the waterfall.
+  // Load navigation state without fetching entire message histories for a meter.
   const [
     conferences,
     [mRes, pRes, prRes],
-    [
-      { data: twinForMeter },
-      { data: myMsgsForMeter },
-      { count: agreedForMeter },
-      { count: editsForMeter }
-    ]
+    { count: editsForMeter }
   ] = await Promise.all([
     loadConferences(),
     Promise.allSettled([
@@ -256,28 +250,10 @@ export default async function ConversationPage({
       computePollUnread(),
       computeProposalsUnread()
     ]),
-    Promise.all([
-      service
-        .from("twin_profiles")
-        .select(
-          "goals, deal_preferences, communication_style, deal_breakers, ai_export_blob, hometown, current_city"
-        )
-        .eq("user_id", userId)
-        .maybeSingle(),
-      service
-        .from("messages")
-        .select("conversation_id")
-        .eq("sender_user_id", userId),
-      service
-        .from("agreement_responses")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", userId)
-        .eq("response", "accepted"),
       service
         .from("edit_deltas")
         .select("id", { count: "exact", head: true })
         .eq("user_id", userId)
-    ])
   ]);
   const messageUnread =
     (mRes.status === "fulfilled" ? mRes.value : 0) +
@@ -285,24 +261,6 @@ export default async function ConversationPage({
   if (messageUnread > 0) unreadCounts["/messages"] = messageUnread;
   if (pRes.status === "fulfilled" && pRes.value > 0)
     unreadCounts["/poll"] = pRes.value;
-  const completedConvsCount = new Set(
-    ((myMsgsForMeter ?? []) as Array<{ conversation_id: string }>).map(
-      (m) => m.conversation_id
-    )
-  ).size;
-  const syncInputs = {
-    name: profileForSidebar?.display_name ?? null,
-    goals: (twinForMeter as any)?.goals ?? null,
-    ai_export_blob: (twinForMeter as any)?.ai_export_blob ?? null,
-    deal_preferences: (twinForMeter as any)?.deal_preferences ?? null,
-    comm_style: (twinForMeter as any)?.communication_style ?? null,
-    deal_breakers: (twinForMeter as any)?.deal_breakers ?? null,
-    hometown: (twinForMeter as any)?.hometown ?? null,
-    current_city: (twinForMeter as any)?.current_city ?? null,
-    completed_conversations: completedConvsCount,
-    accepted_agreements: agreedForMeter ?? 0,
-    edit_count: editsForMeter ?? 0
-  };
   // Clone-sync card — passed INTO Sidebar via its cloneCard prop so
   // it renders inside the same panel as the nav. No own background /
   // border / overflow:hidden (the Sidebar panel already provides the
@@ -318,12 +276,7 @@ export default async function ConversationPage({
         borderTop: "1px solid var(--border)"
       }}
     >
-      <SyncMeter
-        inputs={syncInputs}
-        size={110}
-        avatarUrl={(profileForSidebar as any)?.avatar_url ?? null}
-        userId={userId}
-      />
+      <p className="text-xs retro-dim">{editsForMeter ?? 0} refinements learned</p>
       <Link
         href="/onboarding"
         className="retro-btn retro-btn-primary text-center"
@@ -357,10 +310,10 @@ export default async function ConversationPage({
   );
 
   return (
-    <>
+    <div className="app-frame conversation-frame"><ThemeSync />
       {/* Mobile chrome — hamburger top bar + slide-in drawer holding
           the full sidebar. Hidden on lg+. */}
-      <MobileShell>{sidebarEl}</MobileShell>
+      <MobileShell userId={userId} displayName={sidebarDisplayName} avatarUrl={(profileForSidebar as any)?.avatar_url ?? null} unreadCounts={unreadCounts}>{sidebarEl}</MobileShell>
 
       {/* Warm the router cache for every primary nav destination. */}
       <SitewidePrefetch />
@@ -525,6 +478,6 @@ export default async function ConversationPage({
           : null
       }
     />
-    </>
+    </div>
   );
 }

@@ -95,31 +95,8 @@ platform :ios do
     begin
       fetch_cert.call
     rescue => e
-      # Apple caps Apple Distribution certs (2). If the slots are full and
-      # none of their private keys are on this runner, free a slot by
-      # revoking the soonest-expiring one, then mint a CI-owned cert.
-      # (Explicitly approved by Jack: ship by any means.) sigh(force: true)
-      # below rebuilds the App Store profile against the new cert, so
-      # signing self-heals end to end.
       raise unless e.message.to_s.include?("maximum number")
-      UI.important("Distribution cert slots full. None of the existing certs' private keys exist on CI (or anywhere CI can reach), so they're unusable here — revoking ALL of them so CI can mint and own a fresh one. Already-shipped TestFlight/App Store builds are unaffected; local Xcode regenerates signing automatically next archive.")
-      require "spaceship"
-      Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.from(hash: api_key)
-      doomed = Spaceship::ConnectAPI::Certificate.all
-        .select { |c| c.certificate_type == "DISTRIBUTION" }
-      if doomed.empty?
-        UI.user_error!("Apple reports the cert limit but no DISTRIBUTION certificates are visible — the API key role cannot manage certificates. Generate an App Store Connect API key with the Admin role and update the APP_STORE_CONNECT_API_KEY_ID/_CONTENT secrets.")
-      end
-      doomed.each do |c|
-        UI.important("Revoking distribution certificate #{c.id} (expires #{c.expiration_date})")
-        Spaceship::ConnectAPI.delete_certificate(certificate_id: c.id)
-      end
-      begin
-        fetch_cert.call
-      rescue => e2
-        raise unless e2.message.to_s.include?("maximum number")
-        UI.user_error!("Apple still refuses to create a distribution certificate even with zero DISTRIBUTION certs left. fastlane's 'maximum number' message is masking a permissions failure: this API key's role cannot create certificates. Generate a new App Store Connect API key with the Admin role and update the APP_STORE_CONNECT_API_KEY_ID and APP_STORE_CONNECT_API_KEY_CONTENT secrets — everything else in this pipeline is already proven.")
-      end
+      UI.user_error!("Distribution certificate limit reached. Restore the existing CI signing certificate and private key; no certificates were revoked.")
     end
 
     # App Store provisioning profile for the bundle id. force: true

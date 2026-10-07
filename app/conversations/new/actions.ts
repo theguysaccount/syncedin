@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { connectionBlocked } from "@/lib/user-safety";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { notifyNewConnection } from "@/lib/notify";
 import { assignConversationSlug } from "@/lib/conversationSlugServer";
@@ -43,6 +44,7 @@ async function countOwedProposals(userId: string): Promise<number> {
 const PENDING_LIMIT = 10;
 
 async function openConversationBetween(userId: string, otherId: string) {
+  if (await connectionBlocked(userId, otherId)) redirect("/messages?blocked=account");
   const supabase = createClient();
   // If a conversation between these two already exists, jump to it
   // — guard doesn't apply, we're not creating new dead weight, just

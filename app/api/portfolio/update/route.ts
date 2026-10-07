@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { contentSafetyResponse } from "@/lib/content-safety";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 
 /**
@@ -34,6 +35,8 @@ export async function POST(req: Request) {
   }
 
   const about = (body.about ?? "").toString().trim().slice(0, 4000);
+  const safety = await contentSafetyResponse(about, user.id);
+  if (safety) return safety;
   const theme = body.theme ?? {};
   // Strip anything that's not a 6-7 char hex color to keep the bg/accent
   // values safe to inline as CSS.

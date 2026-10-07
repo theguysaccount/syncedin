@@ -1,302 +1,48 @@
 "use client";
-
-import { useEffect, useState } from "react";
-import { Wordmark } from "./Wordmark";
+import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
+import { Compass, MessagesSquare, Sparkles, Menu, X } from "lucide-react";
 import { Avatar } from "./Avatar";
-
-/**
- * MobileShell — client wrapper that ONLY renders on mobile (≤ lg breakpoint).
- *
- * On mobile the sidebar was rendering as a full-width column stacked above
- * the page content. With the new sci-fi-upload SyncMeter (which has a 50px
- * magenta drop-shadow), the dashboard's main column would render the meter
- * RIGHT ON TOP of the sidebar list. Looked broken.
- *
- * This component:
- *   1. Renders a thin top bar with [☰] + wordmark + theme toggle.
- *   2. Hides the desktop sidebar entirely on screens < lg.
- *   3. Toggles a slide-in drawer that holds the full sidebar content
- *      when the hamburger is tapped.
- *
- * AppShell still owns the desktop sidebar — it's wrapped in
- * `<div className="hidden lg:block">` so it disappears on mobile, and
- * MobileShell takes over the navigation chrome for ≤lg.
- */
-export function MobileShell({
-  children,
-  userId,
-  displayName,
-  avatarUrl
-}: {
-  children: React.ReactNode;
-  /** Authenticated user info — drives the top-right avatar that opens
-   *  /settings. Jack: "on mobile, in the top right corner of the menu
-   *  bar, should be my face, which is where I get to the settings. For
-   *  mobile, right now I can't get to settings." Made optional so the
-   *  shell still works on logged-out routes if it ever gets reused
-   *  there (currently AppShell only renders for authed users). */
-  userId?: string;
-  displayName?: string;
-  avatarUrl?: string | null;
+export function MobileShell({ children, userId, displayName, avatarUrl, unreadCounts = {} }: {
+  children: React.ReactNode; userId?: string; displayName?: string; avatarUrl?: string | null; unreadCounts?: Record<string, number>;
 }) {
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
-
-  // Close drawer on route change. Detect via popstate since Next 14 App
-  // Router doesn't expose a low-level "route changed" hook in the same way.
+  const dialog = useRef<HTMLDialogElement>(null);
+  useEffect(() => { setOpen(false); }, [pathname]);
   useEffect(() => {
-    function onNav() {
-      setOpen(false);
-    }
-    window.addEventListener("popstate", onNav);
-    return () => window.removeEventListener("popstate", onNav);
-  }, []);
-
-  // Body scroll lock when drawer is open
-  useEffect(() => {
-    if (!open) return;
-    const prev = document.body.style.overflow;
+    if (!open) { dialog.current?.close(); return; }
+    dialog.current?.showModal();
+    const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prev;
-    };
+    const media = window.matchMedia("(min-width: 1024px)");
+    const closeOnDesktop = () => { if (media.matches) setOpen(false); };
+    media.addEventListener("change", closeOnDesktop);
+    return () => { document.body.style.overflow = previous; media.removeEventListener("change", closeOnDesktop); };
   }, [open]);
-
-  return (
-    <>
-      {/* Top mobile bar — kept thin. Padding + button height + wordmark
-          height all sized so the bar lands at ~44px total. Earlier
-          version ate ~30% of phone viewport height because the wordmark
-          rendered at natural ~60px tall.
-
-          CRITICAL: `display` MUST stay in the className, not the inline
-          style. Inline-style `display: flex` outranks Tailwind's
-          `lg:hidden` (which sets `display: none` at lg+), and the bar
-          starts leaking onto desktop. Bug shipped once already. */}
-      <div
-        className="flex lg:hidden items-center"
-        style={{
-          position: "sticky",
-          top: 0,
-          zIndex: 40,
-          background: "var(--panel-solid)",
-          borderBottom: "1px solid var(--border)",
-          padding: "4px 10px",
-          gap: 10,
-          minHeight: 56
-        }}
-      >
-        <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          aria-label="Open menu"
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: 10,
-            border: "1px solid var(--border-bright)",
-            background: "transparent",
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            // line-height:1 + matching font-size makes the glyph render
-            // optically centered in the box (default line-height was
-            // pushing the ☰ glyph slightly above center).
-            lineHeight: 1,
-            cursor: "pointer",
-            color: "var(--text)",
-            fontSize: 20,
-            flexShrink: 0,
-            // Equal padding on all sides so the SVG glyph sits dead
-            // center regardless of font-metric quirks.
-            padding: 0
-          }}
-        >
-          {open ? "✕" : "☰"}
-        </button>
-        <Link
-          href="/"
-          aria-label="SyncedIn — home"
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            height: 44,
-            textDecoration: "none",
-            flexShrink: 0
-          }}
-        >
-          {/*
-            Every prior "make it bigger" iteration failed because the
-            wordmark PNG is 500x500 with the actual glyph occupying
-            only the middle ~94px band — 80% of the file was empty
-            transparent space. Setting height: 72 was rendering an
-            ACTUAL visible logo of ~15px tall.
-
-            Fix: use the tight-cropped variant (438x106, generated by
-            scripts) so the CSS height matches what the eye sees.
-            44px on the tight crop reads roughly the same visual size
-            as 200px on the padded original — finally big enough.
-          */}
-          <img
-            src="/syncedin-wordmark-tight.png"
-            alt="SyncedIn"
-            className="wordmark-themed"
-            height={44}
-            style={{ height: 44, width: "auto", display: "block" }}
-          />
-        </Link>
-        {/* Right-side avatar — Jack: "on mobile in the top right
-            corner of the menu bar should be my face, which is where I
-            get to the settings. Right now I can't get to settings."
-            Pinned to flex-end via marginLeft:auto. Tap → /settings. */}
-        {userId && (
-          <Link
-            href="/settings"
-            aria-label="Settings"
-            title="Settings"
-            style={{
-              marginLeft: "auto",
-              flexShrink: 0,
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              padding: 2,
-              borderRadius: 999,
-              border: "1px solid var(--border)",
-              background: "var(--panel)",
-              textDecoration: "none"
-            }}
-          >
-            <Avatar
-              id={userId}
-              name={displayName ?? "Settings"}
-              avatarUrl={avatarUrl ?? null}
-              size={34}
-            />
-          </Link>
-        )}
-      </div>
-
-      {/* Drawer + scrim — slides in from left when open. Same
-          inline-style vs Tailwind specificity caveat as above: do NOT
-          set `display` inline; let `lg:hidden` win at lg+. We control
-          interactivity via pointerEvents, not display, so the drawer
-          can still animate when open changes on mobile. */}
-      <div
-        className="lg:hidden"
-        aria-hidden={!open}
-        style={{
-          position: "fixed",
-          inset: 0,
-          zIndex: 50,
-          pointerEvents: open ? "auto" : "none"
-        }}
-      >
-        {/* Scrim */}
-        <div
-          onClick={() => setOpen(false)}
-          style={{
-            position: "absolute",
-            inset: 0,
-            background: "rgba(10, 13, 24, 0.55)",
-            opacity: open ? 1 : 0,
-            transition: "opacity 180ms ease"
-          }}
-        />
-        {/* Sliding drawer — pulls in the desktop Sidebar content.
-            The wordmark + its big top padding inside the Sidebar are
-            HIDDEN here because the mobile top bar already shows the
-            wordmark; rendering it again wasted ~140px of drawer height
-            and pushed every nav item far down. CSS-scoped to the drawer
-            via the class below so the desktop sidebar is unaffected. */}
-        <div
-          className="syncedin-mobile-drawer"
-          style={{
-            position: "absolute",
-            top: 0,
-            bottom: 0,
-            left: 0,
-            width: "min(280px, 86vw)",
-            maxWidth: "86vw",
-            background: "var(--panel-solid)",
-            borderRight: "1px solid var(--border)",
-            transform: open ? "translateX(0)" : "translateX(-100%)",
-            transition: "transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1)",
-            overflowY: "auto",
-            // Jack: "there's an error where I can scroll to the right side
-            // of the menu." Drawer content (long conference names, deep
-            // social URLs, etc.) was overflowing the 280px column and the
-            // user could pan sideways inside the drawer. Lock horizontal
-            // scroll + force long words to wrap.
-            overflowX: "hidden",
-            overscrollBehaviorX: "contain",
-            wordBreak: "break-word",
-            // Pulled top padding entirely; the sweep band below
-            // serves as the visual top edge and signals motion.
-            padding: "0 6px 12px"
-          }}
-        >
-          {/* Animated brand-gradient sweep band — sits at the very top of
-              the drawer. Replaces the dead band of empty space the user
-              saw with a thin, always-moving accent that says "this app
-              is alive" without competing with the nav items below. 3px
-              tall, 4s linear loop, no perf cost (pure CSS background-
-              position shift). */}
-          <div
-            aria-hidden="true"
-            style={{
-              height: 3,
-              width: "100%",
-              background:
-                "linear-gradient(90deg, #1f8bff 0%, #6b2dc9 25%, #d83bff 50%, #6b2dc9 75%, #1f8bff 100%)",
-              backgroundSize: "200% 100%",
-              animation: "drawerSweep 4s linear infinite",
-              marginBottom: 6
-            }}
-          />
-          {children}
-        </div>
-        <style>{`
-          /* Wordmark is now SHOWN inside the mobile drawer too (Jack:
-             "on mobile in menu logo isnt visible lets bring that back").
-             The hide rules below used to kill it because earlier the
-             drawer had its own top bar; now the drawer's only chrome is
-             the 3px sweep band, so the Sidebar's wordmark gets to act
-             as the menu header without competing. We still keep tight
-             padding overrides so the nav items don't sit miles below
-             the wordmark. */
-          .syncedin-mobile-drawer > div {
-            padding-top: 6px !important;
-            padding-left: 6px !important;
-            padding-right: 6px !important;
-            gap: 6px !important;
-            /* Lock horizontal extent — nothing inside the sidebar can
-               push past the drawer's 280px / 86vw column. Fixes the
-               horizontal-pan bug Jack flagged. */
-            max-width: 100% !important;
-            overflow-x: hidden !important;
-            box-sizing: border-box !important;
-          }
-          /* Wrap long URLs / conference titles inside the drawer so
-             they don't blow the column out horizontally. */
-          .syncedin-mobile-drawer a,
-          .syncedin-mobile-drawer span,
-          .syncedin-mobile-drawer div {
-            word-break: break-word;
-            overflow-wrap: anywhere;
-            min-width: 0;
-          }
-          .syncedin-mobile-drawer img.wordmark-themed,
-          .syncedin-mobile-drawer img[src*="syncedin-wordmark"] {
-            max-height: 28px !important;
-            width: auto !important;
-          }
-          @keyframes drawerSweep {
-            0%   { background-position: 0% 50%; }
-            100% { background-position: 200% 50%; }
-          }
-        `}</style>
-      </div>
-    </>
-  );
+  const tabs = [
+    { href: "/dashboard", label: "Discover", icon: Compass },
+    { href: "/messages", label: "Messages", icon: MessagesSquare },
+    { href: "/twin", label: "Your twin", icon: Sparkles }
+  ];
+  return <>
+    <header className="mobile-header">
+      <Link href="/dashboard" aria-label="SyncedIn home"><img src="/syncedin-wordmark-tight.png" alt="SyncedIn" className="wordmark-themed" style={{ width: 116, height: 28, objectFit: "contain" }} /></Link>
+      {userId && <Link href="/settings" aria-label="Account settings" title="Account settings"><Avatar id={userId} name={displayName ?? "You"} avatarUrl={avatarUrl ?? null} size={34} /></Link>}
+    </header>
+    <nav className="mobile-tabs" aria-label="Mobile navigation">
+      {tabs.map(({ href, label, icon: Icon }) => {
+        const active = pathname === href || (href === "/messages" && (pathname?.startsWith("/conversations/") || pathname?.startsWith("/dm/")));
+        const count = unreadCounts[href] ?? 0;
+        return <Link key={href} href={href} aria-current={active ? "page" : undefined}><Icon size={21} aria-hidden="true" /><span>{label}</span>{count > 0 && <span className="nav-badge" aria-label={`${count} unread`}>{count > 99 ? "99+" : count}</span>}</Link>;
+      })}
+      <button type="button" onClick={() => setOpen(true)} aria-expanded={open} aria-controls="mobile-more"><Menu size={21} aria-hidden="true" /><span>More</span></button>
+    </nav>
+    <dialog ref={dialog} id="mobile-more" className="app-dialog mobile-more" aria-labelledby="mobile-more-title" onCancel={() => setOpen(false)} onClose={() => setOpen(false)} onClick={e => { if (e.target === e.currentTarget) setOpen(false); }}>
+      <div className="dialog-header"><h2 id="mobile-more-title">Your workspace</h2><button className="icon-button" onClick={() => setOpen(false)} aria-label="Close menu" title="Close menu"><X size={19} /></button></div>
+      <div onClick={e => { if ((e.target as HTMLElement).closest("a")) setOpen(false); }}>{children}</div>
+      <nav aria-label="Network"><Link href="/hypernetwork" className="app-nav-link">Hypernetwork</Link><Link href="/conferences/new" className="app-nav-link">Create a conference</Link><Link href="/communities/new" className="app-nav-link">Create a community</Link></nav>
+    </dialog>
+  </>;
 }

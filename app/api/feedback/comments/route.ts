@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
+import { contentSafetyResponse } from "@/lib/content-safety";
 
 /**
  * Comments on a feedback request. GET ?post_id=... returns the list,
@@ -70,6 +71,9 @@ export async function POST(req: Request) {
   if (text.length > 4000) {
     return NextResponse.json({ error: "too_long" }, { status: 400 });
   }
+
+  const safety = await contentSafetyResponse(text, user.id);
+  if (safety) return safety;
 
   const service = createServiceClient();
 

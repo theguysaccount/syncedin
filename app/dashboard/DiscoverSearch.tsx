@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ReportAccountButton } from "../ReportAccountButton";
 import { useEffect, useRef, useState } from "react";
 import { startConversationWithUser } from "./actions";
 import { DotsLoader } from "../DotsLoader";
@@ -508,9 +509,9 @@ export function DiscoverSearch({
     .sort((a, b) => b[1].updatedAt - a[1].updatedAt);
 
   return (
-    <section>
+    <section className="discover-workspace">
       <div className="flex items-baseline justify-between">
-        <div className="retro-label">discover</div>
+        <h2 className="text-base font-semibold">Find your people</h2>
         <div className="retro-dim text-xs">
           {loading ? "Searching..." : `${visibleDirectory.length} ready to sync`}
         </div>
@@ -666,6 +667,7 @@ export function DiscoverSearch({
                     <div className="min-w-0 flex-1">
                       <div className="font-semibold text-sm flex items-center gap-2 flex-wrap">
                         <span>{p.display_name || p.email}</span>
+                        <ReportAccountButton reportedUserId={p.id} reportedName={p.display_name || undefined} />
                         {/* NEW pill — surfaces signups from the last 14
                             days so the user knows who's actively building
                             their twin RIGHT NOW. Jack: "move those new

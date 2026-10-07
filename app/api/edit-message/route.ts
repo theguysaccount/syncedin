@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { contentSafetyResponse } from "@/lib/content-safety";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { editMagnitude, classifyChange } from "@/lib/edit-magnitude";
 
@@ -103,6 +104,8 @@ export async function POST(req: Request) {
   }
 
   const original = msg.final_text;
+  const safety = await contentSafetyResponse(new_text, user.id);
+  if (safety) return safety;
 
   // Snapshot the conversation up to and including this message for the delta log.
   const { data: priorMessages } = await service

@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
+import { contentSafetyResponse } from "@/lib/content-safety";
 
 function slugify(s: string): string {
   return s
@@ -28,6 +29,8 @@ export async function createCommunity(formData: FormData) {
   if (!name) redirect("/communities/new?error=missing_name");
   if (!slug) slug = slugify(name);
   if (!slug) redirect("/communities/new?error=bad_slug");
+  const safety = await contentSafetyResponse(`${name}\n${String(formData.get("description") ?? "")}`, user.id);
+  if (safety) redirect("/communities/new?error=content_check");
 
   const service = createServiceClient();
 

@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { UserPlus } from "lucide-react";
+import { hiddenUserIds } from "@/lib/user-safety";
+import { ReportAccountButton } from "../ReportAccountButton";
 import { redirect } from "next/navigation";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { ExcitementControl } from "../dashboard/ExcitementControl";
@@ -29,6 +32,7 @@ export default async function MessagesPage({
   if (!user) redirect("/login");
 
   const service = createServiceClient();
+  const hidden = await hiddenUserIds(user.id);
 
   const { data: conversations } = await supabase
     .from("conversations")
@@ -87,9 +91,15 @@ export default async function MessagesPage({
     (others ?? []).map((p) => [p.id, p.is_test_persona] as const)
   );
 
-  const sorted = (conversations ?? []).sort(
-    (a, b) => (b.excitement_score ?? -1) - (a.excitement_score ?? -1)
-  );
+  const visibleConversations = (conversations ?? []).filter(c => !hidden.has(c.participant_a === user.id ? c.participant_b : c.participant_a));
+  const { data: recentMessages } = visibleConversations.length
+    ? await supabase.from("messages").select("conversation_id,final_text,sent_at")
+        .in("conversation_id", visibleConversations.map(c => c.id)).order("sent_at", { ascending: false }).limit(500)
+    : { data: [] };
+  const latestByConversation = new Map<string, { final_text: string; sent_at: string }>();
+  for (const message of recentMessages ?? []) if (!latestByConversation.has(message.conversation_id)) latestByConversation.set(message.conversation_id, message);
+  const sorted = visibleConversations.sort((a, b) =>
+    new Date(latestByConversation.get(b.id)?.sent_at ?? b.created_at).getTime() - new Date(latestByConversation.get(a.id)?.sent_at ?? a.created_at).getTime());
 
   // Platform-users directory — fetched here so we can render a "talk to
   // someone now" list instead of the dead-end "go to dashboard" empty
@@ -167,6 +177,7 @@ export default async function MessagesPage({
     .filter(Boolean)
     .join(" ");
   const platformDirectory = (platformUsers ?? [])
+    .filter(p => !hidden.has(p.id))
     .filter((p: any) => {
       if (existingConvIds.has(p.id)) return false;
       // Substance gate — hide twins who signed up but never seeded any
@@ -319,12 +330,7 @@ export default async function MessagesPage({
 
   return (
     <AppShell>
-      <h1 className="retro-h1 text-3xl">Messages</h1>
-      <p className="retro-dim text-sm mt-2">
-        Every conversation your twin is having or has had — with where each
-        one landed: accepted, denied, changed, or still negotiating. Sorted
-        by Sync score, so the highest-leverage ones surface first.
-      </p>
+      <header className="page-heading"><div><h1>Messages</h1><p>{sorted.length} {sorted.length === 1 ? "conversation" : "conversations"}</p></div><Link href="/dashboard" className="retro-btn"><UserPlus size={16} aria-hidden="true" />New connection</Link></header>
 
       {blockedByPending && (
         <div className="retro-panel mt-5 p-4 text-sm">
@@ -441,9 +447,10 @@ export default async function MessagesPage({
             return (
               <div
                 key={c.id}
-                className="retro-panel retro-panel-hover p-3"
+                className="retro-panel retro-panel-hover connection-row p-4"
                 style={{ position: "relative", paddingRight: 44 }}
               >
+                <ReportAccountButton reportedUserId={otherId} reportedName={nameById.get(otherId) ?? undefined} />
                 {/* Always-visible chevron — same affordance as poll list
                     cards. Previous version had pointer-events:none and
                     the parent <div> wasn't a link, so clicks on the
@@ -548,6 +555,7 @@ export default async function MessagesPage({
                         {c.counterpart_summary}
                       </div>
                     )}
+                    {latestByConversation.get(c.id)?.final_text && <p className="message-preview retro-dim text-sm mt-2">{latestByConversation.get(c.id)!.final_text.slice(0, 220)}</p>}
                     {/* Outcome moved OUT of this Link into an editable
                         textbox below (a textarea can't live inside an
                         <a>). */}

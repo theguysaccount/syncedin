@@ -34,11 +34,11 @@ async function resolveLanding(
         .select("phone_consent_source").eq("user_id", user.id).maybeSingle();
       if (!readError && !prefs?.phone_consent_source) {
         const { error } = await sb.from("notification_preferences")
-          .upsert({ user_id: user.id, ...phonePreferencePatch(metadataPhone, "auth_callback") }, { onConflict: "user_id" });
-        if (!error) {
+          .upsert({ user_id: user.id, ...phonePreferencePatch(metadataPhone, "auth_callback", user.user_metadata?.messaging_opt_in === true), on_text_notifications: user.user_metadata?.messaging_opt_in === true }, { onConflict: "user_id" });
+        if (!error && user.user_metadata?.messaging_opt_in === true) {
           const route = await registerClawRoute(metadataPhone);
           if (!route.ok && !route.skipped) console.warn("[auth callback] claw route registration failed", route.error);
-        } else console.warn("[auth callback] private phone save failed", error);
+        } else if (error) console.warn("[auth callback] private phone save failed", error);
       }
     }
     if (explicitNext && explicitNext !== "/dashboard") return `${origin}${explicitNext}`;

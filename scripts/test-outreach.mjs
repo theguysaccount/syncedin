@@ -291,7 +291,7 @@ function authFixture({ passwordError = null, signupResult = { data: { user: { id
 }
 const authForm = (overrides = {}) => {
   const form = new FormData();
-  for (const [key, value] of Object.entries({ email: "user@example.com", password: "long-password", invite: "alex-rivera", ...overrides })) form.set(key, value);
+  for (const [key, value] of Object.entries({ email: "user@example.com", password: "long-password", accepted_terms: "yes", invite: "alex-rivera", ...overrides })) form.set(key, value);
   return form;
 };
 async function redirected(action) {
@@ -307,6 +307,16 @@ test("password errors and missing signup phone retain the original invitation", 
   const missingPhone = await redirected(() => f.actions.signUpWithPassword(authForm()));
   assert.equal(missingPhone.searchParams.get("error"), "missing_phone");
   assert.equal(missingPhone.searchParams.get("invite"), "alex-rivera");
+});
+
+test("authentication requires explicit terms acceptance and preserves invitation context", async () => {
+  const f = authFixture();
+  for (const action of [f.actions.login, f.actions.signInWithPassword, f.actions.signUpWithPassword]) {
+    const result = await redirected(() => action(authForm({ accepted_terms: "" })));
+    assert.equal(result.searchParams.get("error"), "terms_required");
+    assert.equal(result.searchParams.get("invite"), "alex-rivera");
+  }
+  assert.deepEqual(f.calls, []);
 });
 
 test("magic-link success and failure retain community join context", async () => {

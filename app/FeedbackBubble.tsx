@@ -25,7 +25,7 @@ export function FeedbackBubble() {
 
   // Don't overlap the fixed bottom composers on the chat surfaces.
   const hidden =
-    pathname === "/twin" || /^\/conversations\/[^/]+$/.test(pathname);
+    /^\/(?:login|dashboard|messages|twin|conversations|settings|onboarding|invite|personal-intelligence|poll|ghosts|continuation|admin)(?:\/|$)/.test(pathname);
   if (hidden) return null;
 
   async function send() {

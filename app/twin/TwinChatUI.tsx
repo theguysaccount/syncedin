@@ -635,7 +635,7 @@ export function TwinChatUI({
   const empty = loaded && messages.length === 0;
 
   return (
-    <>
+    <div className="twin-chat-workspace">
       {/* SCROLLER — Jack: "The chat page should be separated from the
           menu page in a different scroll, and start me at the bottom
           of that chat." Was using body scroll (the whole page scrolled
@@ -701,36 +701,10 @@ export function TwinChatUI({
         )}
         {empty && (
           <div
-            className="retro-panel"
-            style={{ padding: 16, maxWidth: 560 }}
+            className="twin-empty"
           >
-            <div
-              className="text-sm"
-              style={{ color: "var(--text)", lineHeight: 1.55, fontWeight: 600 }}
-            >
-              This is your private dojo with your twin. Every reply is
-              editable. Tap any bubble to refine it, and your edits train
-              future twin replies. Try:
-            </div>
-            <ul
-              style={{
-                marginTop: 10,
-                paddingLeft: 18,
-                lineHeight: 1.7,
-                fontSize: 13
-              }}
-            >
-              <li>
-                &quot;Which of my pending proposals is the highest-leverage
-                move this week?&quot;
-              </li>
-              <li>
-                &quot;Rewrite my goals to be sharper and less hedged.&quot;
-              </li>
-              <li>
-                &quot;Stop sounding so formal in my conversations.&quot;
-              </li>
-            </ul>
+            <h2>What&apos;s on your mind?</h2>
+            <p>Your priorities, your next introduction, or an idea worth exploring.</p>
           </div>
         )}
         {messages.map((m) => (
@@ -973,7 +947,7 @@ export function TwinChatUI({
         }
         .twin-chips-row::-webkit-scrollbar { display: none; }
       `}</style>
-    </>
+    </div>
   );
 }
 

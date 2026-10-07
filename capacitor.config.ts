@@ -18,7 +18,7 @@ const config: CapacitorConfig = {
   webDir: "public",
   bundledWebRuntime: false,
   server: {
-    url: "https://syncedin.org",
+    url: "https://syncedin.org/login",
     cleartext: false,
     androidScheme: "https",
     iosScheme: "https",
@@ -39,10 +39,10 @@ const config: CapacitorConfig = {
   },
   ios: {
     contentInset: "always",
-    backgroundColor: "#04050aff"
+    backgroundColor: "#f5f7f7ff"
   },
   android: {
-    backgroundColor: "#04050aff",
+    backgroundColor: "#f5f7f7ff",
     allowMixedContent: false
   },
   plugins: {
@@ -51,7 +51,7 @@ const config: CapacitorConfig = {
     },
     SplashScreen: {
       launchAutoHide: true,
-      backgroundColor: "#04050a"
+      backgroundColor: "#f5f7f7"
     }
   }
 };

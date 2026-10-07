@@ -1,4 +1,5 @@
 "use client";
+import { ReportAccountButton } from "../../ReportAccountButton";
 
 // Honest narration for the closed-doors pass: one real API call runs
 // while these rotate. They describe exactly what the call is asked to do.
@@ -1715,6 +1716,7 @@ export function ChatUI({
                 >
                   &lt; messages
                 </Link>
+                <ReportAccountButton reportedUserId={other.id} reportedName={other.name} />
                 <div className="text-base sm:text-lg font-bold flex items-center gap-1.5 min-w-0 flex-wrap">
                   <span className="truncate" style={{ maxWidth: "8em" }}>
                     {selfShort}

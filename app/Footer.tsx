@@ -10,6 +10,7 @@ import { BUILD_SHA } from "@/lib/version";
 // these routes the footer renders nothing. Everywhere else (landing,
 // dashboard, invite pages) it shows as before.
 const HIDE_ON: Array<string | RegExp> = [
+  /^\/(?:login|dashboard|invite|onboarding|settings|personal-intelligence|poll|ghosts|continuation)(?:\/|$)/,
   /^\/conversations(?:\/|$)/,
   /^\/messages(?:\/|$)/,
   /^\/admin(?:\/|$)/,

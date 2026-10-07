@@ -36,6 +36,12 @@ function callbackUrl(formData: FormData): string {
   return `${origin()}/auth/callback?next=${encodeURIComponent(next)}`;
 }
 
+function requireTerms(formData: FormData) {
+  if (formData.get("accepted_terms") !== "yes") {
+    returnToLogin(formData, { error: "terms_required", detail: "Please agree to the Terms of Service before continuing." });
+  }
+}
+
 function phoneFromForm(formData: FormData, required = false): string | null {
   const raw = String(formData.get("phone_number") ?? "").trim();
   if (!raw) {
@@ -54,17 +60,19 @@ function phoneFromForm(formData: FormData, required = false): string | null {
 async function persistPhoneForUser(
   userId: string | undefined,
   phone: string | null,
-  source: string
+  source: string,
+  messagingOptIn = false
 ) {
   if (!userId || !phone) return;
   try {
     const service = createServiceClient();
     const { error } = await service.from("notification_preferences")
-      .upsert({ user_id: userId, ...phonePreferencePatch(phone, source) }, { onConflict: "user_id" });
+      .upsert({ user_id: userId, ...phonePreferencePatch(phone, source, messagingOptIn), on_text_notifications: messagingOptIn }, { onConflict: "user_id" });
     if (error) {
       console.warn("[login] private phone save failed", error);
       return;
     }
+    if (!messagingOptIn) return;
     const route = await registerClawRoute(phone);
     if (!route.ok && !route.skipped) {
       console.warn("[login] claw route registration failed", route.error);
@@ -76,6 +84,7 @@ async function persistPhoneForUser(
 
 // ── Magic link ────────────────────────────────────────────────────────────
 export async function login(formData: FormData) {
+  requireTerms(formData);
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   if (!email) returnToLogin(formData, { error: "missing_email" });
   const phone = phoneFromForm(formData);
@@ -98,6 +107,7 @@ export async function login(formData: FormData) {
 
 // ── Password sign-in ──────────────────────────────────────────────────────
 export async function signInWithPassword(formData: FormData) {
+  requireTerms(formData);
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
   if (!email || !password) returnToLogin(formData, { error: "missing_credentials" });
@@ -120,10 +130,11 @@ export async function signInWithPassword(formData: FormData) {
 // email. Once confirmed (or if confirmation is off) they can password-login
 // forever after — the redundancy that doesn't depend on magic links working.
 export async function signUpWithPassword(formData: FormData) {
+  requireTerms(formData);
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
   if (!email || !password) returnToLogin(formData, { error: "missing_credentials" });
-  const phone = phoneFromForm(formData, true);
+  const phone = phoneFromForm(formData, formData.get("native_app") !== "yes");
   if (password.length < 8) {
     returnToLogin(formData, { error: "password_failed", detail: "Password must be at least 8 characters." });
   }
@@ -134,7 +145,7 @@ export async function signUpWithPassword(formData: FormData) {
     password,
     options: {
       emailRedirectTo: callbackUrl(formData),
-      data: phone ? { phone_number: phone } : undefined
+      data: { phone_number: phone, messaging_opt_in: formData.get("messaging_opt_in") === "yes", terms_version: "2026-10-06", terms_accepted_at: new Date().toISOString() }
     }
   });
 
@@ -174,7 +185,7 @@ export async function signUpWithPassword(formData: FormData) {
   if (error) {
     returnToLogin(formData, { error: "password_failed", detail: error.message });
   }
-  if (data.session) await persistPhoneForUser(data.user?.id, phone, "signup");
+  if (data.session) await persistPhoneForUser(data.user?.id, phone, "signup", formData.get("messaging_opt_in") === "yes");
   // If a session came back immediately, email confirmation is off — go in.
   if (data.session) redirect(nextFromForm(formData));
   // Otherwise they need to confirm via email first.

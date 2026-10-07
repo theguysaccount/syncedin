@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { contentSafetyResponse } from "@/lib/content-safety";
+import { connectionBlocked } from "@/lib/user-safety";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { notifyNewMessage } from "@/lib/notify";
 import { editMagnitude, classifyChange } from "@/lib/edit-magnitude";
@@ -72,6 +74,10 @@ export async function POST(req: Request) {
   }
 
   const edited = original_draft !== final_text;
+  const other = conv.participant_a === user.id ? conv.participant_b : conv.participant_a;
+  if (await connectionBlocked(user.id, other)) return NextResponse.json({ error: "This connection is blocked." }, { status: 403 });
+  const safety = await contentSafetyResponse(final_text, user.id);
+  if (safety) return safety;
 
   // Snapshot conversation state at the time of edit (for delta log).
   const { data: priorMessages } = await service

@@ -5,6 +5,7 @@ import { AppShell } from "../AppShell";
 // PortfolioCard removed — portfolio lives on /personal-intelligence now.
 import { ChangePasswordCard } from "./ChangePasswordCard";
 import { DeleteAccountCard } from "./DeleteAccountCard";
+import { BlockedAccounts } from "./BlockedAccounts";
 
 /**
  * Unified /settings page. Replaces the lone /settings/notifications
@@ -33,6 +34,10 @@ export default async function SettingsPage() {
     .eq("id", user.id)
     .maybeSingle();
 
+  const { data: blocks } = await service.from("user_blocks").select("blocked_id").eq("blocker_id", user.id);
+  const ids = (blocks ?? []).map(row => row.blocked_id);
+  const { data: blockedProfiles } = ids.length ? await service.from("profiles").select("id,display_name").in("id", ids) : { data: [] };
+  const blockedAccounts = (blockedProfiles ?? []).map(row => ({ id: row.id, name: row.display_name || "Blocked account" }));
   return (
     <AppShell>
       <header style={{ marginBottom: 18 }}>
@@ -104,7 +109,7 @@ export default async function SettingsPage() {
 
         {/* Notifications — links out to the existing detailed page. */}
         <section className="settings-card">
-          <h2>Email notifications</h2>
+          <h2>Notifications and phone</h2>
           <p className="hint">
             Decide which moments reach your inbox: new connections,
             sealed agreements, high-match new signups. Default is
@@ -117,6 +122,7 @@ export default async function SettingsPage() {
         </section>
 
         {/* Change password */}
+        <section className="settings-card"><h2>Blocked accounts</h2><BlockedAccounts accounts={blockedAccounts} /></section>
         <section className="settings-card">
           <h2>Change password</h2>
           <p className="hint">

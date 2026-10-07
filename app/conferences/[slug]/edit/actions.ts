@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
+import { contentSafetyResponse } from "@/lib/content-safety";
 
 export async function updateConference(formData: FormData) {
   const supabase = createClient();
@@ -46,6 +47,8 @@ export async function updateConference(formData: FormData) {
     brand_meta: og_image_url ? { og_image_url } : null
   };
 
+  const safety = await contentSafetyResponse(`${patch.name}\n${patch.description ?? ""}`, user.id);
+  if (safety) redirect(`/conferences/${slug}/edit?error=content_check`);
   await service.from("conferences").update(patch).eq("slug", slug);
 
   revalidatePath(`/conferences/${slug}`);

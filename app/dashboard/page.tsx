@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { MessagesSquare, Handshake, UserPlus, Sparkles } from "lucide-react";
+import { hiddenUserIds } from "@/lib/user-safety";
 import { redirect } from "next/navigation";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import {
@@ -30,6 +32,7 @@ export default async function DashboardPage() {
   if (!user) redirect("/login");
 
   const service = createServiceClient();
+  const hidden = await hiddenUserIds(user.id);
 
   // ── Invite gate DISABLED ────────────────────────────────────────────
   // Real-user feedback: the hard 2-invite requirement felt like an
@@ -304,6 +307,7 @@ export default async function DashboardPage() {
     .join(" ");
 
   const directory = (allRealUsers ?? [])
+    .filter(p => !hidden.has(p.id))
     .map((p) => {
       const t = twinByUser.get(p.id) as any;
       // Headline fallback: first SUBSTANTIVE line of ai_export_blob. The
@@ -379,6 +383,7 @@ export default async function DashboardPage() {
     });
 
   const realConversations = (conversations ?? [])
+    .filter(c => !hidden.has(c.participant_a === user.id ? c.participant_b : c.participant_a))
     .filter(
       (c) =>
         !isTestById.get(
@@ -641,74 +646,20 @@ export default async function DashboardPage() {
       <ScrollTopOnSaved />
 
       <>
-        {/* COMMAND CENTER header + feed — Jack's rebrand. Real numbers only. */}
         <section className="mt-2">
-          <div
-            style={{
-              fontSize: 12,
-              fontWeight: 800,
-              letterSpacing: "0.14em",
-              textTransform: "uppercase",
-              color: "var(--amber-bright)"
-            }}
-          >
-            Command Center
-          </div>
-          <h1
-            className="retro-h1"
-            style={{ fontSize: 30, fontWeight: 850, letterSpacing: "-0.02em", marginTop: 4 }}
-          >
-            Good {greetPart}, {firstName}.
-          </h1>
-          <p style={{ color: "var(--text-dim)", marginTop: 2, fontSize: 15 }}>
-            Your twin is scanning, prioritizing, and opening doors.
-          </p>
+          <header className="page-heading">
+            <div><h1>Discover</h1><p>Good {greetPart}, {firstName}.</p></div>
+            <Link href="/invite" className="retro-btn"><UserPlus size={16} aria-hidden="true" />Invite someone</Link>
+          </header>
+          <DiscoverSearch key={user.id} directory={directory} userId={user.id} defaultLocation={twin?.current_city || twin?.hometown || ""} />
 
-          <div
-            style={{
-              marginTop: 18,
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-              gap: 14
-            }}
-          >
-            {commandFeed.map((c) => (
-              <Link
-                key={c.label}
-                href={c.href}
-                className="retro-panel retro-panel-hover"
-                style={{
-                  padding: 16,
-                  textDecoration: "none",
-                  color: "var(--text)",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 10
-                }}
-              >
-                <span
-                  style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 12,
-                    display: "inline-flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: 20,
-                    background: `${c.tint}1f`
-                  }}
-                  aria-hidden
-                >
-                  {c.icon}
-                </span>
-                <div style={{ fontSize: 28, fontWeight: 850, lineHeight: 1 }}>
-                  {c.value}
-                </div>
-                <div style={{ fontSize: 13, color: "var(--text-dim)", fontWeight: 600 }}>
-                  {c.label}
-                </div>
-              </Link>
-            ))}
+          <div className="workspace-metrics">
+            {commandFeed.map((c, i) => {
+              const MetricIcon = [MessagesSquare, Handshake, UserPlus, Sparkles][i];
+              return <Link key={c.label} href={c.href} className="workspace-metric">
+                <strong>{c.value}</strong><span><MetricIcon size={15} aria-hidden="true" />{c.label}</span>
+              </Link>;
+            })}
           </div>
 
           {ccTop && (
@@ -1047,7 +998,6 @@ export default async function DashboardPage() {
               people twin-search. Lifted below the conversations list
               so the user's existing relationships are the first thing
               they see on the dashboard. */}
-          <DiscoverSearch key={user.id} directory={directory} userId={user.id} defaultLocation={twin?.current_city || twin?.hometown || ""} />
 
           {/* Premium-unlock progress — 3 completed referrals = Premium
               free. completedReferrals computed up top so the build

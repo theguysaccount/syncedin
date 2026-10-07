@@ -1,4 +1,6 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
+import { SlidersHorizontal } from "lucide-react";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { AppShell } from "../AppShell";
 import { TwinChatUI } from "./TwinChatUI";
@@ -68,16 +70,7 @@ export default async function TwinPage({
           space (the scroller's height reservation in TwinChatUI was cut
           to match). */}
       <section className="mt-1">
-        <h1 className="retro-h1 text-xl sm:text-2xl leading-tight">
-          Chat with your twin.{" "}
-          <span
-            className="text-sm sm:text-base align-middle"
-            style={{ color: "var(--text)", fontWeight: 600 }}
-          >
-            Your home base. Ask who to reach out to, triage proposals, draft
-            anything.
-          </span>
-        </h1>
+        <header className="page-heading"><div><h1>Your twin</h1><p>Private workspace</p></div><Link href="/onboarding" className="retro-btn"><SlidersHorizontal size={16} aria-hidden="true" />Edit context</Link></header>
 
         {/* Desktop: 2-col grid — chat fills the wide center, pending
             proposals live in a sticky right rail with Accept/Deny
@@ -118,7 +111,7 @@ export default async function TwinPage({
              chat column bottom so the last bubble + the chip strip
              don't sit underneath the composer. */
           .twin-grid > div:first-child {
-            padding-bottom: 140px;
+            padding-bottom: 0;
           }
         `}</style>
       </section>

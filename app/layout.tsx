@@ -1,4 +1,5 @@
 import "./globals.css";
+import "./product.css";
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import { Footer } from "./Footer";

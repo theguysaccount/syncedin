@@ -40,7 +40,7 @@
     "app/onboarding/OnboardingWizard.tsx": "c4e3c6d4e13ded321f650d9a20cbcdd8b211f959cce6593f774d2d9bb90c8e94",
     "app/onboarding/actions.ts": "fa9e87a348e64d53cdcaff44234b77adbbef71df159fc8b607c75faa28fa9dcd",
     "app/settings/page.tsx": "f6bdbcfd8b4e177a202e2aa8c46982551dfbc4111705d0a2fec40678da388b0a",
-    "app/twin/TwinChatUI.tsx": "7a1a1890a97cc0ddd365320c0764ce884f23d9794ebc526a189167b58e78930c",
+    "app/twin/TwinChatUI.tsx": "acc83e02019663f538740f5403164c6f62ec13ade6c21e00ed7157a961c15347",
     "app/twin/page.tsx": "4b83af90b3509909963cec0dbbb51831f6b48cac1dbc50add742fec07ce85470",
     "capacitor.config.ts": "1984f332b6c427ad403ca0b76bf6293fdea8b0b9203b8810923d0bda1b86f52b",
     "lib/invite-stats.ts": "3394aff0d4f2ffb2375fe210d6a73f9f90e998c68eb84a4c94e5788b8ba2a14a",
@@ -49,7 +49,8 @@
     "supabase/schema.sql": "21215b715ab729182ca614de9d1a72d1af2eccd7becce9136e9b66a229af5399",
     "app/api/save-twin-draft/route.ts": "fe7d0ed9e38c264954f29b698777a7fe7357172ba95ccd7c92e7bd8bf4f8f02c",
     "app/privacy/page.tsx": "82766b53508913cd6af9cd053ccaa0428d3e4286668b98760666bb0a61902d03",
-    "app/layout.tsx": "7ae2d59a7d6180d784dcfb0f869db2a5d5952a4ff9e915201190226d29a08b09"
+    "app/layout.tsx": "7ae2d59a7d6180d784dcfb0f869db2a5d5952a4ff9e915201190226d29a08b09",
+    "app/messages/InlineActions.tsx": "6a0fd0b5b8975102e707828d8070e671c2b72590f5903981ac43dbd8426aa0dd"
   },
   "components": {
     "app/admin/reports/page.tsx": "7878461782d767a546da9261bc19b2d63ae15f6598ab38626f6da9fb39632193",

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { Check, Users, Pencil, Target, Inbox, Handshake, Search, Send, LoaderCircle } from "lucide-react";
 
 /**
  * Internal slash-routes the twin commonly references in copy. When the
@@ -834,14 +835,14 @@ export function TwinChatUI({
           className="twin-chips-row"
         >
           {[
-            { e: "✅", q: "Accept proposals first" },
-            { e: "📇", q: "Who to reach out today" },
-            { e: "✍️", q: "Draft a follow-up" },
-            { e: "🎯", q: "My top match this week" },
-            { e: "📥", q: "Prioritize my inbox" },
-            { e: "🤝", q: "Show pending proposals" },
-            { e: "🔍", q: "Search platform users" }
-          ].map(({ e, q }) => (
+            { Icon: Check, q: "Accept proposals first" },
+            { Icon: Users, q: "Who to reach out today" },
+            { Icon: Pencil, q: "Draft a follow-up" },
+            { Icon: Target, q: "My top match this week" },
+            { Icon: Inbox, q: "Prioritize my inbox" },
+            { Icon: Handshake, q: "Show pending proposals" },
+            { Icon: Search, q: "Search platform users" }
+          ].map(({ Icon, q }) => (
             <button
               key={q}
               type="button"
@@ -855,19 +856,17 @@ export function TwinChatUI({
                 padding: "5px 12px",
                 fontSize: 12,
                 fontWeight: 600,
-                borderRadius: 999,
+                borderRadius: 6,
                 border: "1px solid var(--border)",
                 background: "var(--panel)",
                 color: "var(--text-dim)",
                 cursor: sending ? "default" : "pointer",
                 whiteSpace: "nowrap",
                 opacity: sending ? 0.5 : 1,
-                height: 28
+                height: 44
               }}
             >
-              <span style={{ fontSize: 15, lineHeight: 1 }} aria-hidden>
-                {e}
-              </span>
+              <Icon size={16} aria-hidden="true" />
               {q}
             </button>
           ))}
@@ -913,9 +912,9 @@ export function TwinChatUI({
               fontSize: 14,
               padding: "10px 12px",
               resize: "none",
-              minHeight: 40,
+              minHeight: 44,
               maxHeight: 160,
-              borderRadius: 12
+              borderRadius: 6
             }}
           />
           <button
@@ -923,16 +922,19 @@ export function TwinChatUI({
             onClick={send}
             disabled={sending || !text.trim()}
             className="retro-btn retro-btn-primary"
+            aria-label={sending ? "Sending message" : "Send message"}
+            title={sending ? "Sending message" : "Send message"}
             style={{
-              height: 40,
-              padding: "0 16px",
+              height: 44,
+              width: 44,
+              padding: 0,
               fontSize: 13,
               fontWeight: 700,
-              borderRadius: 10,
+              borderRadius: 6,
               flexShrink: 0
             }}
           >
-            {sending ? "…" : "Send →"}
+            {sending ? <LoaderCircle size={18} className="animate-spin" aria-hidden="true" /> : <Send size={18} aria-hidden="true" />}
           </button>
         </div>
       </div>

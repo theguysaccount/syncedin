@@ -84,6 +84,14 @@ test("blocked and suspended accounts cannot leave phantom inbox badges", () => {
   assert(shell.includes("const hidden = await hiddenUserIds(userId)"));
   assert.equal(shell.split(".filter(c => !hidden.has(c.participant_a === userId ? c.participant_b : c.participant_a))").length - 1, 2);
 });
+test("mobile twin actions have accessible icons and pending approval is not reported as complete", () => {
+  const twin = fs.readFileSync("app/twin/TwinChatUI.tsx", "utf8");
+  assert(twin.includes('aria-label={sending ? "Sending message" : "Send message"}'));
+  assert(twin.includes("height: 44"));
+  const actions = fs.readFileSync("app/messages/InlineActions.tsx", "utf8");
+  assert(actions.includes('busy === "accept" ? "Accepting..." : "Accept"'));
+  assert(!actions.includes('busy === "accept" ? "✓ accepted"'));
+});
 // Hosted web uploads intentionally exclude native/signing files via .vercelignore.
 test("Android uploads meet protection minimum and signing never revokes certificates", {
   skip: process.env.VERCEL === "1" && (!fs.existsSync("android/variables.gradle") || !fs.existsSync("fastlane/Fastfile"))

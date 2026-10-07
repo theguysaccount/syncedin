@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { MicButton } from "../MicButton";
+import { Check, X, MessageSquare, LoaderCircle } from "lucide-react";
 
 /**
  * Inline proposal actions on a /messages row — Accept / Deny-with-reason
@@ -107,7 +108,7 @@ export function InlineActions({
             gap: 4
           }}
         >
-          💬 open full messages
+          <MessageSquare size={15} aria-hidden="true" />Open messages
         </a>
         {!accepted && (
           <button
@@ -121,7 +122,8 @@ export function InlineActions({
               opacity: busy ? 0.6 : 1
             }}
           >
-            {busy === "accept" ? "✓ accepted" : "✓ accept"}
+            {busy === "accept" ? <LoaderCircle size={15} className="animate-spin" aria-hidden="true" /> : <Check size={15} aria-hidden="true" />}
+            {busy === "accept" ? "Accepting..." : "Accept"}
           </button>
         )}
         {accepted && (
@@ -129,6 +131,7 @@ export function InlineActions({
             style={{
               display: "inline-flex",
               alignItems: "center",
+              gap: 6,
               padding: "6px 12px",
               fontSize: 12,
               fontWeight: 700,
@@ -138,7 +141,7 @@ export function InlineActions({
               borderRadius: 999
             }}
           >
-            ✓ accepted
+            <Check size={15} aria-hidden="true" />Accepted
           </span>
         )}
         {!rejected && (
@@ -154,7 +157,7 @@ export function InlineActions({
               borderColor: "rgba(239, 68, 68, 0.35)"
             }}
           >
-            {denyOpen ? "cancel" : "✕ deny with reason"}
+            <X size={15} aria-hidden="true" />{denyOpen ? "Cancel" : "Decline with reason"}
           </button>
         )}
         {rejected && (
@@ -162,6 +165,7 @@ export function InlineActions({
             style={{
               display: "inline-flex",
               alignItems: "center",
+              gap: 6,
               padding: "6px 12px",
               fontSize: 12,
               fontWeight: 700,
@@ -171,7 +175,7 @@ export function InlineActions({
               borderRadius: 999
             }}
           >
-            ✕ denied
+            <X size={15} aria-hidden="true" />Declined
           </span>
         )}
       </div>
@@ -179,7 +183,7 @@ export function InlineActions({
         <div
           style={{
             padding: 10,
-            borderRadius: 10,
+            borderRadius: 8,
             border: "1px solid rgba(239, 68, 68, 0.35)",
             background: "rgba(239, 68, 68, 0.05)"
           }}

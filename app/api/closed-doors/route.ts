@@ -4,7 +4,8 @@ import { anthropic, TWIN_MODEL, withAnthropicRetry } from "@/lib/anthropic";
 import { AGREEMENT_MARKER, hasAgreement, scrubAiTells } from "@/lib/twin-prompt";
 import { connectionBlocked } from "@/lib/user-safety";
 import { contentSafetyResponse } from "@/lib/content-safety";
-import { ConversationLineDecoder, conversationStreamResponse } from "@/lib/conversation-stream";
+import { conversationStreamResponse } from "@/lib/conversation-stream";
+import { CONVERSATION_TOOL, ConversationMessageDecoder } from "@/lib/conversation-json";
 import type { Message, Profile, TwinProfile } from "@/lib/types";
 import { loadBlendedAiExports } from "@/lib/ai-exports";
 
@@ -157,7 +158,7 @@ PHASE 2 (your entire output): The distilled human-facing exchange ONLY. 4 to 6 m
 Hard rules: never invent facts absent from the contexts. NEVER use em-dashes anywhere, use commas or periods. Each message must contain information the humans need, not process narration.
 
 ${wantsStream
-    ? 'Return JSON Lines only, no markdown fences or surrounding array. Write each COMPLETE message as one JSON object followed by a newline. Escape line breaks inside text as \\n. Format:\n{"sender":"a","text":"..."}\n{"sender":"b","text":"..."}'
+    ? 'Return the entire exchange through the write_exchange tool. Supply its messages array in chronological order, alternating sender a and b. Do not emit the exchange as ordinary text.'
     : 'Return ONLY this JSON, no markdown fences:\n{"messages":[{"sender":"a","text":"..."},{"sender":"b","text":"..."}]}'} `;
 
   const userContent = `${dossier("PERSON A", aProfile as Profile, aTwin as TwinProfile, aBlob ?? "")}
@@ -171,9 +172,11 @@ Run the closed-doors negotiation and return the JSON now.`;
       const inserted: Message[] = [];
       try {
         await withAnthropicRetry(async () => {
-          const decoder = new ConversationLineDecoder();
+          const decoder = new ConversationMessageDecoder();
           const stream = anthropic.messages.stream({
             model: TWIN_MODEL, max_tokens: 1500, system,
+            tools: [CONVERSATION_TOOL],
+            tool_choice: { type: "tool", name: CONVERSATION_TOOL.name },
             messages: [{ role: "user", content: userContent }]
           }, { signal, timeout: 90_000, maxRetries: 0 });
           async function save(records: Array<{ text: string }>) {
@@ -197,11 +200,17 @@ Run the closed-doors negotiation and return the JSON now.`;
             }
           }
           try {
+            let toolIndex: number | null = null;
             for await (const event of stream) {
-              if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
-                await save(decoder.push(event.delta.text));
+              if (event.type === "content_block_start" && event.content_block.type === "tool_use" && event.content_block.name === CONVERSATION_TOOL.name) {
+                if (toolIndex !== null) throw new Error("Invalid conversation response.");
+                toolIndex = event.index;
+              }
+              if (event.type === "content_block_delta" && event.index === toolIndex && event.delta.type === "input_json_delta") {
+                await save(decoder.push(event.delta.partial_json));
               }
             }
+            if (toolIndex === null) throw new Error("Invalid conversation response.");
             await save(decoder.push("", true));
           } catch (error) {
             // Never retry a partially saved exchange: continuing uses the saved transcript.

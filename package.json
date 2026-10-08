@@ -29,6 +29,7 @@
     "@capacitor/ios": "^6.2.2",
     "@capacitor/push-notifications": "^6.0.2",
     "@capacitor/share": "^6.0.2",
+    "@streamparser/json": "0.0.26",
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.45.4",
     "lucide-react": "^1.44.0",

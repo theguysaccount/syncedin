@@ -7,6 +7,7 @@ import React from "react";
 import jsxRuntime from "react/jsx-runtime";
 import { renderToStaticMarkup } from "react-dom/server";
 import * as icons from "lucide-react";
+import * as streamParser from "@streamparser/json";
 test("mobile releases resolve the patched Capacitor WebView runtime", () => {
   const lock = JSON.parse(fs.readFileSync("package-lock.json", "utf8"));
   for (const name of ["core", "ios", "android", "cli"]) {
@@ -25,6 +26,7 @@ function load(file, mocks) {
   return module.exports;
 }
 const conversationStream = load("lib/conversation-stream.ts", {});
+const conversationJson = load("lib/conversation-json.ts", {"@streamparser/json":streamParser});
 const messageFixture = (id = "stream-1", text = "A useful first message.") => ({
   id, conversation_id: "qa-conversation", sender_user_id: "qa-a",
   original_draft: text, final_text: text, edited: false, sent_at: "2026-10-08T12:00:00Z"
@@ -43,13 +45,53 @@ test("repeat Start clicks share one synchronous generation lock", () => {
   guard.end(next);
   assert(guard.begin());
 });
-test("model JSON Lines tolerate split strings, escaped newlines and a final record without newline", () => {
-  const decoder = new conversationStream.ConversationLineDecoder();
+test("structured model output tolerates split strings, escaped newlines and token boundaries", () => {
+  const decoder = new conversationJson.ConversationMessageDecoder();
   const first = JSON.stringify({ sender: "a", text: 'Quotes: "hello"\nA second line.' });
-  assert.deepEqual(decoder.push(first.slice(0, 25)), []);
-  assert.deepEqual(decoder.push(first.slice(25) + '\n{"sender":"b","text":"Second'), [{ text: 'Quotes: "hello"\nA second line.' }]);
-  assert.deepEqual(decoder.push(' message."}', true), [{ text: "Second message." }]);
-  assert.throws(() => decoder.push('{"text":null}\n'));
+  assert.deepEqual(decoder.push('{"messages":[' + first.slice(0, 25)), []);
+  assert.deepEqual(decoder.push(first.slice(25) + ',{"sender":"b","text":"Second'), [{ text: 'Quotes: "hello"\nA second line.' }]);
+  assert.deepEqual(decoder.push(' message."}]}', true), [{ text: "Second message." }]);
+  assert.throws(() => new conversationJson.ConversationMessageDecoder().push('{"messages":[{"text":null}]}'));
+});
+test("pretty-printed structured JSON emits complete objects before its enclosing array closes", () => {
+  const decoder = new conversationJson.ConversationMessageDecoder();
+  assert.deepEqual(decoder.push('{\n  "messages": [\n    {\n      "sender": "a",\n      "text": "First message."\n    }'), [{text:"First message."}]);
+  assert.deepEqual(decoder.push('\n  ]\n}',true), []);
+});
+test("truncated or oversized structured model output cannot be reported as complete", () => {
+  const incomplete = new conversationJson.ConversationMessageDecoder();
+  incomplete.push('{"messages":[{"text":"Saved message."},');
+  assert.throws(()=>incomplete.push("",true));
+  assert.throws(()=>new conversationJson.ConversationMessageDecoder().push(" ".repeat(32001)));
+});
+test("live provider delivers a complete conversation message before the remaining messages", {
+  skip:process.env.RUN_LIVE_CONVERSATION_STREAM_TEST !== "1" || !process.env.ANTHROPIC_API_KEY,
+  timeout:45_000
+}, async context => {
+  const {default:Anthropic}=await import("@anthropic-ai/sdk");
+  const client=new Anthropic({apiKey:process.env.ANTHROPIC_API_KEY});
+  const decoder=new conversationJson.ConversationMessageDecoder();
+  const started=Date.now();let first=null;let firstBatch=0;let count=0;let toolIndex=null;
+  const stream=client.messages.stream({
+    model:process.env.TWIN_MODEL||"claude-sonnet-4-6",max_tokens:1500,
+    tools:[conversationJson.CONVERSATION_TOOL],tool_choice:{type:"tool",name:conversationJson.CONVERSATION_TOOL.name},
+    system:"Generate a professional exchange between two fictional research collaborators. Never invent facts, use no em dashes. Return exactly six messages through write_exchange, alternating a and b, each one or two sentences. The final message ends with >>> AGREEMENT: Exchange research notes and feedback on Friday in this conversation.",
+    messages:[{role:"user",content:"Synthetic release QA only. Person A wants useful feedback on research notes. Person B wants an exchange of practical research. Both are willing to swap research notes and feedback on Friday in this conversation. They can clarify the scope, feedback format, timing, and next step. Write the six-message exchange."}]
+  },{timeout:30000,maxRetries:0});
+  try {
+    for await(const event of stream){
+      if(event.type==="content_block_start"&&event.content_block.type==="tool_use"&&event.content_block.name===conversationJson.CONVERSATION_TOOL.name)toolIndex=event.index;
+      if(event.type==="content_block_delta"&&event.index===toolIndex&&event.delta.type==="input_json_delta"){
+        const rows=decoder.push(event.delta.partial_json);
+        if(rows.length&&first===null){first=Date.now()-started;firstBatch=rows.length;}
+        count+=rows.length;
+      }
+    }
+    count+=decoder.push("",true).length;
+    assert.equal(count,6);
+    assert(firstBatch>0&&firstBatch<count,"Tool input must not be buffered until every message is complete");
+    context.diagnostic(JSON.stringify({messages:count,firstBatch,firstCompleteMessageMs:first,totalMs:Date.now()-started,customerDataUsed:false,databaseWrites:0}));
+  } finally {stream.abort();}
 });
 test("conversation stream shows a saved message before the exchange completes", async () => {
   let finish;
@@ -169,17 +211,19 @@ function closedDoorsFixture({ blocked = false, unsafe = false, partialFailure = 
     "@/lib/supabase/server": {createClient:()=>({auth:{getUser:async()=>({data:{user:{id:"qa-a"}}})}}),createServiceClient:()=>service},
     "@/lib/anthropic": {TWIN_MODEL:"test",withAnthropicRetry:async fn=>{attempts++;return fn();},anthropic:{messages:{stream:()=>({
       abort() {}, async *[Symbol.asyncIterator]() {
-        yield {type:"content_block_delta",delta:{type:"text_delta",text:'{"sender":"a","text":"First checked message."}\n'}};
+        yield {type:"content_block_start",index:0,content_block:{type:"tool_use",name:"write_exchange"}};
+        yield {type:"content_block_delta",index:0,delta:{type:"input_json_delta",partial_json:'{"messages":[{"sender":"a","text":"First checked message."},'}};
         if (pause) await pause;
         if (partialFailure) throw new Error("Provider unavailable");
-        yield {type:"content_block_delta",delta:{type:"text_delta",text:'{"sender":"b","text":"Second checked message."}\n{"sender":"a","text":">>> AGREEMENT: Exchange research on Friday."}'}};
+        yield {type:"content_block_delta",index:0,delta:{type:"input_json_delta",partial_json:'{"sender":"b","text":"Second checked message."},{"sender":"a","text":">>> AGREEMENT: Exchange research on Friday."}]}'}};
       }
     })}}},
     "@/lib/twin-prompt": {AGREEMENT_MARKER:">>> AGREEMENT:",hasAgreement:text=>text.includes(">>> AGREEMENT:"),scrubAiTells:text=>text},
     "@/lib/user-safety": {connectionBlocked:async()=>blocked},
     "@/lib/content-safety": {contentSafetyResponse:async text=>{checked.push(text);return unsafe ? Response.json({error:"Cannot share this content."},{status:422}) : null;}},
     "@/lib/ai-exports": {loadBlendedAiExports:async()=>null},
-    "@/lib/conversation-stream": conversationStream
+    "@/lib/conversation-stream": conversationStream,
+    "@/lib/conversation-json": conversationJson
   });
   return { rows,checked,attempts:()=>attempts,post:()=>route.POST(new Request("https://example.test/api/closed-doors",{method:"POST",headers:{"content-type":"application/json",accept:"text/event-stream"},body:JSON.stringify({conversation_id:"qa-conversation"})})) };
 }

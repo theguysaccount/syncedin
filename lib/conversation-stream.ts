@@ -23,24 +23,6 @@ export function createConversationRunGuard() {
   };
 }
 
-/** Model output is JSON Lines: parse complete records, never a partial JSON string. */
-export class ConversationLineDecoder {
-  private pending = "";
-  push(delta: string, final = false): Array<{ text: string }> {
-    this.pending += delta;
-    if (this.pending.length > 32_000) throw new Error("Invalid conversation response.");
-    const lines = this.pending.split("\n");
-    this.pending = final ? "" : lines.pop()!;
-    return lines.filter(line => line.trim()).map(line => {
-      const value = JSON.parse(line);
-      if (!value || typeof value.text !== "string" || !value.text.trim()) {
-        throw new Error("Invalid conversation message.");
-      }
-      return { text: value.text };
-    });
-  }
-}
-
 export function conversationStreamResponse(
   produce: (send: (event: ConversationEvent) => void, signal: AbortSignal) => Promise<void>,
   requestSignal: AbortSignal

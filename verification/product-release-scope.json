@@ -54,8 +54,8 @@
     "app/messages/InlineActions.tsx": "6a0fd0b5b8975102e707828d8070e671c2b72590f5903981ac43dbd8426aa0dd",
     "app/twin/PendingProposalsRail.tsx": "9ea7a794c24b423e54f00dfb33d50ae197ea05b3932893f87e0d11d92a3df893",
     "app/api/error-report/route.ts": "8988f012e6b0af173983e3359f0501420c48bad58d4d4a7a6ffb09603e3a8f86",
-    "package.json": "dccdefcc04cd51c07e3c0a076d6148276880c3ba380805d30e95d1683ee0c9b3",
-    "package-lock.json": "ffc72a5014d8de51ea16401b2f37e6defdc8e8e41aead561b17b016631e91778",
+    "package.json": "b881063f07b7799f9e7f83f6328c276fb3f82532469921b38eb81eb1fc36edf4",
+    "package-lock.json": "5085a488a9867e7ed9e548652fca15d38f92a3166cba0b0b79e7848711faf499",
     "app/SyncMeter.tsx": "5e9c89de19dd4e070e0355cd81faa8752d74c648a6a6ad801dda2fd58e503900",
     "app/conversations/new/page.tsx": "5649b8c397ef77f2b286ebb57d9b1e67e3ea2008ee6d4c0ad9fbc8863bb432fc",
     "app/onboarding/page.tsx": "97d00bb9c7f4f4ee66a93ed46faefb9a96fe95d908eddc82f5cd2e56bc51abca",
@@ -63,10 +63,11 @@
     "app/continuation/page.tsx": "5e87ca379d34cd4c951c89a65bdce009816d2d6c1a4852471f34f9cec1192f6d",
     "app/ghosts/page.tsx": "105cbf4b07ec7dc680c0ff39d0b3f3246ffcd4e0d6f4369ce8417e3631177fa7",
     "app/personal-intelligence/page.tsx": "8fe91c5fb3599f3400ca1e8f2efe0061938684a3cda8763f61ab2e692234f8fd",
-    "app/api/closed-doors/route.ts": "6409d277fff680f9cb541cd314d72c5d33f4d33b0e2d84fb31fdb1773c27b516",
+    "app/api/closed-doors/route.ts": "b77bf2b3ea9dbd6f7fe21ca11f7432455580cb65a2dc5d5507ef5bebeca662eb",
     "app/product.css": "ed00fdac604d03bb3a49e06e11d389ac27205f742d124d854790a0962d6eaeb2",
-    "scripts/test-release-safety.mjs": "770fc20fd359fc03ca6bbdbbf8bc71468e25b285ab82362982623708c321c16c",
-    "lib/conversation-stream.ts": "b1a604eb69f01f4cc569f53a5e7fb17215dbefe7e06c599c2634f19ac4e445e3"
+    "scripts/test-release-safety.mjs": "afb66030062d48733814fc9fb1d717edc8a37aee5e1911c081fa8d88d4f751f4",
+    "lib/conversation-stream.ts": "88ac16481e79e427ecdbcc33a5760fd38fce368e6d064929759216a4e9429416",
+    "lib/conversation-json.ts": "a40e9fe26835804b6537b18de7678cdff6d7c0f8cf6c5c2844d6e1eb4e45edfa"
   },
   "components": {
     "app/admin/reports/page.tsx": "7878461782d767a546da9261bc19b2d63ae15f6598ab38626f6da9fb39632193",

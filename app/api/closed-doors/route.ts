@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { anthropic, TWIN_MODEL, withAnthropicRetry } from "@/lib/anthropic";
-import { AGREEMENT_MARKER, scrubAiTells } from "@/lib/twin-prompt";
+import { AGREEMENT_MARKER, hasAgreement, scrubAiTells } from "@/lib/twin-prompt";
+import { connectionBlocked } from "@/lib/user-safety";
+import { contentSafetyResponse } from "@/lib/content-safety";
+import { ConversationLineDecoder, conversationStreamResponse } from "@/lib/conversation-stream";
 import type { Message, Profile, TwinProfile } from "@/lib/types";
 import { loadBlendedAiExports } from "@/lib/ai-exports";
 
@@ -47,6 +50,7 @@ ${clip(blob, 6000) || "(none provided)"}`;
 }
 
 export async function POST(req: Request) {
+  const wantsStream = req.headers.get("accept")?.includes("text/event-stream");
   const supabase = createClient();
   const {
     data: { user }
@@ -81,13 +85,17 @@ export async function POST(req: Request) {
   if (conv.participant_a !== user.id && conv.participant_b !== user.id) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
+  if (await connectionBlocked(conv.participant_a, conv.participant_b)) {
+    return NextResponse.json({ error: "This connection is blocked." }, { status: 403 });
+  }
 
   // Fresh conversations only. Anything already in flight belongs to the
   // turn-by-turn loop.
-  const { count: existingCount } = await service
+  const { count: existingCount, error: countError } = await service
     .from("messages")
     .select("id", { count: "exact", head: true })
     .eq("conversation_id", conversation_id);
+  if (countError) return NextResponse.json({ error: "Conversation could not be loaded." }, { status: 503 });
   if ((existingCount ?? 0) > 0) {
     return NextResponse.json(
       { error: "not_fresh", detail: "Conversation already has messages." },
@@ -148,14 +156,66 @@ PHASE 2 (your entire output): The distilled human-facing exchange ONLY. 4 to 6 m
 
 Hard rules: never invent facts absent from the contexts. NEVER use em-dashes anywhere, use commas or periods. Each message must contain information the humans need, not process narration.
 
-Return ONLY this JSON, no markdown fences:
-{"messages":[{"sender":"a","text":"..."},{"sender":"b","text":"..."}]}`;
+${wantsStream
+    ? 'Return JSON Lines only, no markdown fences or surrounding array. Write each COMPLETE message as one JSON object followed by a newline. Escape line breaks inside text as \\n. Format:\n{"sender":"a","text":"..."}\n{"sender":"b","text":"..."}'
+    : 'Return ONLY this JSON, no markdown fences:\n{"messages":[{"sender":"a","text":"..."},{"sender":"b","text":"..."}]}'} `;
 
   const userContent = `${dossier("PERSON A", aProfile as Profile, aTwin as TwinProfile, aBlob ?? "")}
 
 ${dossier("PERSON B", bProfile as Profile, bTwin as TwinProfile, bBlob ?? "")}
 
 Run the closed-doors negotiation and return the JSON now.`;
+
+  if (wantsStream) {
+    return conversationStreamResponse(async (send, signal) => {
+      const inserted: Message[] = [];
+      try {
+        await withAnthropicRetry(async () => {
+          const decoder = new ConversationLineDecoder();
+          const stream = anthropic.messages.stream({
+            model: TWIN_MODEL, max_tokens: 1500, system,
+            messages: [{ role: "user", content: userContent }]
+          }, { signal, timeout: 90_000, maxRetries: 0 });
+          async function save(records: Array<{ text: string }>) {
+            for (const record of records) {
+              signal.throwIfAborted();
+              if (inserted.length >= 6) throw new Error("Too many conversation messages.");
+              const text = scrubAiTells(record.text.trim()).slice(0, 1200);
+              const sender = inserted.length % 2 === 0 ? aId : bId;
+              const safety = await contentSafetyResponse(text, sender);
+              if (safety) throw new Error((await safety.json()).error);
+              signal.throwIfAborted();
+              if (await connectionBlocked(aId, bId)) throw new Error("This connection is blocked.");
+              const { data: row, error } = await service.from("messages").insert({
+                conversation_id, sender_user_id: sender,
+                original_draft: text, final_text: text, edited: false,
+                sent_at: new Date().toISOString()
+              }).select("*").single();
+              if (error || !row) throw new Error("Your next message could not be saved. Please continue to try again.");
+              inserted.push(row as Message);
+              send({ type: "message", message: row as Message });
+            }
+          }
+          try {
+            for await (const event of stream) {
+              if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
+                await save(decoder.push(event.delta.text));
+              }
+            }
+            await save(decoder.push("", true));
+          } catch (error) {
+            // Never retry a partially saved exchange: continuing uses the saved transcript.
+            if (inserted.length) throw new Error("The exchange stopped early. Your saved messages are safe. Please continue to try again.");
+            throw error;
+          } finally { stream.abort(); }
+        }, { label: "closed-doors-stream", retries: 2 });
+        if (inserted.length < 3) throw new Error("The exchange stopped early. Please continue to try again.");
+        send({ type: "done", done: hasAgreement(inserted[inserted.length - 1].final_text), next_turn_user_id: null });
+      } catch (error) {
+        if (!signal.aborted) send({ type: "error", detail: error instanceof Error ? error.message : "The exchange could not be completed. Please try again." });
+      }
+    }, req.signal);
+  }
 
   let text = "";
   try {
@@ -207,6 +267,9 @@ Run the closed-doors negotiation and return the JSON now.`;
   if (cleaned.length < 3) {
     return NextResponse.json({ error: "too_thin" }, { status: 500 });
   }
+  const safety = await contentSafetyResponse(cleaned.map(message => message.text).join("\n\n"), user.id);
+  if (safety) return safety;
+  if (await connectionBlocked(aId, bId)) return NextResponse.json({ error: "This connection is blocked." }, { status: 403 });
 
   // Insert sequentially with spaced timestamps so ordering is stable.
   const base = Date.now() - cleaned.length * 1500;

@@ -57,10 +57,11 @@ export function FeedbackBubble() {
 
   return (
     <div
+      className="feedback-bubble"
       style={{
         position: "fixed",
         right: 20,
-        bottom: "calc(20px + env(safe-area-inset-bottom, 0px))",
+        bottom: "calc(var(--feedback-bottom-offset, 20px) + env(safe-area-inset-bottom, 0px))",
         zIndex: 50,
         display: "flex",
         flexDirection: "column",
@@ -213,7 +214,7 @@ export function FeedbackBubble() {
           color: "#ffffff",
           fontSize: 14,
           fontWeight: 800,
-          letterSpacing: "-0.005em",
+          letterSpacing: 0,
           cursor: "pointer",
           background:
             "linear-gradient(135deg, #2358ff 0%, #6b2dc9 60%, #9333ea 100%)"

@@ -200,7 +200,7 @@ export async function POST(req: Request) {
           max_tokens: 500,
           system: systemPrompt,
           messages: history
-        }),
+        }, { signal: req.signal }),
       { label: "run-conversation" }
     );
     text = scrubAiTells(
@@ -249,8 +249,10 @@ export async function POST(req: Request) {
     );
   }
 
+  if (req.signal.aborted) return new Response(null, { status: 499 });
   const safety = await contentSafetyResponse(text, turnUserId);
   if (safety) return safety;
+  if (req.signal.aborted) return new Response(null, { status: 499 });
   const { data: message, error } = await service
     .from("messages")
     .insert({

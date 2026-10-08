@@ -205,6 +205,7 @@
   .mobile-header,.mobile-tabs { display: none; }
 }
 @media (max-width:1023px) {
+  body:has(.mobile-tabs) .feedback-bubble { --feedback-bottom-offset: 84px; }
   .conversation-frame { padding-bottom: 0; }
   .conversation-frame .conv-main { height: calc(100dvh - 64px - 65px - max(8px,env(safe-area-inset-bottom))) !important; }
 }

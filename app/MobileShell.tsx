@@ -14,7 +14,7 @@ export function MobileShell({ children, userId, displayName, avatarUrl, unreadCo
   useEffect(() => { setOpen(false); }, [pathname]);
   useEffect(() => {
     if (!open) { dialog.current?.close(); return; }
-    dialog.current?.showModal();
+    if (dialog.current && !dialog.current.open) dialog.current.showModal();
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     const media = window.matchMedia("(min-width: 1024px)");
@@ -38,10 +38,10 @@ export function MobileShell({ children, userId, displayName, avatarUrl, unreadCo
         const count = unreadCounts[href] ?? 0;
         return <Link key={href} href={href} aria-current={active ? "page" : undefined}><Icon size={21} aria-hidden="true" /><span>{label}</span>{count > 0 && <span className="nav-badge" aria-label={`${count} unread`}>{count > 99 ? "99+" : count}</span>}</Link>;
       })}
-      <button type="button" onClick={() => setOpen(true)} aria-expanded={open} aria-controls="mobile-more"><Menu size={21} aria-hidden="true" /><span>More</span></button>
+      <button type="button" onClick={() => setOpen(true)} aria-haspopup="dialog" aria-expanded={open} aria-controls="mobile-more"><Menu size={21} aria-hidden="true" /><span>More</span></button>
     </nav>
-    <dialog ref={dialog} id="mobile-more" className="app-dialog mobile-more" aria-labelledby="mobile-more-title" onCancel={() => setOpen(false)} onClose={() => setOpen(false)} onClick={e => { if (e.target === e.currentTarget) setOpen(false); }}>
-      <div className="dialog-header"><h2 id="mobile-more-title">Your workspace</h2><button className="icon-button" onClick={() => setOpen(false)} aria-label="Close menu" title="Close menu"><X size={19} /></button></div>
+    <dialog ref={dialog} id="mobile-more" className="app-dialog mobile-more" aria-labelledby="mobile-more-title" onCancel={e => { if (e.target === e.currentTarget) { e.stopPropagation(); setOpen(false); } }} onClose={e => { if (e.target === e.currentTarget) setOpen(false); }} onClick={e => { if (e.target === e.currentTarget) setOpen(false); }}>
+      <div className="dialog-header"><h2 id="mobile-more-title">Your workspace</h2><button type="button" className="icon-button" onClick={() => setOpen(false)} aria-label="Close menu" title="Close menu"><X size={19} /></button></div>
       <div onClick={e => { if ((e.target as HTMLElement).closest("a")) setOpen(false); }}>{children}</div>
       <nav aria-label="Network" className="mobile-more-network" onClick={e => { if ((e.target as HTMLElement).closest("a")) setOpen(false); }}>
         <div className="nav-section-label">Network</div>

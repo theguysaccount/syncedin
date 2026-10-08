@@ -410,6 +410,7 @@ export default async function ConversationPage({
         </div>
       )}
       <ChatUI
+      key={params.id}
       conversationId={params.id}
       selfUserId={user.id}
       selfName={selfProfile!.display_name ?? selfProfile!.email}

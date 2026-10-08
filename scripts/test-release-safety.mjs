@@ -24,6 +24,202 @@ function load(file, mocks) {
   }, module, module.exports);
   return module.exports;
 }
+const conversationStream = load("lib/conversation-stream.ts", {});
+const messageFixture = (id = "stream-1", text = "A useful first message.") => ({
+  id, conversation_id: "qa-conversation", sender_user_id: "qa-a",
+  original_draft: text, final_text: text, edited: false, sent_at: "2026-10-08T12:00:00Z"
+});
+test("repeat Start clicks share one synchronous generation lock", () => {
+  const guard = conversationStream.createConversationRunGuard();
+  const first = guard.begin();
+  assert(first);
+  assert.equal(guard.begin(), null);
+  guard.abort();
+  assert(first.signal.aborted);
+  const next = guard.begin();
+  assert(next);
+  guard.end(first);
+  assert.equal(guard.begin(), null, "An old request must not release a new request's lock");
+  guard.end(next);
+  assert(guard.begin());
+});
+test("model JSON Lines tolerate split strings, escaped newlines and a final record without newline", () => {
+  const decoder = new conversationStream.ConversationLineDecoder();
+  const first = JSON.stringify({ sender: "a", text: 'Quotes: "hello"\nA second line.' });
+  assert.deepEqual(decoder.push(first.slice(0, 25)), []);
+  assert.deepEqual(decoder.push(first.slice(25) + '\n{"sender":"b","text":"Second'), [{ text: 'Quotes: "hello"\nA second line.' }]);
+  assert.deepEqual(decoder.push(' message."}', true), [{ text: "Second message." }]);
+  assert.throws(() => decoder.push('{"text":null}\n'));
+});
+test("conversation stream shows a saved message before the exchange completes", async () => {
+  let finish;
+  let firstSeen;
+  const waitForFinish = new Promise(resolve => { finish = resolve; });
+  const waitForFirst = new Promise(resolve => { firstSeen = resolve; });
+  const response = conversationStream.conversationStreamResponse(async send => {
+    send({ type: "message", message: messageFixture() });
+    await waitForFinish;
+    send({ type: "done", done: true });
+  }, new AbortController().signal);
+  const events = [];
+  const read = conversationStream.readConversationEvents(response, event => {
+    events.push(event); if (event.type === "message") firstSeen();
+  }, new AbortController().signal);
+  await waitForFirst;
+  assert.equal(events.some(event => event.type === "done"), false);
+  finish(); await read;
+  assert.equal(events.at(-1).type, "done");
+});
+test("SSE framing handles arbitrary byte boundaries including multibyte characters and CRLF", async () => {
+  const bytes = new TextEncoder().encode(`: heartbeat\r\n\r\ndata: ${JSON.stringify({type:"message",message:messageFixture("utf8", "Hello café.")})}\r\n\r\ndata: {"type":"done","done":false}\r\n\r\n`);
+  const body = new ReadableStream({ start(controller) { for (const byte of bytes) controller.enqueue(new Uint8Array([byte])); controller.close(); } });
+  const events = [];
+  await conversationStream.readConversationEvents(new Response(body, {headers:{"content-type":"text/event-stream"}}), event => events.push(event), new AbortController().signal);
+  assert.equal(events[0].message.final_text, "Hello café.");
+  assert.equal(events[1].done, false);
+});
+test("incomplete streams preserve received messages and surface a recoverable error", async () => {
+  const events = [];
+  const response = new Response(`data: ${JSON.stringify({type:"message",message:messageFixture()})}\n\n`, {headers:{"content-type":"text/event-stream"}});
+  await assert.rejects(conversationStream.readConversationEvents(response, event => events.push(event), new AbortController().signal), /interrupted/);
+  assert.equal(events.length, 1);
+});
+test("streamed failures do not silently mark a conversation complete", async () => {
+  const events = [];
+  const response = new Response('data: {"type":"error","detail":"Please continue."}\n\n', {headers:{"content-type":"text/event-stream"}});
+  await assert.rejects(conversationStream.readConversationEvents(response, event => events.push(event), new AbortController().signal), /Please continue/);
+  assert.equal(events.length, 0);
+});
+test("leaving a conversation cancels its stream producer", async () => {
+  let stopped;
+  const aborted = new Promise(resolve => { stopped = resolve; });
+  const response = conversationStream.conversationStreamResponse(async (_send, signal) => {
+    await new Promise(resolve => signal.addEventListener("abort", () => { stopped(); resolve(); }, {once:true}));
+  }, new AbortController().signal);
+  const controller = new AbortController();
+  const read = conversationStream.readConversationEvents(response, () => controller.abort(), controller.signal);
+  await assert.rejects(read, {name:"AbortError"});
+  await aborted;
+});
+test("old JSON responses still work while the streaming release rolls out", async () => {
+  const events = [];
+  await conversationStream.readConversationEvents(Response.json({messages:[messageFixture()],done:true}), event => events.push(event), new AbortController().signal);
+  assert.deepEqual(events.map(event => event.type), ["message", "done"]);
+});
+test("Start and both conversation generation paths use the shared guard and abortable request", () => {
+  const source = fs.readFileSync("app/conversations/[id]/ChatUI.tsx", "utf8");
+  assert.equal(source.split("const controller = generation.current.begin();").length - 1, 2);
+  assert(source.includes("disabled={running || negotiating || !!editingId}"));
+  assert(source.includes('accept: "text/event-stream"'));
+  assert(source.includes("generation.current.abort()"));
+  assert(!source.includes("setMessages(json.messages)"));
+  assert(source.includes('aria-label="Message options"'));
+  assert(source.includes('role="menuitem"'));
+  assert(source.includes('window.addEventListener("pointerdown", outside)'));
+  assert(source.includes("createPortal("));
+  assert(fs.readFileSync("app/conversations/[id]/page.tsx", "utf8").includes("key={params.id}"));
+  const turn = fs.readFileSync("app/api/run-conversation/route.ts", "utf8");
+  assert(turn.includes("{ signal: req.signal }"));
+  assert(turn.indexOf("if (req.signal.aborted)") < turn.indexOf('.insert({'));
+});
+test("nested dialogs cannot close the mobile More menu", () => {
+  const calls = [];
+  const Component = load("app/MobileShell.tsx", {
+    react:{...React,useState:()=>[true,value=>calls.push(value)],useEffect:()=>{},useRef:()=>({current:null})},
+    "react/jsx-runtime":jsxRuntime,
+    "next/navigation":{usePathname:()=>"/twin"},
+    "next/link":{default:()=>null},
+    "lucide-react":icons,"./Avatar":{Avatar:()=>null},"./BrandMark":{BrandMark:()=>null}
+  }).MobileShell;
+  const tree = Component({children:null});
+  const dialog = tree.props.children.find(element=>element.type==="dialog");
+  const outer = {};
+  dialog.props.onClose({target:{},currentTarget:outer});
+  dialog.props.onCancel({target:{},currentTarget:outer});
+  assert.equal(calls.length,0);
+  dialog.props.onClose({target:outer,currentTarget:outer});
+  assert.deepEqual(calls,[false]);
+});
+test("feedback stays above the mobile navigation without removing either control", () => {
+  assert(fs.readFileSync("app/FeedbackBubble.tsx", "utf8").includes("var(--feedback-bottom-offset, 20px)"));
+  assert(fs.readFileSync("app/product.css", "utf8").includes("body:has(.mobile-tabs) .feedback-bubble { --feedback-bottom-offset: 84px; }"));
+});
+function closedDoorsFixture({ blocked = false, unsafe = false, partialFailure = false, pause = null } = {}) {
+  const rows = [];
+  const checked = [];
+  let attempts = 0;
+  const profile = id => ({ id, display_name: id, email: `${id}@example.test` });
+  const service = { from(table) {
+    let id;
+    let insert;
+    const query = {
+      select() { return query; }, eq(_key, value) { id = value; return query; },
+      insert(value) { insert = value; return query; },
+      async single() {
+        if (insert) { const row = { id: `saved-${rows.length}`, ...insert }; rows.push(row); return {data:row,error:null}; }
+        if (table === "conversations") return {data:{id:"qa-conversation",participant_a:"qa-a",participant_b:"qa-b"}};
+        return {data:profile(id)};
+      },
+      async maybeSingle() { return {data:{goals:"Work on useful research",deal_preferences:"Exchange expertise",ai_export_blob:null}}; },
+      then(resolve, reject) { return Promise.resolve({count:0,error:null}).then(resolve,reject); }
+    }; return query;
+  } };
+  const route = load("app/api/closed-doors/route.ts", {
+    "next/server": {NextResponse:{json:(body,options)=>Response.json(body, options)}},
+    "@/lib/supabase/server": {createClient:()=>({auth:{getUser:async()=>({data:{user:{id:"qa-a"}}})}}),createServiceClient:()=>service},
+    "@/lib/anthropic": {TWIN_MODEL:"test",withAnthropicRetry:async fn=>{attempts++;return fn();},anthropic:{messages:{stream:()=>({
+      abort() {}, async *[Symbol.asyncIterator]() {
+        yield {type:"content_block_delta",delta:{type:"text_delta",text:'{"sender":"a","text":"First checked message."}\n'}};
+        if (pause) await pause;
+        if (partialFailure) throw new Error("Provider unavailable");
+        yield {type:"content_block_delta",delta:{type:"text_delta",text:'{"sender":"b","text":"Second checked message."}\n{"sender":"a","text":">>> AGREEMENT: Exchange research on Friday."}'}};
+      }
+    })}}},
+    "@/lib/twin-prompt": {AGREEMENT_MARKER:">>> AGREEMENT:",hasAgreement:text=>text.includes(">>> AGREEMENT:"),scrubAiTells:text=>text},
+    "@/lib/user-safety": {connectionBlocked:async()=>blocked},
+    "@/lib/content-safety": {contentSafetyResponse:async text=>{checked.push(text);return unsafe ? Response.json({error:"Cannot share this content."},{status:422}) : null;}},
+    "@/lib/ai-exports": {loadBlendedAiExports:async()=>null},
+    "@/lib/conversation-stream": conversationStream
+  });
+  return { rows,checked,attempts:()=>attempts,post:()=>route.POST(new Request("https://example.test/api/closed-doors",{method:"POST",headers:{"content-type":"application/json",accept:"text/event-stream"},body:JSON.stringify({conversation_id:"qa-conversation"})})) };
+}
+test("closed-doors route streams checked, persisted rows before the model finishes", async () => {
+  let release;
+  const fixture = closedDoorsFixture({pause:new Promise(resolve=>{release=resolve;})});
+  const response = await fixture.post();
+  let seen;
+  const first = new Promise(resolve=>{seen=resolve;});
+  const events = [];
+  const read = conversationStream.readConversationEvents(response,event=>{events.push(event);if(event.type==="message")seen();},new AbortController().signal);
+  await first;
+  assert.equal(fixture.rows.length,1);
+  assert.equal(fixture.checked.length,1);
+  assert.equal(events.some(event=>event.type==="done"),false);
+  release(); await read;
+  assert.deepEqual(fixture.rows.map(row=>row.sender_user_id),["qa-a","qa-b","qa-a"]);
+  assert.equal(events.at(-1).done,true);
+});
+test("blocked connections never reach conversation generation", async () => {
+  const fixture = closedDoorsFixture({blocked:true});
+  assert.equal((await fixture.post()).status,403);
+  assert.equal(fixture.attempts(),0);
+  assert.equal(fixture.rows.length,0);
+});
+test("streaming moderation fails closed before saving or displaying content", async () => {
+  const fixture = closedDoorsFixture({unsafe:true});
+  const events = [];
+  await assert.rejects(conversationStream.readConversationEvents(await fixture.post(),event=>events.push(event),new AbortController().signal),/Cannot share/);
+  assert.equal(fixture.rows.length,0);
+  assert.equal(events.filter(event=>event.type==="message").length,0);
+});
+test("a provider error after a saved message never restarts or overwrites that exchange", async () => {
+  const fixture = closedDoorsFixture({partialFailure:true});
+  const events = [];
+  await assert.rejects(conversationStream.readConversationEvents(await fixture.post(),event=>events.push(event),new AbortController().signal),/saved messages are safe/);
+  assert.equal(fixture.rows.length,1);
+  assert.equal(fixture.attempts(),1);
+  assert.equal(events.filter(event=>event.type==="message").length,1);
+});
 function renderProduct(file, name, props = {}, mocks = {}) {
   const component = load(file, {
     react: React,

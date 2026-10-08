@@ -12,6 +12,9 @@ const NEG_LINES = [
 ];
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
+import { Copy, Pencil, Ellipsis } from "lucide-react";
+import { createConversationRunGuard, readConversationEvents } from "@/lib/conversation-stream";
 import Link from "next/link";
 import type { Message } from "@/lib/types";
 import { Avatar } from "../../Avatar";
@@ -866,7 +869,8 @@ export function ChatUI({
   useEffect(() => {
     doneRef.current = done;
   }, [done]);
-  const [running, setRunning] = useState(false);
+  const [running, setRunning] = useState(!initialDone);
+  const generation = useRef(createConversationRunGuard());
   // Whether the bottom-of-conversation compose textarea is open. Hidden
   // by default after the twin loop finishes — user pops it open with
   // the "+ add another message" button, closes via the X in the panel.
@@ -996,16 +1000,18 @@ export function ChatUI({
     // (done is in scope below; we reference it from the surrounding
     //  component closure)
     // — see usage further down for the actual definition.
-    if (!doneRef.current) return;
+    if (!done) return;
     autoSummarizedRef.current = true;
     void summarizeNow();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [messages.length, summaryResult, summarizing]);
+  }, [done, messages.length, summaryResult, summarizing]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
   const [menu, setMenu] = useState<
     { id: string; x: number; y: number; canEdit: boolean } | null
   >(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const menuTrigger = useRef<HTMLElement | null>(null);
   const [myResponse, setMyResponse] = useState<ResponseState | null>(
     initialMyResponse
   );
@@ -1082,6 +1088,10 @@ export function ChatUI({
   const scrollerRef = useRef<HTMLDivElement>(null);
   const firstScrollRef = useRef(true);
   const startedRef = useRef(false);
+  useEffect(() => () => {
+    startedRef.current = false;
+    generation.current.abort();
+  }, [conversationId]);
 
   useEffect(() => {
     // Don't yank the viewport to the bottom while the user is editing a
@@ -1111,11 +1121,27 @@ export function ChatUI({
   // Dismiss the context menu on any outside click / escape.
   useEffect(() => {
     if (!menu) return;
+    menuRef.current?.querySelector<HTMLButtonElement>("button")?.focus();
     const close = () => setMenu(null);
-    window.addEventListener("click", close);
+    const outside = (event: PointerEvent) => {
+      if (!menuRef.current?.contains(event.target as Node) && !menuTrigger.current?.contains(event.target as Node)) close();
+    };
+    const key = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { close(); menuTrigger.current?.focus(); }
+      if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+        event.preventDefault();
+        const buttons = Array.from(menuRef.current?.querySelectorAll<HTMLButtonElement>("button") ?? []);
+        const index = buttons.indexOf(document.activeElement as HTMLButtonElement);
+        buttons[(index + (event.key === "ArrowDown" ? 1 : -1) + buttons.length) % buttons.length]?.focus();
+      }
+      if (event.key === "Tab") close();
+    };
+    window.addEventListener("pointerdown", outside);
+    window.addEventListener("keydown", key);
     window.addEventListener("scroll", close, true);
     return () => {
-      window.removeEventListener("click", close);
+      window.removeEventListener("pointerdown", outside);
+      window.removeEventListener("keydown", key);
       window.removeEventListener("scroll", close, true);
     };
   }, [menu]);
@@ -1123,20 +1149,6 @@ export function ChatUI({
   async function readError(res: Response): Promise<string> {
     const j = await res.json().catch(() => ({}) as any);
     return j.detail || j.hint || j.error || `Request failed (HTTP ${res.status})`;
-  }
-
-  // Read both the friendly message AND the retryable flag so the run loop
-  // can do one more client-level retry for transient AI overloads before
-  // surfacing the error to the user.
-  async function readErrorWithRetryFlag(
-    res: Response
-  ): Promise<{ message: string; retryable: boolean }> {
-    const j = await res.json().catch(() => ({}) as any);
-    return {
-      message:
-        j.detail || j.hint || j.error || `Request failed (HTTP ${res.status})`,
-      retryable: !!j.retryable
-    };
   }
 
   // Auto-run the conversation: keep generating turns until the server says done.
@@ -1164,158 +1176,101 @@ export function ChatUI({
   }, [negotiating]);
 
   const runLoop = useCallback(async (opts?: { proposeNow?: boolean }) => {
-    const forceNext = done || !!opts?.proposeNow;
+    const controller = generation.current.begin();
+    if (!controller) return;
+    const forceNext = doneRef.current || !!opts?.proposeNow;
+    doneRef.current = false;
+    autoSummarizedRef.current = false;
+    setSummaryResult(null);
     setRunning(true);
     setError(null);
     setDone(false);
-    // Per-turn timeout. Jack's bug report: "Nicole's twin has been typing
-    // for the past three minutes. It seemingly is broken. There should be
-    // an error message." If the server retry chain doesn't return in
-    // ~45s (server already has 12s + we give 8s of client retry = 20s of
-    // expected grace), we bail with a visible error instead of letting
-    // the typing dots spin forever.
-    const TURN_TIMEOUT_MS = 45_000;
-    function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
-      return new Promise<T>((resolve, reject) => {
-        const t = window.setTimeout(() => {
-          reject(
-            new Error(
-              `The other twin took too long to respond (${label}). They might be offline or hitting a rate limit. Try again or come back in a bit — we've logged this.`
-            )
-          );
-        }, ms);
-        p.then((v) => {
-          window.clearTimeout(t);
-          resolve(v);
-        }).catch((err) => {
-          window.clearTimeout(t);
-          reject(err);
-        });
-      });
-    }
     try {
       for (let i = 0; i < CLIENT_TURN_CAP; i++) {
-        // Inner retry: if the server tells us the failure was retryable
-        // (i.e. Anthropic 529 even after server-side retries), wait 8s
-        // and try once more silently before surfacing to the user.
-        let res: Response | null = null;
-        for (let attempt = 0; attempt < 2; attempt++) {
-          try {
-            res = await withTimeout(
-              fetch("/api/run-conversation", {
-                method: "POST",
-                headers: { "content-type": "application/json" },
-                body: JSON.stringify({
-                  conversation_id: conversationId,
-                  // Only force on the FIRST iteration of the loop — once we've
-                  // generated one fresh turn the natural early-exit logic
-                  // should resume.
-                  force: forceNext && i === 0,
-                  // Same scoping: propose_now only applies to the first turn.
-                  propose_now: !!opts?.proposeNow && i === 0
-                })
-              }),
-              TURN_TIMEOUT_MS,
-              `turn ${i + 1}`
-            );
-          } catch (timeoutErr) {
-            // Auto-report so it lands on /admin/reports without the user
-            // having to copy-paste the error.
-            try {
-              const data = JSON.stringify({
-                message: `[chat-stuck] ${(timeoutErr as Error).message}`,
-                source: "chat:turn-timeout",
-                extras: { conversation_id: conversationId, turn: i + 1 }
-              });
-              if (typeof navigator !== "undefined" && navigator.sendBeacon) {
-                navigator.sendBeacon(
-                  "/api/error-report",
-                  new Blob([data], { type: "application/json" })
-                );
-              }
-            } catch {
-              /* never throw from the reporter */
-            }
-            throw timeoutErr;
-          }
-          if (res.ok) break;
-          const { message, retryable } = await readErrorWithRetryFlag(
-            res.clone()
-          );
-          if (!retryable || attempt === 1) {
-            throw new Error(message);
-          }
-          // Wait 8 seconds before the client-level retry. The server has
-          // already burned ~12s on its 4-attempt backoff chain at this
-          // point, so 8s + 12s = ~20s of total grace.
-          await new Promise((r) => setTimeout(r, 8000));
-        }
-        if (!res || !res.ok) throw new Error(await readError(res!));
-        const json = await res.json();
-        if (json.message) {
-          setMessages((m) => [...m, json.message]);
-        }
-        // Server hands back who's typing next so the indicator can render
-        // on the correct side with the right name.
-        if (typeof json.next_turn_user_id !== "undefined") {
-          setNextTurnUserId(json.next_turn_user_id ?? null);
-        }
-        if (json.done) {
+        controller.signal.throwIfAborted();
+        const result = await requestGeneration("/api/run-conversation", {
+          conversation_id: conversationId,
+          force: forceNext && i === 0,
+          propose_now: !!opts?.proposeNow && i === 0
+        }, controller);
+        if (result.done) {
+          doneRef.current = true;
           setDone(true);
-          // Fire-and-forget: generate the outcome summary + excitement score.
-          fetch("/api/summarize-conversation", {
-            method: "POST",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify({ conversation_id: conversationId })
-          }).catch(() => {});
           break;
         }
       }
     } catch (e: any) {
-      setError(e.message || String(e));
-      // Kill the typing-indicator state — otherwise the user sees BOTH
-      // the error banner AND "Nicole is typing…" stuck on the side,
-      // which is exactly the bug Jack flagged. nextTurnUserId=null
-      // makes the indicator render condition fall through.
-      setNextTurnUserId(null);
+      if (!controller.signal.aborted) {
+        setError(e.message || String(e));
+        setNextTurnUserId(null);
+      }
     } finally {
-      setRunning(false);
+      generation.current.end(controller);
+      if (!controller.signal.aborted) setRunning(false);
     }
   }, [conversationId]);
 
+  async function requestGeneration(path: string, body: object, owner: AbortController) {
+    const request = new AbortController();
+    const cancel = () => request.abort();
+    owner.signal.addEventListener("abort", cancel, { once: true });
+    let timedOut = false;
+    const timer = window.setTimeout(() => { timedOut = true; request.abort(); }, path === "/api/closed-doors" ? 90_000 : 45_000);
+    let finished = false;
+    try {
+      owner.signal.throwIfAborted();
+      const response = await fetch(path, {
+        method: "POST", signal: request.signal,
+        headers: { "content-type": "application/json", accept: "text/event-stream" },
+        body: JSON.stringify(body)
+      });
+      if (!response.ok) throw new Error(await readError(response));
+      await readConversationEvents(response, event => {
+        if (owner.signal.aborted) return;
+        if (event.type === "message") {
+          setMessages(previous => previous.some(message => message.id === event.message.id) ? previous : [...previous, event.message]);
+          setNextTurnUserId(event.message.sender_user_id === selfUserId ? other.id : selfUserId);
+        } else if (event.type === "done") {
+          finished = event.done;
+          setNextTurnUserId(event.next_turn_user_id ?? null);
+        }
+      }, request.signal);
+      return { done: finished };
+    } catch (error) {
+      if (timedOut) {
+        const detail = "This response took too long. Your saved messages are safe. Please continue to try again.";
+        try { navigator.sendBeacon?.("/api/error-report", new Blob([JSON.stringify({ message: detail, source: "chat:turn-timeout", extras: { conversation_id: conversationId } })], { type: "application/json" })); } catch { /* Reporting must not block recovery. */ }
+        throw new Error(detail);
+      }
+      throw error;
+    } finally {
+      window.clearTimeout(timer);
+      owner.signal.removeEventListener("abort", cancel);
+    }
+  }
+
   const closedDoors = useCallback(async () => {
+    const controller = generation.current.begin();
+    if (!controller) return;
+    setRunning(true);
     setNegotiating(true);
     setNegLine(0);
     setError(null);
     try {
-      const res = await fetch("/api/closed-doors", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ conversation_id: conversationId })
-      });
-      if (!res.ok) throw new Error(await readError(res));
-      const json = await res.json();
-      if (!Array.isArray(json.messages) || json.messages.length === 0) {
-        throw new Error("empty distilled exchange");
-      }
-      setMessages(json.messages);
-      setDone(true);
+      const result = await requestGeneration("/api/closed-doors", { conversation_id: conversationId }, controller);
+      doneRef.current = result.done;
+      setDone(result.done);
       setNextTurnUserId(null);
-      // Outcome summary + excitement score from the existing pipeline so
-      // /messages and /proposals stay consistent.
-      fetch("/api/summarize-conversation", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ conversation_id: conversationId })
-      }).catch(() => {});
-    } catch {
-      // Any hiccup: fall back to the classic turn-by-turn loop so the
-      // conversation still happens.
-      runLoop();
+    } catch (error) {
+      if (!controller.signal.aborted) {
+        setError(error instanceof Error ? error.message : "The conversation could not be completed. Please try again.");
+        setNextTurnUserId(null);
+      }
     } finally {
-      setNegotiating(false);
+      generation.current.end(controller);
+      if (!controller.signal.aborted) { setNegotiating(false); setRunning(false); }
     }
-  }, [conversationId, runLoop]);
+  }, [conversationId]);
 
   // On mount:
   //  - if the conversation isn't finished, auto-run it
@@ -1333,19 +1288,21 @@ export function ChatUI({
       } else {
         runLoop();
       }
-    } else {
-      fetch("/api/summarize-conversation", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ conversation_id: conversationId })
-      }).catch(() => {});
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function openMenu(e: React.MouseEvent, id: string, canEdit: boolean) {
     e.preventDefault();
-    setMenu({ id, x: e.clientX, y: e.clientY, canEdit });
+    e.stopPropagation();
+    menuTrigger.current = e.currentTarget as HTMLElement;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.type === "contextmenu" ? e.clientX : rect.right;
+    const y = e.type === "contextmenu" ? e.clientY : rect.bottom;
+    setMenu(previous => previous?.id === id ? null : {
+      id, x: Math.max(8, Math.min(x, window.innerWidth - 180)),
+      y: Math.max(8, Math.min(y, window.innerHeight - (canEdit ? 104 : 60))), canEdit
+    });
   }
 
   async function copyMessage(id: string) {
@@ -1769,7 +1726,7 @@ export function ChatUI({
                 </div>
               </div>
             </div>
-            {!running && (
+            {(
               <div className="flex items-center gap-2 shrink-0">
                 {/* Propose destination — explicit manual trigger so the
                     twin doesn't end conversations on its own discretion.
@@ -1780,6 +1737,7 @@ export function ChatUI({
                   <button
                     type="button"
                     onClick={() => runLoop({ proposeNow: true })}
+                    disabled={running || negotiating}
                     className="retro-btn text-xs"
                     title="Have your twin wrap up with a concrete proposal now"
                     style={{
@@ -1791,13 +1749,17 @@ export function ChatUI({
                   </button>
                 )}
                 <button
+                  type="button"
+                  disabled={running || negotiating || !!editingId}
                   onClick={() =>
                     messages.length === 0 ? closedDoors() : runLoop()
                   }
                   className="retro-btn text-xs"
                   title="Continue / re-run"
                 >
-                  {messages.length === 0
+                  {running || negotiating
+                    ? "generating..."
+                    : messages.length === 0
                     ? "start"
                     : done
                       ? "re-run"
@@ -2001,6 +1963,18 @@ export function ChatUI({
                         non-clickable. Hard bug to spot because the
                         plain-text version looked stylistically fine. */}
                     {linkify(body)}
+                  </div>
+                  <div className={`flex mt-1 ${mine ? "justify-end" : "justify-start"}`}>
+                    <button
+                      type="button"
+                      className="icon-button"
+                      aria-label="Message options"
+                      title="Message options"
+                      aria-haspopup="menu"
+                      aria-expanded={menu?.id === m.id}
+                      aria-controls={menu?.id === m.id ? "conversation-message-menu" : undefined}
+                      onClick={event => openMenu(event, m.id, mine)}
+                    ><Ellipsis size={18} aria-hidden="true" /></button>
                   </div>
                   {/* Edit affordance on your own messages. The bubble has
                       always been double-click-to-edit + right-click-to-edit
@@ -2983,27 +2957,37 @@ export function ChatUI({
       </div>
 
       {/* Context menu */}
-      {menu && (
+      {menu && createPortal(
         <div
-          className="fixed retro-panel retro-shadow z-50 text-sm"
-          style={{ left: menu.x, top: menu.y }}
+          ref={menuRef}
+          id="conversation-message-menu"
+          role="menu"
+          aria-label="Message actions"
+          className="app-frame conversation-message-menu"
+          style={{ position: "fixed", left: menu.x, top: menu.y, zIndex: 100, minHeight: 0, width: 172, padding: 4, border: "1px solid var(--border)", borderRadius: 8, background: "var(--panel-solid)", boxShadow: "0 8px 24px #0002" }}
           onClick={(e) => e.stopPropagation()}
         >
           <button
+            type="button"
+            role="menuitem"
             onClick={() => copyMessage(menu.id)}
-            className="block w-full text-left px-4 py-2 hover:bg-[var(--panel-2)]"
+            className="flex items-center gap-2 w-full text-left px-3 py-2 hover:bg-[var(--panel-2)]"
+            style={{ minHeight: 44 }}
           >
-            Copy
+            <Copy size={16} aria-hidden="true" />Copy
           </button>
           {menu.canEdit && (
             <button
+              type="button"
+              role="menuitem"
               onClick={() => startEdit(menu.id)}
-              className="block w-full text-left px-4 py-2 hover:bg-[var(--panel-2)] border-t border-[var(--border)]"
+              className="flex items-center gap-2 w-full text-left px-3 py-2 hover:bg-[var(--panel-2)] border-t border-[var(--border)]"
+              style={{ minHeight: 44 }}
             >
-              Edit
+              <Pencil size={16} aria-hidden="true" />Edit
             </button>
           )}
-        </div>
+        </div>, document.body
       )}
     </main>
   );

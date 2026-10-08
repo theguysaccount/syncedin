@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Compass, MessagesSquare, Sparkles, UserPlus, ScanFace, ChartNoAxesColumn, Brain, MessageCircle, CalendarDays, Settings, Upload, LogOut } from "lucide-react";
+import { Compass, MessagesSquare, MessageSquarePlus, Sparkles, UserPlus, ScanFace, ChartNoAxesColumn, Brain, MessageCircle, CalendarDays, Settings, Upload, LogOut } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 const primary = [
   { href: "/dashboard", label: "Discover", icon: Compass },
@@ -10,7 +10,7 @@ const primary = [
 ];
 const explore = [
   { href: "/invite", label: "Invitations", icon: UserPlus },
-  { href: "/ghosts", label: "Practice conversations", icon: ScanFace },
+  { href: "/ghosts", label: "Talk with ghosts", icon: ScanFace },
   { href: "/personal-intelligence", label: "Personal intelligence", icon: Brain },
   { href: "/poll", label: "Polls", icon: ChartNoAxesColumn },
   { href: "/feedback", label: "Feedback", icon: MessageCircle }
@@ -34,13 +34,14 @@ export function Sidebar({ signOutAction, conferences = [], unreadCounts = {}, cl
     });
   }
   return <aside className="app-sidebar">
+    <Link href="/conversations/new" className="retro-btn retro-btn-primary sidebar-new-conversation"><MessageSquarePlus size={18} aria-hidden="true" />New conversation</Link>
     <nav aria-label="Main navigation">{links(primary)}</nav>
     <div><div className="nav-section-label">Workspace</div><nav aria-label="Workspace">{links(explore)}</nav></div>
     {conferences.length > 0 && <div><div className="nav-section-label">Your conferences</div><nav aria-label="Your conferences">
       {conferences.map(c => <Link key={c.slug} href={`/conferences/${c.slug}`} className="app-nav-link"><CalendarDays size={17} aria-hidden="true" /><span>{c.name}</span></Link>)}
     </nav></div>}
+    {cloneCard}
     <div className="sidebar-footer">
-      {cloneCard}
       <Link href="/onboarding" className="app-nav-link"><Sparkles size={17} aria-hidden="true" />Edit twin context</Link>
       <Link href="/continuation" className="app-nav-link"><Upload size={17} aria-hidden="true" />Import a chat</Link>
       <Link href="/settings" className="app-nav-link"><Settings size={17} aria-hidden="true" />Settings</Link>

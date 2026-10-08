@@ -704,6 +704,7 @@ export function TwinChatUI({
           <div
             className="twin-empty"
           >
+            <span className="twin-brand-symbol" aria-hidden="true"><img src="/syncedin-wordmark-tight.png" alt="" width={438} height={106} /></span>
             <h2>What&apos;s on your mind?</h2>
             <p>Your priorities, your next introduction, or an idea worth exploring.</p>
           </div>

@@ -1,12 +1,10 @@
 "use client";
 
-import { useId } from "react";
+import { useEffect, useId, useRef, useState } from "react";
+import { Info, X } from "lucide-react";
 import { computeSyncScore, type SyncInputs } from "@/lib/sync-score";
 
-/**
- * Small (i) badge that shows the full Sync-score breakdown on hover.
- * CSS-only — no JS state, so it's safe to render inside a server component.
- */
+/** The breakdown uses a dialog so it also works with touch and keyboards. */
 function SyncInfoBadge({
   breakdown,
   nextStep
@@ -14,68 +12,46 @@ function SyncInfoBadge({
   breakdown: { label: string; points: number; max: number; done: boolean }[];
   nextStep: string | null;
 }) {
+  const [open, setOpen] = useState(false);
+  const dialog = useRef<HTMLDialogElement>(null);
+  const titleId = useId();
+  useEffect(() => {
+    if (!open) { dialog.current?.close(); return; }
+    dialog.current?.showModal();
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = previous; };
+  }, [open]);
   return (
     <span
       className="group"
       style={{ position: "relative", display: "inline-flex", marginLeft: 6 }}
     >
-      <span
+      <button
+        type="button"
+        className="sync-info-button"
         aria-label="How Sync % works"
-        style={{
-          width: 16,
-          height: 16,
-          borderRadius: "50%",
-          border: "1px solid var(--border-bright)",
-          color: "var(--text-dim)",
-          fontSize: 10,
-          fontWeight: 700,
-          display: "inline-flex",
-          alignItems: "center",
-          justifyContent: "center",
-          cursor: "help",
-          background: "var(--panel)",
-          fontFamily: "system-ui, sans-serif"
-        }}
+        title="How Sync % works"
+        aria-haspopup="dialog"
+        onClick={() => setOpen(true)}
       >
-        i
-      </span>
-      <span
-        className="opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity"
+        <Info size={15} aria-hidden="true" />
+      </button>
+      <dialog
+        ref={dialog}
+        className="app-frame app-dialog sync-dialog"
+        aria-labelledby={titleId}
+        onCancel={event => { event.stopPropagation(); setOpen(false); }}
+        onClose={event => { event.stopPropagation(); setOpen(false); }}
+        onClick={event => { if (event.target === event.currentTarget) setOpen(false); }}
         style={{
-          position: "absolute",
-          // Open to the RIGHT of the badge. Previous versions opened
-          // downward (got clipped by page bottom) and upward (got
-          // clipped at top of viewport when SyncMeter sits near the top
-          // of the dashboard, as Jack flagged). The right side has more
-          // breathing room on every page that includes the meter — the
-          // content column always extends far to the right of where the
-          // meter lives in the layout.
-          //
-          // Vertically center on the badge so it reads like a callout
-          // anchored to the (i) circle.
-          top: "50%",
-          left: "calc(100% + 12px)",
-          transform: "translateY(-50%)",
-          width: 280,
-          padding: "12px 14px",
-          background: "var(--panel-solid)",
-          border: "1px solid var(--border)",
-          borderRadius: 10,
-          fontSize: 11,
+          fontSize: 13,
           lineHeight: 1.45,
-          color: "var(--text)",
-          // Bumped 30 → 9999. The tooltip is inside the sticky sidebar
-          // aside, which the dashboard's conversation cards establish
-          // their own stacking contexts above on hover. Jack: "HOVER
-          // ON SYNC GOES BEHIND ELEMENTS." 9999 wins all of them.
-          zIndex: 9999,
-          boxShadow: "0 16px 36px -12px rgba(0,0,0,0.45)",
+          fontFamily: "inherit",
           textAlign: "left"
         }}
       >
-        <strong style={{ display: "block", marginBottom: 6, fontSize: 12 }}>
-          How Sync % works
-        </strong>
+        <div className="dialog-header"><h2 id={titleId}>Your twin sync</h2><button type="button" className="icon-button" aria-label="Close sync breakdown" title="Close sync breakdown" onClick={() => setOpen(false)}><X size={18} /></button></div>
         <div
           style={{
             color: "var(--text-dim)",
@@ -139,7 +115,7 @@ function SyncInfoBadge({
             {nextStep}
           </div>
         )}
-      </span>
+      </dialog>
     </span>
   );
 }
@@ -161,12 +137,14 @@ function SyncInfoBadge({
 export function SyncMeter({
   inputs,
   size = 240,
+  compact = false,
   // kept for backward-compat call sites; ignored in v8
   avatarUrl: _avatarUrl,
   userId: _userId
 }: {
   inputs: SyncInputs;
   size?: number;
+  compact?: boolean;
   avatarUrl?: string | null;
   userId?: string | null;
 }) {
@@ -220,6 +198,7 @@ export function SyncMeter({
 
   return (
     <div
+      className={compact ? "sync-meter sync-meter-compact" : "sync-meter"}
       style={{
         position: "relative",
         // Mobile-safe sizing: never exceed the parent container's width,
@@ -239,7 +218,7 @@ export function SyncMeter({
         // pink/purple haze into the sidebar nav rendered above this
         // element on the desktop column). 24px max keeps the glow
         // contained while still reading as "powered up."
-        filter: `drop-shadow(0 0 ${Math.min(12, glowStrength * 0.5)}px ${innerGlow}) drop-shadow(0 0 ${Math.min(24, glowStrength)}px ${glowColor})`
+        filter: compact ? undefined : `drop-shadow(0 0 ${Math.min(12, glowStrength * 0.5)}px ${innerGlow}) drop-shadow(0 0 ${Math.min(24, glowStrength)}px ${glowColor})`
       }}
     >
       <svg
@@ -435,6 +414,7 @@ export function SyncMeter({
           line. The body silhouette is already tightly cropped by the
           viewBox; this is the gap that visually rests the eye. */}
       <div
+        className="sync-meter-caption"
         style={{
           display: "flex",
           alignItems: "center",
@@ -449,22 +429,22 @@ export function SyncMeter({
           style={{
             fontSize: 20,
             fontWeight: 700,
-            letterSpacing: "0.04em",
+            letterSpacing: 0,
             color: "var(--text)"
           }}
         >
           {total}%
         </span>
-        <span
+        {!compact && <span
           style={{
             fontSize: 13,
             fontWeight: 500,
-            letterSpacing: "0.24em",
+            letterSpacing: 0,
             color: "var(--text-dim)"
           }}
         >
           SYNC
-        </span>
+        </span>}
         <SyncInfoBadge breakdown={parts} nextStep={nextStep} />
       </div>
     </div>

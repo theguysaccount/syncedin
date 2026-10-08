@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
+import { AppShell } from "../../AppShell";
 import NewConversationFinder from "./NewConversationFinder";
 
 export default function NewConversationPage({
@@ -16,34 +18,26 @@ export default function NewConversationPage({
   const error = searchParams.error ? errors[searchParams.error] : null;
 
   return (
-    <main className="max-w-3xl mx-auto px-5 py-10">
-      <Link href="/dashboard" className="retro-dim text-sm">
-        &lt; back
-      </Link>
-
-      <div className="mt-6 retro-panel retro-shadow p-8">
-        <div className="retro-label">new conversation</div>
-        <h1 className="retro-h1 text-3xl mt-3">
-          Find who you want to sync with
-        </h1>
-        <p className="mt-2 text-sm" style={{ color: "var(--text-dim)" }}>
-          Type a name. We&apos;ll search SyncedIn AND the open web so you can
-          start a conversation or draft an invite in your twin&apos;s voice.
-        </p>
-
-        <div className="mt-6">
+    <AppShell>
+      <header className="page-heading">
+        <div><h1>New conversation</h1><p>Find who you want to sync with.</p></div>
+        <Link href="/dashboard" className="retro-btn"><ArrowLeft size={16} aria-hidden="true" />Back to Discover</Link>
+      </header>
+      <div className="max-w-3xl">
+        <div>
           <NewConversationFinder />
         </div>
 
         {error && (
           <div
-            className="mt-4 p-3 retro-panel"
+            className="auth-error mt-4"
+            role="alert"
             style={{ borderColor: "var(--red)" }}
           >
             <p className="text-sm retro-red">{error}</p>
           </div>
         )}
       </div>
-    </main>
+    </AppShell>
   );
 }

@@ -24,20 +24,7 @@ export default async function ContinuationPage() {
   return (
     <AppShell>
       <section className="mt-2">
-        <div className="retro-label">where it goes next</div>
-        <h1 className="retro-h1 text-2xl sm:text-3xl mt-2 leading-tight">
-          Continue the conversation you&apos;ve been having.
-        </h1>
-        <p
-          className="mt-2 text-sm sm:text-base leading-relaxed"
-          style={{ color: "var(--text-dim)" }}
-        >
-          Drop in your iMessage, WhatsApp, Telegram, or SMS export. We&apos;ll
-          model the person on the other end — their cadence, what they care
-          about, what they dodge — and play out the next 8–10 messages. Share
-          the result with them as a &quot;look where we&apos;re headed, want
-          to make this real?&quot; invite.
-        </p>
+        <header className="page-heading"><div><h1>Import a chat</h1><p>Where the conversation could go next.</p></div></header>
 
         <div className="mt-6">
           <ContinuationConsole />

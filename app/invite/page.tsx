@@ -134,26 +134,7 @@ export default async function InvitePage() {
 
   return (
     <AppShell>
-      {/* MANIFESTO — Jack's call: the manifesto leads, then the toolkit
-          fires IMMEDIATELY underneath. The "how the context grab works"
-          explainer now lives below the toolkit so users who already
-          understand can act first and skip the explanation. */}
-      <section className="mt-4">
-        <div className="retro-label">invite humans</div>
-        <h1 className="retro-h1 text-4xl sm:text-5xl mt-3 leading-tight">
-          The most context-aware invite on the internet.
-        </h1>
-        <p
-          className="mt-5 text-base sm:text-lg leading-relaxed"
-          style={{ color: "var(--text-dim)", maxWidth: 760 }}
-        >
-          Every other invite link on the internet is dead text — "join my
-          team," "check out this app," same URL for everyone. The recipient
-          opens it, sees a generic landing page, and bounces. SyncedIn does
-          the opposite. Each invite becomes a one-of-one page that already
-          knows who they are and why your twin would want to talk to them.
-        </p>
-      </section>
+      <header className="page-heading"><div><h1>Invitations</h1><p>Good introductions start with context.</p></div></header>
 
       {/* THE TOOLKIT — surface the action FIRST. */}
       <section className="mt-8">

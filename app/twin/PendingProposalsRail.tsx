@@ -38,6 +38,15 @@ export function PendingProposalsRail() {
   // header that expands on click. Avoids stacking 6 huge cards and
   // duplicating what the twin will surface inline once tool-use lands.
   const [expanded, setExpanded] = useState(false);
+  const [quickOpen, setQuickOpen] = useState(true);
+
+  useEffect(() => {
+    const media = window.matchMedia("(min-width: 900px)");
+    const sync = () => setQuickOpen(media.matches);
+    sync();
+    media.addEventListener("change", sync);
+    return () => media.removeEventListener("change", sync);
+  }, []);
 
   const load = useCallback(async () => {
     try {
@@ -112,6 +121,7 @@ export function PendingProposalsRail() {
 
   return (
     <aside
+      className="twin-actions-rail"
       style={{
         position: "sticky",
         top: 12,
@@ -127,6 +137,7 @@ export function PendingProposalsRail() {
           full Accept/Deny cards. */}
       <div style={{ display: "flex", alignItems: "center", gap: 8, borderBottom: "1px solid var(--border)" }}>
       <button
+        className="proposal-toggle"
         type="button"
         onClick={() => setExpanded((v) => !v)}
         style={{
@@ -392,28 +403,9 @@ export function PendingProposalsRail() {
 
       {/* Quick Actions — always-on shortcuts. Keeps the right rail
           full of value even when proposals are clear. */}
-      <div
-        style={{
-          padding: "12px 0",
-          display: "flex",
-          flexDirection: "column",
-          gap: 2,
-          marginTop: 6
-        }}
-      >
-        <div
-          style={{
-            fontSize: 10,
-            fontWeight: 700,
-            letterSpacing: 0,
-            textTransform: "uppercase",
-            color: "var(--text-dim)",
-            marginBottom: 6,
-            padding: "0 2px"
-          }}
-        >
-          Quick actions
-        </div>
+      <details className="twin-quick-actions" open={quickOpen} onToggle={event => setQuickOpen(event.currentTarget.open)}>
+        <summary><span>Quick actions</span><ChevronDown size={16} aria-hidden="true" /></summary>
+        <div className="twin-quick-action-list">
         {/* These fire prompts INTO the chat (not nav links — the menu
             already covers navigation). Each maps to something the twin can
             actually do with its tools: update context, find matches, triage,
@@ -467,6 +459,7 @@ export function PendingProposalsRail() {
           }
         ].map((a) => (
           <button
+            className="twin-quick-action"
             key={a.label}
             type="button"
             onClick={() =>
@@ -495,7 +488,8 @@ export function PendingProposalsRail() {
             {a.label}
           </button>
         ))}
-      </div>
+        </div>
+      </details>
 
     </aside>
   );

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Plus } from "lucide-react";
 import { redirect } from "next/navigation";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { Sidebar } from "./Sidebar";
@@ -219,43 +220,43 @@ export async function AppShell({
   if (pollRes.status === "fulfilled" && pollRes.value > 0)
     unreadCounts["/poll"] = pollRes.value;
 
-  const { count: editCount } = await createServiceClient().from("edit_deltas")
-    .select("id", { count: "exact", head: true }).eq("user_id", userId);
+  const service = createServiceClient();
+  const [{ data: twinProfile }, { data: sentMessages }, { count: acceptedCount }, { count: editCount }] = await Promise.all([
+    service.from("twin_profiles")
+      .select("goals, ai_export_blob, deal_preferences, communication_style, deal_breakers, hometown, current_city")
+      .eq("user_id", userId).maybeSingle(),
+    supabase.from("messages").select("conversation_id").eq("sender_user_id", userId),
+    supabase.from("agreement_responses").select("id", { count: "exact", head: true })
+      .eq("user_id", userId).eq("response", "accepted"),
+    service.from("edit_deltas").select("id", { count: "exact", head: true }).eq("user_id", userId)
+  ]);
+  const syncInputs = {
+    name: displayName,
+    goals: twinProfile?.goals,
+    ai_export_blob: twinProfile?.ai_export_blob,
+    deal_preferences: twinProfile?.deal_preferences,
+    comm_style: twinProfile?.communication_style,
+    deal_breakers: twinProfile?.deal_breakers,
+    hometown: twinProfile?.hometown,
+    current_city: twinProfile?.current_city,
+    completed_conversations: new Set((sentMessages ?? []).map(message => message.conversation_id)).size,
+    accepted_agreements: acceptedCount ?? 0,
+    edit_count: editCount ?? 0
+  };
 
   // Clone-sync card rendered INSIDE the Sidebar (passed via the new
   // `cloneCard` prop) so it sits inside the one sticky aside and
   // scrolls/sticks as one block with the nav. Identical on every page.
   const cloneCard = (
-    <aside
-      style={{
-        // Lives inside the sidebar aside — no own background/border;
-        // the sidebar's panel already provides the surface.
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        gap: 6,
-        paddingTop: 8,
-        borderTop: "1px solid var(--border)"
-        // NOTE: NO overflow:hidden here. The SyncMeter's (i) hover
-        // tooltip opens to the right; clipping the wrapper hid the
-        // tooltip behind the conversation cards next to the sidebar
-        // (Jack: "HOVER ON SYNC GOES BEHIND ELEMENTS"). The meter's
-        // drop-shadow is already capped at 24px in SyncMeter.tsx so
-        // it can't bleed into the nav.
-      }}
-    >
-      <div className="text-xs retro-dim" style={{ width: "100%", padding: "8px 0" }}>{editCount ?? 0} refinements learned</div>
-      <Link
-        href="/onboarding"
-        className="retro-btn retro-btn-primary text-center"
-        style={{
-          width: "100%",
-          fontSize: 11,
-          padding: "7px 10px"
-        }}
-      >
-        + add context
-      </Link>
+    <aside className="sidebar-sync" aria-label="Twin sync">
+      <SyncMeter inputs={syncInputs} size={72} compact />
+      <div className="sidebar-sync-context">
+        <strong>Your twin</strong>
+        <span>{editCount ?? 0} edits captured</span>
+        <Link href="/onboarding" className="retro-btn sidebar-context-link">
+          <Plus size={15} aria-hidden="true" />Add context
+        </Link>
+      </div>
     </aside>
   );
 
@@ -291,6 +292,8 @@ export async function AppShell({
         userId={userId}
         displayName={displayName}
         avatarUrl={(profile as any)?.avatar_url ?? null}
+        portfolioHandle={profile?.handle ?? null}
+        isAdmin={isAdmin}
       >
         {sidebar}
       </MobileShell>
@@ -305,7 +308,7 @@ export async function AppShell({
           community lift up here. Profile avatar lives top-right with
           a dropdown for Edit twin / Settings / Sign out. Hidden on
           mobile because MobileShell already owns the top strip there. */}
-      <div className="hidden lg:block">
+      <div className="app-desktop-header hidden lg:block">
         <TopBar
           userId={userId}
           displayName={displayName}
@@ -328,11 +331,6 @@ export async function AppShell({
           The main content keeps its readable max-width via its own
           inner wrapper. */}
       <main
-        // overflow-x: hidden + max-w-full mirror the global guard but
-        // scope it to the AppShell column too — belt-and-suspenders
-        // against any page-level content that briefly inflates before
-        // its own min-w-0 catches up.
-        style={{ maxWidth: "100vw", overflowX: "hidden" }}
         className="app-main"
       >
         {/* Desktop sidebar — hidden on mobile, replaced by MobileShell drawer.
@@ -347,17 +345,7 @@ export async function AppShell({
             (Jack: "MOBILE VIEW VERY BROKEN" screenshots). Now we use
             lg:flex so the column is genuinely display:none on mobile. */}
         <div
-          className="hidden lg:flex lg:flex-col"
-          style={{
-            position: "sticky",
-            top: 20,
-            alignSelf: "start",
-            // Establish a stacking context above the main content
-            // column so the SyncMeter (i) hover tooltip — which lives
-            // inside this aside and pops out to the right — renders
-            // ON TOP of the conversation cards next to it.
-            zIndex: 5
-          }}
+          className="app-sidebar-slot hidden lg:flex lg:flex-col"
         >
           {sidebar}
           {/* sidebarExtra prop is now ignored — kept on the API for

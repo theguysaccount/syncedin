@@ -5,7 +5,7 @@ import { ReportAccountButton } from "../ReportAccountButton";
 import { useEffect, useRef, useState } from "react";
 import { startConversationWithUser } from "./actions";
 import { DotsLoader } from "../DotsLoader";
-import { Globe, MapPin, Pencil, RotateCw, Trash2 } from "lucide-react";
+import { Globe, MapPin, Pencil, RotateCw, Trash2, X, ArrowRight, Sparkles } from "lucide-react";
 import { ConnectionNoteEditor } from "./ConnectionNoteEditor";
 import { capConnectionNote, CONNECTION_REASON_LIMIT, parseOutreachContext, type OutreachContext } from "@/lib/outreach-context";
 import { discoveryCacheKey, discoveryQuery, matchesCity, type SearchScope } from "@/lib/discovery-search";
@@ -510,15 +510,15 @@ export function DiscoverSearch({
 
   return (
     <section className="discover-workspace">
-      <div className="flex items-baseline justify-between">
+      <div className="discovery-heading flex items-baseline justify-between">
         <h2 className="text-base font-semibold">Find your people</h2>
         <div className="retro-dim text-xs">
           {loading ? "Searching..." : `${visibleDirectory.length} ready to sync`}
         </div>
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center gap-3">
-        <fieldset className="inline-flex shrink-0 gap-1 rounded-lg border p-1" style={{ borderColor: "var(--border-bright)" }}>
+      <div className="discovery-toolbar mt-3 flex flex-wrap items-center gap-3">
+        <fieldset className="discovery-scope inline-flex shrink-0 gap-1 rounded-lg border p-1" style={{ borderColor: "var(--border-bright)" }}>
           <legend className="sr-only">Search scope</legend>
           {(["global", "local"] as const).map((scope) => (
             <label key={scope} className="relative cursor-pointer">
@@ -539,7 +539,7 @@ export function DiscoverSearch({
         </label> : <span className="retro-dim text-xs">Best fit, anywhere</span>}
       </div>
 
-      <div className="mt-3 grid items-start gap-3 md:grid-cols-2">
+      <div className="discovery-fields mt-3 grid items-start gap-3 md:grid-cols-2">
       <div className="min-w-0">
         <label htmlFor="discover-search" className="retro-label block mb-1">Find someone</label>
         <div className="relative">
@@ -549,26 +549,24 @@ export function DiscoverSearch({
           onChange={(e) => setQ(e.target.value)}
           placeholder="Search by name. Find them on SyncedIn or anywhere on the web."
           className="retro-input"
-          style={{ paddingRight: q ? 80 : 16 }}
+          style={{ paddingRight: q ? 56 : 16 }}
         />
         {q && (
           <button
             type="button"
             onClick={() => setQ("")}
-            className="retro-dim hover:text-white"
+            className="icon-button discovery-clear"
+            aria-label="Clear search"
+            title="Clear search"
             style={{
               position: "absolute",
-              right: 8,
+              right: 4,
               top: "50%",
               transform: "translateY(-50%)",
-              fontSize: 12,
-              padding: "4px 10px",
-              borderRadius: 6,
-              border: "1px solid var(--border-bright)",
-              background: "var(--panel-2)"
+              border: 0
             }}
           >
-            × clear
+            <X size={16} aria-hidden="true" />
           </button>
         )}
         </div>
@@ -582,7 +580,7 @@ export function DiscoverSearch({
           onChange={(event) => setConnectionReason(event.target.value)}
           placeholder="e.g. Invite climate founders to a research dinner"
           className="retro-input text-sm"
-          rows={2}
+          rows={1}
           maxLength={CONNECTION_REASON_LIMIT}
         />
       </div>
@@ -591,6 +589,22 @@ export function DiscoverSearch({
       {!searching && searchScope === "local" && searchLocation.trim() && !visibleDirectory.length && (
         <p className="retro-dim text-sm mt-3">No SyncedIn matches near {searchLocation.trim()}.</p>
       )}
+
+      {!searching && <div className="discovery-intent mt-4">
+        <label htmlFor="discover-intent" className="retro-label block mb-2">People you&apos;re looking for</label>
+        <div className="discovery-intent-row">
+          <input id="discover-intent" value={intent} onChange={event => setIntent(event.target.value.slice(0, 280))}
+            onKeyDown={event => { if (event.key === "Enter") { event.preventDefault(); askTwin(intent.trim()); } }}
+            placeholder={intent ? "" : `e.g. "${SAMPLE_INTENTS[placeholderIdx]}"`}
+            className="retro-input" maxLength={280} />
+          <button type="button" onClick={() => askTwin(intent.trim())}
+            disabled={suggesting || !settingsReady || (searchScope === "local" && !searchLocation.trim())}
+            className="retro-btn retro-btn-primary">
+            {suggesting ? <DotsLoader label="searching" /> : <>Find people<ArrowRight size={16} aria-hidden="true" /></>}
+          </button>
+        </div>
+        {lastIntent && <p className="retro-dim text-xs mt-2">Searched: &quot;{lastIntent}&quot;</p>}
+      </div>}
 
       {otherDrafts.length > 0 && <details className="mt-4 border-y py-3" style={{ borderColor: "var(--border)" }}>
         <summary className="cursor-pointer text-sm font-semibold">Saved notes ({otherDrafts.length})</summary>
@@ -622,19 +636,19 @@ export function DiscoverSearch({
         if (visible.length === 0) return null;
         return (
           <div className="mt-4">
-            <div className="flex items-baseline justify-between">
+            <div className="directory-heading flex items-baseline justify-between">
               <div
                 className="retro-label"
                 style={{ color: "var(--amber-bright)" }}
               >
-                already on SyncedIn
+                On SyncedIn
               </div>
               <div className="retro-dim text-xs">
                 {visible.length} {visible.length === 1 ? "twin" : "twins"} you
                 haven&apos;t talked to yet
               </div>
             </div>
-            <div className="mt-3 space-y-2">
+            <div className="directory-list mt-3">
               {visible.slice(0, 12).map((p) => {
                 const blurb =
                   (looksLikeRealBio(p.goals) ? p.goals : null) ||
@@ -651,8 +665,7 @@ export function DiscoverSearch({
                   <form
                     action={startConversationWithUser}
                     key={p.id}
-                    className="retro-panel retro-panel-hover p-4 flex items-start gap-3"
-                    style={{ position: "relative" }}
+                    className="directory-card retro-panel retro-panel-hover"
                   >
                     {/* Avatar — uploaded photo if available, otherwise a
                         deterministic 2-stop gradient circle with initials.
@@ -664,10 +677,9 @@ export function DiscoverSearch({
                       avatarUrl={p.avatar_url}
                       size={44}
                     />
-                    <div className="min-w-0 flex-1">
-                      <div className="font-semibold text-sm flex items-center gap-2 flex-wrap">
+                    <div className="directory-identity">
+                      <div className="directory-name">
                         <span>{p.display_name || p.email}</span>
-                        <ReportAccountButton reportedUserId={p.id} reportedName={p.display_name || undefined} />
                         {/* NEW pill — surfaces signups from the last 14
                             days so the user knows who's actively building
                             their twin RIGHT NOW. Jack: "move those new
@@ -675,56 +687,22 @@ export function DiscoverSearch({
                         {p.created_at_ms &&
                           Date.now() - p.created_at_ms <
                             14 * 86_400_000 && (
-                            <span
-                              style={{
-                                fontSize: 9,
-                                fontWeight: 800,
-                                letterSpacing: "0.1em",
-                                padding: "2px 6px",
-                                borderRadius: 999,
-                                background: "var(--amber-bright)",
-                                color: "#000",
-                                textTransform: "uppercase"
-                              }}
-                            >
-                              new
-                            </span>
+                            <span className="directory-new">New</span>
                           )}
                       </div>
-                      {blurb && (
-                        <div className="retro-dim text-xs mt-1 line-clamp-2">
-                          {blurb}
-                        </div>
-                      )}
-                    </div>
-                    <input type="hidden" name="userId" value={p.id} />
-                    <div className="flex flex-col items-end gap-1.5 shrink-0">
                       <div
-                        className="text-xs font-mono"
+                        className="directory-score"
                         style={{
                           color: scoreColor,
-                          letterSpacing: "0.04em",
-                          fontWeight: 700
+                          fontWeight: 500
                         }}
                         title="Estimated connection score: how much of your twin's profile overlaps with theirs. Updates as both twins add context."
                       >
                         {score}% sync
                       </div>
-                      <button
-                        type="submit"
-                        className="retro-btn retro-btn-primary text-xs"
-                      >
-                        connect &gt;
-                      </button>
                     </div>
-                    {/* Small X — dismiss this user from the directory. Stays
-                        hidden across page loads via localStorage. Stops
-                        form propagation so it doesn't accidentally fire
-                        startConversationWithUser.
-                        Positioned at the TOP-LEFT corner (not top-right)
-                        so it can't visually overlap the "{score}% sync"
-                        label and "connect >" button stacked on the right. */}
                     <button
+                      className="directory-dismiss icon-button"
                       type="button"
                       aria-label={`Dismiss ${p.display_name || p.email}`}
                       title="Not interested — hide this person"
@@ -733,38 +711,15 @@ export function DiscoverSearch({
                         e.stopPropagation();
                         dismissUser(p.id);
                       }}
-                      style={{
-                        position: "absolute",
-                        top: 6,
-                        left: 6,
-                        width: 20,
-                        height: 20,
-                        borderRadius: 10,
-                        border: "1px solid var(--border)",
-                        background: "var(--panel-solid)",
-                        color: "var(--text-dim)",
-                        cursor: "pointer",
-                        fontSize: 11,
-                        lineHeight: 1,
-                        display: "inline-flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        padding: 0,
-                        // Sits above the avatar circle; very low opacity
-                        // until row-hover so it doesn't dominate. Mobile
-                        // taps still hit it via the 20×20 target.
-                        opacity: 0.55,
-                        transition: "opacity 120ms ease"
-                      }}
-                      onMouseEnter={(e) => {
-                        (e.currentTarget as HTMLButtonElement).style.opacity = "1";
-                      }}
-                      onMouseLeave={(e) => {
-                        (e.currentTarget as HTMLButtonElement).style.opacity = "0.55";
-                      }}
                     >
-                      ✕
+                      <X size={16} aria-hidden="true" />
                     </button>
+                    {blurb && <p className="directory-preview retro-dim line-clamp-2">{blurb}</p>}
+                    <input type="hidden" name="userId" value={p.id} />
+                    <div className="directory-actions">
+                      <ReportAccountButton reportedUserId={p.id} reportedName={p.display_name || undefined} />
+                      <button type="submit" className="retro-btn retro-btn-primary">Connect<ArrowRight size={16} aria-hidden="true" /></button>
+                    </div>
                   </form>
                 );
               })}
@@ -776,46 +731,6 @@ export function DiscoverSearch({
       {/* Twin-recommended connections */}
       {!searching && (
         <div className="mt-6">
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => askTwin(intent.trim())}
-              disabled={suggesting || !settingsReady || (searchScope === "local" && !searchLocation.trim())}
-              className="retro-btn retro-btn-primary shrink-0"
-            >
-              {suggesting ? (
-                <DotsLoader label="searching" />
-              ) : (
-                "Find people"
-              )}
-            </button>
-            <input
-              value={intent}
-              onChange={(e) => setIntent(e.target.value.slice(0, 280))}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  askTwin(intent.trim());
-                }
-              }}
-              placeholder={
-                intent
-                  ? ""
-                  : `e.g. "${SAMPLE_INTENTS[placeholderIdx]}"`
-              }
-              className="retro-input flex-1"
-              maxLength={280}
-            />
-          </div>
-          <div
-            className="retro-dim text-xs mt-2"
-            style={{ minHeight: 18 }}
-          >
-            {lastIntent
-              ? `searched: "${lastIntent}"`
-              : "Leave it blank to let your twin pick. Or type any intent — your twin combines it with your own context to find the right people."}
-          </div>
-
           {suggestionError && <p role="alert" className="retro-red text-sm mt-2">{suggestionError}</p>}
           {suggestions && suggestions.length === 0 && !suggesting && !suggestionError && (
             <p className="retro-dim text-sm mt-3">
@@ -839,7 +754,7 @@ export function DiscoverSearch({
                     a real pill button for re-running the search.
                   */}
                   <div
-                    className="rounded-xl p-3"
+                    className="discovery-rationale"
                     style={{
                       background: "var(--panel-2)",
                       border: "1px solid var(--border)",
@@ -854,9 +769,7 @@ export function DiscoverSearch({
                         flexShrink: 0,
                         width: 28,
                         height: 28,
-                        borderRadius: "50%",
-                        background: "var(--amber-bright)33",
-                        color: "var(--amber-bright)",
+                        color: "var(--violet)",
                         display: "inline-flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -866,20 +779,19 @@ export function DiscoverSearch({
                         lineHeight: 1
                       }}
                     >
-                      ‟
+                      <Sparkles size={18} aria-hidden="true" />
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div
                         className="text-xs"
                         style={{
                           color: "var(--text-dim)",
-                          textTransform: "uppercase",
-                          letterSpacing: "0.08em",
-                          fontWeight: 700,
+                          letterSpacing: 0,
+                          fontWeight: 600,
                           marginBottom: 4
                         }}
                       >
-                        your twin&apos;s read
+                        Your twin&apos;s read
                       </div>
                       <div
                         className="text-sm"
@@ -894,25 +806,20 @@ export function DiscoverSearch({
                     </div>
                     <button
                       type="button"
+                      className="icon-button"
                       onClick={() => askTwin(s.search_query)}
                       disabled={suggesting}
                       title="Re-run this intent to surface fresh matches"
+                      aria-label="Find more matches for this intent"
                       style={{
                         flexShrink: 0,
                         alignSelf: "center",
-                        padding: "6px 12px",
-                        borderRadius: 999,
-                        border: "1px solid var(--border-bright)",
-                        background: "var(--panel-solid)",
-                        color: "var(--text)",
-                        fontSize: 12,
-                        fontWeight: 700,
                         cursor: suggesting ? "default" : "pointer",
                         opacity: suggesting ? 0.5 : 1,
                         whiteSpace: "nowrap"
                       }}
                     >
-                      ↻ find more
+                      <RotateCw size={16} aria-hidden="true" />
                     </button>
                   </div>
                   {s.people.length === 0 ? (

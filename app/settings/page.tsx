@@ -40,7 +40,8 @@ export default async function SettingsPage() {
   const blockedAccounts = (blockedProfiles ?? []).map(row => ({ id: row.id, name: row.display_name || "Blocked account" }));
   return (
     <AppShell>
-      <header style={{ marginBottom: 18 }}>
+      <header className="page-heading">
+        <div>
         <h1 className="retro-h1 text-2xl">Settings</h1>
         <p
           className="mt-1 text-sm"
@@ -49,6 +50,7 @@ export default async function SettingsPage() {
           One place for your notifications, security, account, and the
           public-facing portfolio your twin builds for you.
         </p>
+        </div>
       </header>
 
       <div

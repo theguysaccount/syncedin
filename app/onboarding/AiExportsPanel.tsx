@@ -227,7 +227,7 @@ export function AiExportsPanel() {
           background: var(--panel-solid);
           border: 1px dashed var(--border-bright);
           border-radius: 8px;
-          font-family: ui-monospace, "SF Mono", Menlo, monospace;
+          font-family: ui-monospace, SF Mono, Menlo, monospace;
           font-size: 12px;
           line-height: 1.5;
           color: var(--text);

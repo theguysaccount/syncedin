@@ -172,40 +172,8 @@ export default async function PersonalIntelligencePage() {
   return (
     <AppShell>
       <TrackBeacon meta={{ door: "personal-intelligence" }} />
-      <header style={{ marginBottom: 20 }}>
-        <div
-          style={{
-            fontSize: 11,
-            fontWeight: 800,
-            letterSpacing: "0.16em",
-            textTransform: "uppercase",
-            color: "#1f8bff",
-            marginBottom: 8
-          }}
-        >
-          Personal intelligence
-        </div>
-        <h1
-          className="retro-h1"
-          style={{ fontSize: 30, letterSpacing: "-0.01em", margin: 0 }}
-        >
-          The non-networking things your twin can do for you.
-        </h1>
-        <p
-          style={{
-            marginTop: 10,
-            fontSize: 14,
-            color: "var(--text-dim)",
-            maxWidth: 680,
-            lineHeight: 1.55
-          }}
-        >
-          Your twin already has the richest context on you that any model
-          has ever had — bio, footprint, goals, voice. That same context
-          unlocks a long tail of personal generations: images, merch, a
-          song, a life path, recommendations, plot ideas, and business
-          projections. Each card below ships as we build it.
-        </p>
+      <header className="page-heading">
+        <div><h1>Personal intelligence</h1><p>Your projects, perspectives, and next possibilities.</p></div>
         {!hasTwin && (
           <div
             style={{

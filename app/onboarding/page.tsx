@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
-import { Wordmark } from "../Wordmark";
+import { BrandMark } from "../BrandMark";
+import { ThemeSync } from "../ThemeSync";
 import { OnboardingWizard } from "./OnboardingWizard";
 import { SelfMap } from "./SelfMap";
 import { LiveSyncMeter } from "./LiveSyncMeter";
@@ -109,7 +110,8 @@ export default async function OnboardingPage({
   const firstNameForWelcome = (initial.display_name || "").trim().split(/\s+/)[0] || "";
 
   return (
-    <main className="max-w-6xl mx-auto px-6 pt-1 pb-8">
+    <div className="app-frame setup-frame"><ThemeSync />
+    <main className="max-w-6xl mx-auto px-6 pt-5 pb-8">
       {/* Glowing-dot particles that fly from inputs toward the SyncMeter
           whenever the user types. Pure DOM + CSS, respects reduced
           motion. Mounted at page level so it sees the form + meter. */}
@@ -123,9 +125,9 @@ export default async function OnboardingPage({
         className="flex items-center justify-between"
         style={{ minHeight: 28 }}
       >
-        <Wordmark />
-        <Link href="/dashboard" className="retro-dim text-xs">
-          dashboard &gt;
+        <Link href="/" className="app-brand-link" aria-label="SyncedIn home"><BrandMark /></Link>
+        <Link href="/dashboard" className="retro-btn">
+          Back to Discover
         </Link>
       </div>
 
@@ -193,5 +195,6 @@ export default async function OnboardingPage({
         <SelfMap formSelector="#onboarding-form" />
       </section>
     </main>
+    </div>
   );
 }

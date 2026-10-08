@@ -64,7 +64,7 @@
     "app/ghosts/page.tsx": "105cbf4b07ec7dc680c0ff39d0b3f3246ffcd4e0d6f4369ce8417e3631177fa7",
     "app/personal-intelligence/page.tsx": "8fe91c5fb3599f3400ca1e8f2efe0061938684a3cda8763f61ab2e692234f8fd",
     "app/api/closed-doors/route.ts": "b77bf2b3ea9dbd6f7fe21ca11f7432455580cb65a2dc5d5507ef5bebeca662eb",
-    "app/product.css": "cfe69b33b7a9851ae631ab4f713fa6af8ab52ea711334ed688dad2ed9a9fd13d",
+    "app/product.css": "956344b526aabf96fb99e907649f4e9b22f29b6544040cb230436af2956662a7",
     "scripts/test-release-safety.mjs": "afb66030062d48733814fc9fb1d717edc8a37aee5e1911c081fa8d88d4f751f4",
     "lib/conversation-stream.ts": "88ac16481e79e427ecdbcc33a5760fd38fce368e6d064929759216a4e9429416",
     "lib/conversation-json.ts": "a40e9fe26835804b6537b18de7678cdff6d7c0f8cf6c5c2844d6e1eb4e45edfa",

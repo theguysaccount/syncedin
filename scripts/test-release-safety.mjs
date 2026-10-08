@@ -25,6 +25,48 @@ function load(file, mocks) {
   }, module, module.exports);
   return module.exports;
 }
+test("agent setup keeps every action and exposes the selected provider accessibly", () => {
+  const { BrandMark } = load("app/BrandMark.tsx", { "react/jsx-runtime": jsxRuntime });
+  const request = load("lib/agent-request.ts", {});
+  const { AgentSetup } = load("app/agents/AgentSetup.tsx", {
+    react: React,
+    "react/jsx-runtime": jsxRuntime,
+    "lucide-react": icons,
+    "@/lib/agent-request": request,
+    "../BrandMark": { BrandMark },
+  });
+  const html = renderToStaticMarkup(React.createElement(AgentSetup));
+  for (const label of ["ChatGPT", "Claude", "Codex / other", "Copy request", "Open ChatGPT", "Import agent profile", "Review profile", "Copy agent URL", "Your approval"]) assert(html.includes(label), label);
+  assert.equal((html.match(/aria-pressed="true"/g) || []).length, 1);
+  assert(html.includes('id="agent-request"'));
+  assert(html.includes('role="status"'));
+  assert(html.includes("syncedin-wordmark-tight.png"));
+});
+test("feedback launcher preserves its composer and private-route exclusions", () => {
+  let path = "/agents";
+  const { FeedbackBubble } = load("app/FeedbackBubble.tsx", {
+    react: React,
+    "react/jsx-runtime": jsxRuntime,
+    "next/navigation": { usePathname: () => path },
+    "lucide-react": icons,
+  });
+  const html = renderToStaticMarkup(React.createElement(FeedbackBubble));
+  assert(html.includes('class="fb-launch"'));
+  assert(html.includes('aria-expanded="false"'));
+  assert(html.includes('aria-controls="feedback-composer"'));
+  assert(!html.includes("gradient"), "The solid launcher fill belongs to shared CSS, not an inline gradient");
+  path = "/agent/review";
+  assert.equal(renderToStaticMarkup(React.createElement(FeedbackBubble)), "");
+});
+test("feedback edge rotates independently of its solid fill and respects reduced motion", () => {
+  const css = fs.readFileSync("app/product.css", "utf8");
+  assert(css.includes("@property --fb-edge-angle"));
+  assert(css.includes("linear-gradient(var(--fb-fill),var(--fb-fill)) padding-box"));
+  assert(css.includes("conic-gradient(from var(--fb-edge-angle)"));
+  assert(css.includes("mask-composite: exclude"));
+  assert(css.includes("@keyframes fbEdgeRotate"));
+  assert(/prefers-reduced-motion: reduce[\s\S]*\.fb-launch\s*\{\s*animation: none/.test(css));
+});
 const conversationStream = load("lib/conversation-stream.ts", {});
 const conversationJson = load("lib/conversation-json.ts", {"@streamparser/json":streamParser});
 const messageFixture = (id = "stream-1", text = "A useful first message.") => ({

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { usePathname } from "next/navigation";
+import { MessageSquare, X } from "lucide-react";
 
 /**
  * Global "Give Feedback" bubble — a persistent, customer-support-style
@@ -25,7 +26,9 @@ export function FeedbackBubble() {
 
   // Don't overlap the fixed bottom composers on the chat surfaces.
   const hidden =
-    /^\/(?:agent|login|dashboard|messages|twin|conversations|settings|onboarding|invite|personal-intelligence|poll|ghosts|continuation|admin)(?:\/|$)/.test(pathname);
+    /^\/(?:agent|login|dashboard|messages|twin|conversations|settings|onboarding|invite|personal-intelligence|poll|ghosts|continuation|admin)(?:\/|$)/.test(
+      pathname,
+    );
   if (hidden) return null;
 
   async function send() {
@@ -40,7 +43,7 @@ export function FeedbackBubble() {
       const res = await fetch("/api/feedback/quick", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ message: m, surface: pathname || "/" })
+        body: JSON.stringify({ message: m, surface: pathname || "/" }),
       });
       const j = await res.json().catch(() => ({}));
       if (!res.ok || j?.error) {
@@ -61,22 +64,24 @@ export function FeedbackBubble() {
       style={{
         position: "fixed",
         right: 20,
-        bottom: "calc(var(--feedback-bottom-offset, 20px) + env(safe-area-inset-bottom, 0px))",
+        bottom:
+          "calc(var(--feedback-bottom-offset, 20px) + env(safe-area-inset-bottom, 0px))",
         zIndex: 50,
         display: "flex",
         flexDirection: "column",
         alignItems: "flex-end",
-        gap: 12
+        gap: 12,
       }}
     >
       {open && (
         <div
+          id="feedback-composer"
           className="retro-panel retro-shadow"
           style={{
             width: "min(340px, calc(100vw - 40px))",
             padding: 16,
             borderRadius: 18,
-            background: "var(--panel-solid)"
+            background: "var(--panel-solid)",
           }}
         >
           {sent ? (
@@ -86,7 +91,7 @@ export function FeedbackBubble() {
                   fontSize: 16,
                   fontWeight: 800,
                   color: "var(--amber-bright)",
-                  marginBottom: 6
+                  marginBottom: 6,
                 }}
               >
                 ✓ Got it — thank you.
@@ -96,11 +101,11 @@ export function FeedbackBubble() {
                   fontSize: 13,
                   color: "var(--text-dim)",
                   lineHeight: 1.5,
-                  margin: 0
+                  margin: 0,
                 }}
               >
-                Every piece of feedback makes the platform sharper for
-                everyone on it. Jack reads them all.
+                Every piece of feedback makes the platform sharper for everyone
+                on it. Jack reads them all.
               </p>
               <button
                 type="button"
@@ -122,7 +127,7 @@ export function FeedbackBubble() {
                   alignItems: "baseline",
                   justifyContent: "space-between",
                   gap: 8,
-                  marginBottom: 4
+                  marginBottom: 4,
                 }}
               >
                 <div style={{ fontSize: 15, fontWeight: 800 }}>
@@ -138,10 +143,10 @@ export function FeedbackBubble() {
                     color: "var(--text-dim)",
                     fontSize: 16,
                     cursor: "pointer",
-                    lineHeight: 1
+                    lineHeight: 1,
                   }}
                 >
-                  ×
+                  <X size={18} aria-hidden="true" />
                 </button>
               </div>
               <p
@@ -149,12 +154,13 @@ export function FeedbackBubble() {
                   fontSize: 12.5,
                   color: "var(--text-dim)",
                   lineHeight: 1.45,
-                  margin: "0 0 10px"
+                  margin: "0 0 10px",
                 }}
               >
                 What&apos;s confusing, broken, or missing? We act on it fast.
               </p>
               <textarea
+                aria-label="Your feedback"
                 value={message}
                 onChange={(e) => setMessage(e.target.value.slice(0, 3000))}
                 rows={4}
@@ -166,13 +172,11 @@ export function FeedbackBubble() {
                   fontSize: 14,
                   lineHeight: 1.5,
                   resize: "vertical",
-                  minHeight: 88
+                  minHeight: 88,
                 }}
               />
               {err && (
-                <div
-                  style={{ fontSize: 12, color: "#ef4444", marginTop: 6 }}
-                >
+                <div style={{ fontSize: 12, color: "#ef4444", marginTop: 6 }}>
                   {err}
                 </div>
               )}
@@ -186,7 +190,7 @@ export function FeedbackBubble() {
                   width: "100%",
                   fontSize: 14,
                   fontWeight: 800,
-                  padding: "10px 16px"
+                  padding: "10px 16px",
                 }}
               >
                 {sending ? "sending…" : "Send feedback"}
@@ -203,64 +207,16 @@ export function FeedbackBubble() {
           setErr("");
         }}
         aria-label="Give feedback"
+        aria-expanded={open}
+        aria-controls="feedback-composer"
         className="fb-launch"
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 8,
-          padding: "11px 18px",
-          borderRadius: 999,
-          border: "none",
-          color: "#ffffff",
-          fontSize: 14,
-          fontWeight: 800,
-          letterSpacing: 0,
-          cursor: "pointer",
-          background:
-            "linear-gradient(135deg, #2358ff 0%, #6b2dc9 60%, #9333ea 100%)"
-        }}
       >
-        <style>{`
-          .fb-launch {
-            box-shadow:
-              0 0 0 1px rgba(147, 51, 234, 0.55),
-              0 10px 30px -6px rgba(107, 45, 201, 0.7),
-              0 0 22px rgba(147, 51, 234, 0.55);
-            animation: fbGlow 2.8s ease-in-out infinite;
-          }
-          .fb-launch:hover { transform: translateY(-1px); }
-          @keyframes fbGlow {
-            0%, 100% {
-              box-shadow:
-                0 0 0 1px rgba(147, 51, 234, 0.5),
-                0 10px 30px -6px rgba(107, 45, 201, 0.6),
-                0 0 18px rgba(147, 51, 234, 0.45);
-            }
-            50% {
-              box-shadow:
-                0 0 0 1px rgba(147, 51, 234, 0.75),
-                0 12px 36px -6px rgba(107, 45, 201, 0.85),
-                0 0 34px rgba(147, 51, 234, 0.8);
-            }
-          }
-          @media (prefers-reduced-motion: reduce) {
-            .fb-launch { animation: none; }
-          }
-        `}</style>
-        <svg
-          width="18"
-          height="18"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
-        >
-          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-        </svg>
-        {open ? "Close" : "Give feedback"}
+        {open ? (
+          <X size={18} aria-hidden="true" />
+        ) : (
+          <MessageSquare size={18} aria-hidden="true" />
+        )}
+        <span>{open ? "Close" : "Give feedback"}</span>
       </button>
     </div>
   );

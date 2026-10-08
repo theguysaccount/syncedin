@@ -16,7 +16,7 @@ export default async function AgentsPage() {
     data: { user },
   } = await createClient().auth.getUser();
   return (
-    <main className="app-frame agent-page">
+    <main className="app-frame agent-page agent-signup-page">
       <ThemeSync />
       <header className="agent-page-nav">
         <Link href="/" aria-label="SyncedIn home">
@@ -27,7 +27,7 @@ export default async function AgentsPage() {
         </Link>
       </header>
       <div className="agent-page-content">
-        <header className="page-heading">
+        <header className="page-heading agent-heading">
           <div>
             <h1>SyncedIn, with your agent.</h1>
             <p>ChatGPT. Claude. Codex. Your context, your approval.</p>

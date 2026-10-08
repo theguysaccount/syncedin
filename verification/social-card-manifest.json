@@ -145,5 +145,12 @@
     "twitterFile": "app/paper/twitter-image.png",
     "sha256": "051ed5e03ab69d1fdb9dfa28bbb17418e386f82c298e8f66d06a66cddc664b1e",
     "alt": "SyncedIn \u2014 Intention Is All You Need"
+  },
+  {
+    "path": "/agents",
+    "file": "app/agents/opengraph-image.png",
+    "twitterFile": "app/agents/twitter-image.png",
+    "sha256": "86cf4710ae1575cfd3dbc10f83662c34521cc59057626ec7c2a7148e98ef964a",
+    "alt": "SyncedIn: Join with your agent. Private draft, your review, your SyncedIn twin.\n"
   }
 ]

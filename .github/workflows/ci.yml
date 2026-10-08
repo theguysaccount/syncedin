@@ -38,7 +38,7 @@ jobs:
         run: npx tsc --noEmit
 
       - name: Production build
-        run: npx next build
+        run: npm run build
         env:
           # Build-time placeholder values so next build doesn't fail on
           # missing env vars. Real values live in Vercel for runtime.

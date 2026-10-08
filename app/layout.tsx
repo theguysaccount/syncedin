@@ -272,6 +272,8 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-screen" data-clarity-mask="True">
+        {/* Remove private review fragments before any telemetry loads. */}
+        <Script id="private-agent-ticket" strategy="beforeInteractive" dangerouslySetInnerHTML={{__html:`if(location.pathname==='/agent/review'){var p=new URLSearchParams(location.search),t=new URLSearchParams(location.hash.slice(1)).get('ticket');if(t&&/^sir_[a-f0-9]{64}$/.test(t)){try{localStorage.setItem('syncedin-review-'+p.get('id'),JSON.stringify({ticket:t,expires:Date.now()+86400000}));history.replaceState(null,'',location.pathname+location.search);}catch{}}}`}} />
         {/* Catches ChunkLoadError on stale tabs that survived a deploy
             and forces a one-time hard reload so users never see the
             empty React-#418/#423 hydration error screen. */}
@@ -297,6 +299,7 @@ export default function RootLayout({
             strategy="afterInteractive"
             dangerouslySetInnerHTML={{
               __html: `(function(c,l,a,r,i,t,y){
+        if(c.location.pathname.startsWith('/agent/'))return;
         c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
         t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
         y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);

@@ -153,6 +153,7 @@ export default async function OnboardingPage({
 
       <div className="mt-3 grid lg:grid-cols-[1fr_320px] gap-8 items-start">
         <div className="min-w-0">
+          <div className="agent-onboarding-choice"><Link href="/agents" className="retro-btn">Set up with ChatGPT, Claude, or my agent</Link></div>
           <OnboardingWizard initial={initial} userId={user.id} />
           {/* Multi-source AI context uploader — the "king" twin-context
               feature. Lets the user paste deep self-descriptions from

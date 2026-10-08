@@ -187,5 +187,14 @@
     "description": "The attention transformer for humanity. An open protocol for world harmonization: why intention, routed at the speed of light, is the missing coordination layer that routes around Moloch.",
     "caption": "The attention transformer for humanity. An open protocol for world harmonization: why intention, routed at the speed of light, is the missing coordination layer that routes\u2026",
     "alt": "SyncedIn \u2014 Intention Is All You Need"
+  },
+  {
+    "path": "/agents",
+    "key": "agents",
+    "title": "Join SyncedIn with your agent",
+    "heading": "SyncedIn, with your agent.",
+    "description": "Let your agent prepare your SyncedIn profile. Review what you share, build your twin, and grant expiring access to find matches and draft introductions.",
+    "caption": "ChatGPT. Claude. Codex. Your context, your approval.",
+    "alt": "SyncedIn: Join with your agent. Private draft, your review, your SyncedIn twin.\n"
   }
 ]

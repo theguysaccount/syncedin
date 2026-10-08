@@ -80,6 +80,7 @@ export default async function SettingsPage() {
         </section>
 
         {/* Change password */}
+        <section className="settings-card"><h2>Connected agents</h2><Link href="/agents" className="settings-row-link"><span>Review drafts and manage agent access</span><span className="arrow">→</span></Link></section>
         <section className="settings-card"><h2>Blocked accounts</h2><BlockedAccounts accounts={blockedAccounts} /></section>
         <section className="settings-card">
           <h2>Change password</h2>

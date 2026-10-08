@@ -24,7 +24,7 @@ function nextFromForm(formData: FormData): string {
 }
 
 function formContext(formData: FormData) {
-  return { invite: String(formData.get("invite") ?? ""), conference: String(formData.get("conference") ?? "") };
+  return { invite: String(formData.get("invite") ?? ""), conference: String(formData.get("conference") ?? ""), next: String(formData.get("next") ?? "") };
 }
 
 function returnToLogin(formData: FormData, status: Record<string, string>): never {

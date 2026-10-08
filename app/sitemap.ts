@@ -34,6 +34,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${APP_URL}/`, changeFrequency: "daily", priority: 1.0 },
     { url: `${APP_URL}/article`, changeFrequency: "monthly", priority: 0.9 },
     { url: `${APP_URL}/blog`, changeFrequency: "weekly", priority: 0.9 },
+    { url: `${APP_URL}/agents`, changeFrequency: "monthly", priority: 0.7 },
 
     // === Comparison pages (high-intent SEO) ===
     { url: `${APP_URL}/vs/lemlist`, changeFrequency: "monthly", priority: 0.8 },

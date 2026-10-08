@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { Capacitor } from "@capacitor/core";
 import { createClient } from "@/lib/supabase/client";
 import { authDestination } from "@/lib/auth-return";
+import type { Provider } from "@supabase/supabase-js";
+import { MessageCircle } from "lucide-react";
 
 // Google "G" logo — official multi-color inline SVG.
 function GoogleLogo() {
@@ -59,13 +61,17 @@ function AppleLogo() {
 export function OAuthButtons({
   invite,
   conference,
+  next,
+  chatgptEnabled=false,
   acceptedTerms = false
 }: {
   invite?: string;
   conference?: string;
+  next?: string;
+  chatgptEnabled?: boolean;
   acceptedTerms?: boolean;
 }) {
-  const [busy, setBusy] = useState<"google" | "apple" | null>(null);
+  const [busy, setBusy] = useState<"google" | "apple" | "custom:chatgpt" | null>(null);
   const [err, setErr] = useState<string>("");
   const [web, setWeb] = useState(false);
   useEffect(() => { setWeb(!Capacitor.isNativePlatform()); }, []);
@@ -74,20 +80,20 @@ export function OAuthButtons({
     const origin =
       typeof window !== "undefined" ? window.location.origin : "";
     const params = new URLSearchParams();
-    params.set("next", authDestination({ invite, conference }));
+    params.set("next", authDestination({ invite, conference, next }));
     const qs = params.toString();
     return `${origin}/auth/callback${qs ? `?${qs}` : ""}`;
   }
 
-  async function go(provider: "google" | "apple") {
+  async function go(provider: "google" | "apple" | "custom:chatgpt") {
     if (!acceptedTerms || Capacitor.isNativePlatform()) return;
     setErr("");
     setBusy(provider);
     try {
       const supabase = createClient();
       const { data, error } = await supabase.auth.signInWithOAuth({
-        provider,
-        options: { redirectTo: callbackUrl() }
+        provider: provider as Provider,
+        options: { redirectTo: callbackUrl(), ...(provider === "custom:chatgpt" ? { scopes: "openid profile email" } : {}) }
       });
       if (error || !data?.url) {
         throw new Error(error?.message || `${provider} sign-in failed`);
@@ -102,6 +108,7 @@ export function OAuthButtons({
   if (!web) return null;
   return (
     <div className="space-y-2"><div className="auth-divider">or</div>
+      {chatgptEnabled && <button type="button" onClick={()=>go("custom:chatgpt")} disabled={busy!==null||!acceptedTerms} className="retro-btn w-full"><MessageCircle size={18} aria-hidden="true" />{busy==="custom:chatgpt"?"Connecting...":"Continue with ChatGPT"}</button>}
       <button
         type="button"
         onClick={() => go("google")}

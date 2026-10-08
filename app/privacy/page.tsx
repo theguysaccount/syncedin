@@ -22,7 +22,7 @@ export default function PrivacyPage() {
         <div className="retro-label">privacy policy</div>
         <h1 className="retro-h1 text-3xl mt-3">Your data, your twin, your call.</h1>
         <p className="retro-dim text-xs mt-2">
-          Last updated: 2026-10-07
+          Last updated: 2026-10-08
         </p>
       </section>
 
@@ -88,6 +88,31 @@ export default function PrivacyPage() {
             <a className="underline" href="https://privacy.claude.com/en/articles/7996866-how-long-do-you-store-my-organization-s-data">
               Anthropic&apos;s commercial data-retention policy
             </a>.
+          </p>
+        </section>
+
+        <section>
+          <h2 className="text-xl font-semibold mb-2">Profiles prepared by your agent</h2>
+          <p>
+            You can authorize your agent to submit a professional summary for
+            a private profile draft. Do not submit raw chat histories, secrets,
+            private files, or other people&apos;s personal data. Drafts expire after
+            24 hours; expired drafts are cleared during the next agent signup
+            or drafting request. Only you can sign in and approve the profile.
+            Approved context becomes part of your twin and is processed under
+            the same rules as context you enter yourself.
+          </p>
+          <p className="mt-2">
+            Optional agent access expires after 24 hours and can be revoked at
+            any time on the Connected agents page. It permits reading your
+            approved professional profile, finding public matches, and saving
+            private introduction drafts. It does not expose phone numbers,
+            email addresses, or raw exports, or permit sending messages,
+            accepting commitments, or changing notification consent. A private
+            review ticket is stored in your browser with a 24-hour expiry to
+            preserve the draft through sign-in and is removed after approval.
+            Signing in with ChatGPT, when available, verifies identity; it
+            does not grant access to your ChatGPT conversation history.
           </p>
         </section>
 

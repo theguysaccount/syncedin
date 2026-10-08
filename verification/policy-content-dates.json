@@ -1,7 +1,7 @@
 {
   "privacy": {
-    "date": "2026-10-07",
-    "source": "Product release: phone consent, provider retention, account deletion, and replay masking disclosures."
+    "date": "2026-10-08",
+    "source": "Agent onboarding release: private drafts, human review, expiring scopes, revocation, browser review tickets, and identity versus conversation access disclosures."
   },
   "terms": {
     "date": "2026-10-06",

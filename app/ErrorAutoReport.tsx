@@ -63,7 +63,7 @@ export function ErrorAutoReport() {
         message: payload.message,
         stack: payload.stack,
         source: payload.source,
-        url: window.location.href,
+        url: window.location.pathname.startsWith("/agent/") ? window.location.origin + window.location.pathname : window.location.href,
         user_agent: navigator.userAgent,
         extras: payload.extras
       };
@@ -142,7 +142,7 @@ export function reportClientError(payload: {
   try {
     const body = {
       ...payload,
-      url: window.location.href,
+      url: window.location.pathname.startsWith("/agent/") ? window.location.origin + window.location.pathname : window.location.href,
       user_agent: navigator.userAgent
     };
     const data = JSON.stringify(body);

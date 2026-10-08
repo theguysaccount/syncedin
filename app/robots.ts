@@ -9,6 +9,7 @@ import type { MetadataRoute } from "next";
  */
 const PRIVATE_PATHS = [
           "/api/",
+          "/agent/",
           "/admin/",
           "/dashboard",
           "/onboarding",

@@ -233,3 +233,38 @@
   .app-frame * { scroll-behavior: auto; animation-duration: .01ms !important; }
   .app-frame .sync-meter animate { display: none; }
 }
+
+.agent-page { min-height: 75vh; }
+.agent-page-nav { max-width: 1080px; margin-inline: auto; padding: 22px 24px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.agent-page-content { max-width: 760px; padding: 28px 24px 64px; margin-inline: auto; }
+.agent-page-content h1 { font-size: 32px; line-height: 1.25; letter-spacing: 0; }
+.agent-page-content h2 { font-size: 20px; }
+.agent-provider-modes { display: flex; border-bottom: 1px solid var(--border); gap: 4px; margin-bottom: 24px; }
+.agent-provider-modes button { min-height: 44px; padding: 10px 16px; font-size: 14px; color: var(--text-dim); border-bottom: 2px solid transparent; }
+.agent-provider-modes button[aria-pressed="true"] { color: var(--accent); border-bottom-color: var(--accent); }
+.agent-setup label,.agent-review-form label:not(.terms-check) { display: block; font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+.agent-setup textarea { font-size: 15px; line-height: 1.65; resize: vertical; min-height: 190px; }
+.agent-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
+.agent-actions .retro-btn { min-height: 44px; }
+.agent-endpoint { margin-top: 28px; display: flex; align-items: center; flex-wrap: wrap; gap: 10px; color: var(--text-dim); font-size: 13px; }
+.agent-endpoint code { overflow-wrap: anywhere; }
+.agent-import { margin-top: 28px; border-top: 1px solid var(--border); padding-top: 20px; }
+.agent-import summary { cursor: pointer; font-weight: 600; }
+.agent-import form { display: grid; gap: 14px; margin-top: 18px; }
+.agent-import .retro-btn { justify-self: start; }
+.agent-access { border-top: 1px solid var(--border); padding-top: 28px; margin-top: 32px; }
+.agent-access-row { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding-block: 18px; border-bottom: 1px solid var(--border); }
+.agent-access-row p { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+.agent-draft { padding: 20px 0; border-bottom: 1px solid var(--border); }
+.agent-draft p { white-space: pre-wrap; overflow-wrap: anywhere; }
+.agent-review-form { display: grid; gap: 22px; }
+.agent-review-form textarea { resize: vertical; min-height: 96px; }
+.agent-review-note { padding-left: 12px; border-left: 3px solid var(--accent); font-size: 14px; color: var(--text-dim); }
+.agent-links { display: flex; gap: 20px; flex-wrap: wrap; font-size: 13px; color: var(--text-dim); margin-top: 36px; }
+.agent-onboarding-choice { margin-bottom: 18px; }
+@media (max-width:639px) {
+  .agent-page-nav,.agent-page-content { padding-inline: 18px; }
+  .agent-page-content h1 { font-size: 27px; }
+  .agent-provider-modes button { padding-inline: 10px; font-size: 13px; }
+  .agent-access-row { align-items: flex-start; flex-wrap: wrap; }
+}

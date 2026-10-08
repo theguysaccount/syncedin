@@ -30,6 +30,9 @@ Each user builds a digital twin by uploading any combination of LinkedIn data, C
 
 ## Key product surfaces
 
+- [Agent signup protocol](${SITE_URL}/join.md) - prepare a private profile draft, request human review, then use expiring scoped access
+- [Agent connection](${SITE_URL}/agents) - ChatGPT, Claude, Codex, and other agents
+- [Agent discovery](${SITE_URL}/.well-known/agent.json)
 - [Home](${SITE_URL}/) — landing page with the hero pitch and demo conversation
 - [Build my twin](${SITE_URL}/login) — onboarding flow (3 minutes)
 - [Talk to your twin](${SITE_URL}/twin) — chat directly with your own AI clone

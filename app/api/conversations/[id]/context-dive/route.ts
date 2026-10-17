@@ -35,11 +35,9 @@ import { anthropic, TWIN_MODEL } from "@/lib/anthropic";
  * conversation can stay short — coordination already happened
  * off-stage.
  */
-export async function GET(
-  _req: Request,
-  { params }: { params: { id: string } }
-) {
-  const supabase = createClient();
+export async function GET(_req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();
@@ -67,11 +65,9 @@ export async function GET(
   });
 }
 
-export async function POST(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
-  const supabase = createClient();
+export async function POST(req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();

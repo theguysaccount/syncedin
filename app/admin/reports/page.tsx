@@ -56,7 +56,7 @@ function signatureOf(message: string, stored: string | null): string {
 }
 
 export default async function AdminReportsPage() {
-  const supabase = createClient();
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();

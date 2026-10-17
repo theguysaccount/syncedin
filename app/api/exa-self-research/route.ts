@@ -14,7 +14,7 @@ import { exaPeopleSearch } from "@/lib/exa";
  *     the user can edit and use as their twin context.
  */
 export async function POST(req: Request) {
-  const supabase = createClient();
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();

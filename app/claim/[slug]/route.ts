@@ -17,15 +17,13 @@ import { assignConversationSlug } from "@/lib/conversationSlugServer";
  * Skips claiming if the visitor is the same person as the inviter (treats it
  * as "preview your own invite" and just sends them to the dashboard).
  */
-export async function GET(
-  req: Request,
-  { params }: { params: { slug: string } }
-) {
+export async function GET(req: Request, props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
   const url = new URL(req.url);
   const slug = (params.slug || "").toLowerCase();
   if (!slug) return NextResponse.redirect(`${url.origin}/dashboard`);
 
-  const supabase = createClient();
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();

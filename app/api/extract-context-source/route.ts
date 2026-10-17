@@ -18,7 +18,7 @@ import { scrapePublicProfile } from "@/lib/scrape";
  * navbar text, ads, and follower counts.
  */
 export async function POST(req: Request) {
-  const supabase = createClient();
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();

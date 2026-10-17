@@ -16,7 +16,7 @@ import type { Profile, TwinProfile, Message } from "@/lib/types";
  * Constraint: the OTHER participant must be a test persona (is_test_persona).
  */
 export async function POST(req: Request) {
-  const supabase = createClient();
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();
@@ -110,7 +110,8 @@ export async function POST(req: Request) {
     counterpart: realProfile as Profile,
     counterpartTwin:
       (realTwin as Pick<TwinProfile, "goals" | "deal_preferences">) ?? null,
-    recentDeltas: []
+    recentDeltas: [],
+    goalOverride: conv.goal_override ?? null
   });
 
   const history = buildConversationHistory(

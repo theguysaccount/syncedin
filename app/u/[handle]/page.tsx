@@ -32,11 +32,12 @@ function defaultTheme(): Theme {
   };
 }
 
-export async function generateMetadata({
-  params
-}: {
-  params: { handle: string };
-}): Promise<Metadata> {
+export async function generateMetadata(
+  props: {
+    params: Promise<{ handle: string }>;
+  }
+): Promise<Metadata> {
+  const params = await props.params;
   const service = createServiceClient();
   const { data: p } = await service
     .from("profiles")
@@ -57,11 +58,12 @@ export async function generateMetadata({
   };
 }
 
-export default async function PortfolioPage({
-  params
-}: {
-  params: { handle: string };
-}) {
+export default async function PortfolioPage(
+  props: {
+    params: Promise<{ handle: string }>;
+  }
+) {
+  const params = await props.params;
   const handle = (params.handle || "").toLowerCase();
   const service = createServiceClient();
 
@@ -198,7 +200,7 @@ export default async function PortfolioPage({
 
   // Owner check — only the signed-in user matching this profile sees the
   // edit affordances.
-  const supabase = createClient();
+  const supabase = (await createClient());
   const {
     data: { user: viewer }
   } = await supabase.auth.getUser();

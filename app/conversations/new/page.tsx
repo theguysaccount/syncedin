@@ -3,11 +3,12 @@ import { ArrowLeft } from "lucide-react";
 import { AppShell } from "../../AppShell";
 import NewConversationFinder from "./NewConversationFinder";
 
-export default function NewConversationPage({
-  searchParams
-}: {
-  searchParams: { error?: string };
-}) {
+export default async function NewConversationPage(
+  props: {
+    searchParams: Promise<{ error?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const errors: Record<string, string> = {
     not_found:
       "Couldn't find that user. Try searching by name above, or invite them.",

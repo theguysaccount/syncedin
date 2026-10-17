@@ -8,7 +8,7 @@ import { AppShell } from "../../AppShell";
 import { BrandScrapeFields } from "../../conferences/BrandScrapeFields";
 
 export default async function NewCommunityPage() {
-  const supabase = createClient();
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();

@@ -18,7 +18,7 @@ import { anthropic, TWIN_MODEL } from "@/lib/anthropic";
  * regenerates client-side every time the form context changes.
  */
 export async function POST(req: Request) {
-  const supabase = createClient();
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();

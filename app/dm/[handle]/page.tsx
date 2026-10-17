@@ -16,11 +16,12 @@ import { DmChat } from "./DmChat";
  */
 export const dynamic = "force-dynamic";
 
-export async function generateMetadata({
-  params
-}: {
-  params: { handle: string };
-}): Promise<Metadata> {
+export async function generateMetadata(
+  props: {
+    params: Promise<{ handle: string }>;
+  }
+): Promise<Metadata> {
+  const params = await props.params;
   const service = createServiceClient();
   const { data: p } = await service
     .from("profiles")
@@ -42,11 +43,12 @@ export async function generateMetadata({
   };
 }
 
-export default async function DmPage({
-  params
-}: {
-  params: { handle: string };
-}) {
+export default async function DmPage(
+  props: {
+    params: Promise<{ handle: string }>;
+  }
+) {
+  const params = await props.params;
   const handle = (params.handle || "").toLowerCase();
   if (!handle) notFound();
   const service = createServiceClient();

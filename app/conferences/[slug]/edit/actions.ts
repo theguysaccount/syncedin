@@ -6,7 +6,7 @@ import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { contentSafetyResponse } from "@/lib/content-safety";
 
 export async function updateConference(formData: FormData) {
-  const supabase = createClient();
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();
@@ -56,7 +56,7 @@ export async function updateConference(formData: FormData) {
 }
 
 export async function deleteConference(formData: FormData) {
-  const supabase = createClient();
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();

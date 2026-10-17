@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { notifyAcceptanceNudge, notifyAgreementSealed } from "@/lib/notify";
 
@@ -12,7 +12,7 @@ import { notifyAcceptanceNudge, notifyAgreementSealed } from "@/lib/notify";
  *             so the twins regenerate from there with the objection in context.
  */
 export async function POST(req: Request) {
-  const supabase = createClient();
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();
@@ -88,16 +88,16 @@ export async function POST(req: Request) {
     const bothAccepted =
       accepted.has(conv.participant_a) && accepted.has(conv.participant_b);
     if (bothAccepted) {
-      notifyAgreementSealed({ conversationId: conversation_id }).catch((e) =>
+      after(() => notifyAgreementSealed({ conversationId: conversation_id }).catch((e) =>
         console.warn("[respond-agreement] notify failed", e)
-      );
+      ));
     } else {
       // One-sided accept: the deal can ONLY seal if the counterpart
       // knows about it. Nudge them (deduped, pref-respecting, persona-safe).
-      notifyAcceptanceNudge({
+      after(() => notifyAcceptanceNudge({
         conversationId: conversation_id,
         acceptedByUserId: user.id
-      }).catch((e) => console.warn("[respond-agreement] nudge failed", e));
+      }).catch((e) => console.warn("[respond-agreement] nudge failed", e)));
     }
     return NextResponse.json({ ok: true, both_accepted: bothAccepted });
   }

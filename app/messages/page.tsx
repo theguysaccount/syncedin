@@ -20,12 +20,13 @@ export const metadata = {
   title: "Messages · SyncedIn"
 };
 
-export default async function MessagesPage({
-  searchParams
-}: {
-  searchParams?: { blocked?: string; owed?: string };
-}) {
-  const supabase = createClient();
+export default async function MessagesPage(
+  props: {
+    searchParams?: Promise<{ blocked?: string; owed?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();

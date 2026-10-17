@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import { connectionBlocked } from "@/lib/user-safety";
 import { revalidatePath } from "next/cache";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
@@ -12,7 +13,7 @@ import { assignConversationSlug } from "@/lib/conversationSlugServer";
  * user's judgment overrides the AI score and is kept as a calibration signal.
  */
 export async function setExcitement(formData: FormData) {
-  const supabase = createClient();
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();
@@ -52,7 +53,7 @@ export async function setExcitement(formData: FormData) {
  * Test personas are seeded users with is_test_persona = true.
  */
 export async function startTestConversation(formData: FormData) {
-  const supabase = createClient();
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();
@@ -100,7 +101,7 @@ export async function startTestConversation(formData: FormData) {
  * SyncedIn user, picked from the directory on the dashboard.
  */
 export async function startConversationWithUser(formData: FormData) {
-  const supabase = createClient();
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();
@@ -140,11 +141,10 @@ export async function startConversationWithUser(formData: FormData) {
   }
   // #69 — short-slug for /c/<slug>.
   assignConversationSlug(conv.id as string).catch(() => {});
-  // Fire-and-forget notification to both participants.
-  notifyNewConnection({
+  after(() => notifyNewConnection({
     conversationId: conv.id,
     participantA: user.id,
     participantB: otherId
-  }).catch((e) => console.warn("[start-conv] notify failed", e));
+  }).catch((e) => console.warn("[start-conv] notify failed", e)));
   redirect(`/conversations/${conv.id}`);
 }

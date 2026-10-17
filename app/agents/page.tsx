@@ -14,7 +14,7 @@ export const metadata: Metadata = withPublicSEO("/agents", {
 export default async function AgentsPage() {
   const {
     data: { user },
-  } = await createClient().auth.getUser();
+  } = await (await createClient()).auth.getUser();
   return (
     <main className="app-frame agent-page agent-signup-page">
       <ThemeSync />

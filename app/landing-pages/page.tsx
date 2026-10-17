@@ -205,7 +205,7 @@ const GROUPS: Group[] = [
 ];
 
 export default async function LandingPagesIndex() {
-  const supabase = createClient();
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();

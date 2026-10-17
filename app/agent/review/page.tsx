@@ -3,12 +3,13 @@ import { createClient } from "@/lib/supabase/server";
 import { BrandMark } from "../../BrandMark";
 import { ThemeSync } from "../../ThemeSync";
 import { AgentReview } from "./AgentReview";
-export default async function ReviewPage({
-  searchParams,
-}: {
-  searchParams: { id?: string };
-}) {
-  const db = createClient();
+export default async function ReviewPage(
+  props: {
+    searchParams: Promise<{ id?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
+  const db = (await createClient());
   const {
     data: { user },
   } = await db.auth.getUser();

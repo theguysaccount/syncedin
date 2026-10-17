@@ -10,7 +10,7 @@ import { BulkReachToolkit } from "../../BulkReachToolkit";
  * actually wants to coordinate with come in too.
  */
 export default async function InviteGatePage() {
-  const supabase = createClient();
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();

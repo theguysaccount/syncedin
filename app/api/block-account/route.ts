@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { sendEmail } from "@/lib/email";
 export async function POST(req: Request) {
-  const { data: { user } } = await createClient().auth.getUser();
+  const { data: { user } } = await (await createClient()).auth.getUser();
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   const body = await req.json().catch(() => null);
   const target = body?.blocked_user_id;
@@ -24,7 +24,7 @@ export async function POST(req: Request) {
 }
 
 export async function DELETE(req: Request) {
-  const { data: { user } } = await createClient().auth.getUser();
+  const { data: { user } } = await (await createClient()).auth.getUser();
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   const body = await req.json().catch(() => null);
   if (typeof body?.blocked_user_id !== "string") return NextResponse.json({ error: "invalid_account" }, { status: 400 });

@@ -26,7 +26,7 @@ type PollRow = {
 };
 
 export default async function PollListPage() {
-  const supabase = createClient();
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();

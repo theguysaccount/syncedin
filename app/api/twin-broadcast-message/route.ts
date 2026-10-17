@@ -21,7 +21,7 @@ import type { Profile, TwinProfile } from "@/lib/types";
  * once per dashboard load.
  */
 export async function GET(req: Request) {
-  const supabase = createClient();
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();

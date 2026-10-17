@@ -17,7 +17,7 @@ const VALID_CATEGORIES = new Set([
 ]);
 
 export async function POST(req: Request) {
-  const supabase = createClient();
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();

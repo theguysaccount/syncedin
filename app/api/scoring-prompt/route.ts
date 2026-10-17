@@ -14,7 +14,7 @@ import { DEFAULT_SCORING_PROMPT } from "@/lib/scoring";
  * conversations, so the score "learns" each time the user adjusts it.
  */
 export async function GET() {
-  const supabase = createClient();
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();
@@ -44,7 +44,7 @@ export async function GET() {
 }
 
 export async function PUT(req: Request) {
-  const supabase = createClient();
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();

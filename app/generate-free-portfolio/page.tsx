@@ -27,7 +27,7 @@ export const metadata: Metadata = withPublicSEO('/generate-free-portfolio', {
 });
 
 export default async function GenerateFreePortfolioPage() {
-  const supabase = createClient();
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();

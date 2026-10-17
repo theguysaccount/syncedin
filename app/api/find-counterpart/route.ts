@@ -14,7 +14,7 @@ import { discoveryOptions, discoveryQuery, matchesCity, rankDiscoveryPeople } fr
  * skip Exa (no point — we know who they are).
  */
 export async function POST(req: Request) {
-  const supabase = createClient();
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();

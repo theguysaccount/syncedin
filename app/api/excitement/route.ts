@@ -7,7 +7,7 @@ import { createClient, createServiceClient } from "@/lib/supabase/server";
  * taste — every override is a training signal.
  */
 export async function POST(req: Request) {
-  const supabase = createClient();
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();

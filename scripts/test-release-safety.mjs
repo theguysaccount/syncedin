@@ -293,9 +293,10 @@ test("feedback stays above the mobile navigation without removing either control
   assert(fs.readFileSync("app/FeedbackBubble.tsx", "utf8").includes("var(--feedback-bottom-offset, 20px)"));
   assert(fs.readFileSync("app/product.css", "utf8").includes("body:has(.mobile-tabs) .feedback-bubble { --feedback-bottom-offset: 84px; }"));
 });
-function closedDoorsFixture({ blocked = false, unsafe = false, partialFailure = false, pause = null } = {}) {
+function closedDoorsFixture({ blocked = false, unsafe = false, partialFailure = false, pause = null, goal = null } = {}) {
   const rows = [];
   const checked = [];
+  const prompts = [];
   let attempts = 0;
   const profile = id => ({ id, display_name: id, email: `${id}@example.test` });
   const service = { from(table) {
@@ -306,7 +307,7 @@ function closedDoorsFixture({ blocked = false, unsafe = false, partialFailure = 
       insert(value) { insert = value; return query; },
       async single() {
         if (insert) { const row = { id: `saved-${rows.length}`, ...insert }; rows.push(row); return {data:row,error:null}; }
-        if (table === "conversations") return {data:{id:"qa-conversation",participant_a:"qa-a",participant_b:"qa-b"}};
+        if (table === "conversations") return {data:{id:"qa-conversation",participant_a:"qa-a",participant_b:"qa-b",goal_override:goal}};
         return {data:profile(id)};
       },
       async maybeSingle() { return {data:{goals:"Work on useful research",deal_preferences:"Exchange expertise",ai_export_blob:null}}; },
@@ -316,7 +317,7 @@ function closedDoorsFixture({ blocked = false, unsafe = false, partialFailure = 
   const route = load("app/api/closed-doors/route.ts", {
     "next/server": {NextResponse:{json:(body,options)=>Response.json(body, options)}},
     "@/lib/supabase/server": {createClient:()=>({auth:{getUser:async()=>({data:{user:{id:"qa-a"}}})}}),createServiceClient:()=>service},
-    "@/lib/anthropic": {TWIN_MODEL:"test",withAnthropicRetry:async fn=>{attempts++;return fn();},anthropic:{messages:{stream:()=>({
+    "@/lib/anthropic": {TWIN_MODEL:"test",withAnthropicRetry:async fn=>{attempts++;return fn();},anthropic:{messages:{create:async args=>{prompts.push(args);return {content:[{type:"text",text:JSON.stringify({messages:[{sender:"a",text:"Research question."},{sender:"b",text:"Research answer."},{sender:"a",text:"Research follow-up."},{sender:"b",text:"Research detail."}]})}]};},stream:args=>{prompts.push(args);return ({
       abort() {}, async *[Symbol.asyncIterator]() {
         yield {type:"content_block_start",index:0,content_block:{type:"tool_use",name:"write_exchange"}};
         yield {type:"content_block_delta",index:0,delta:{type:"input_json_delta",partial_json:'{"messages":[{"sender":"a","text":"First checked message."},'}};
@@ -324,7 +325,7 @@ function closedDoorsFixture({ blocked = false, unsafe = false, partialFailure = 
         if (partialFailure) throw new Error("Provider unavailable");
         yield {type:"content_block_delta",index:0,delta:{type:"input_json_delta",partial_json:'{"sender":"b","text":"Second checked message."},{"sender":"a","text":">>> AGREEMENT: Exchange research on Friday."}]}'}};
       }
-    })}}},
+    });}}}},
     "@/lib/twin-prompt": {AGREEMENT_MARKER:">>> AGREEMENT:",hasAgreement:text=>text.includes(">>> AGREEMENT:"),scrubAiTells:text=>text},
     "@/lib/user-safety": {connectionBlocked:async()=>blocked},
     "@/lib/content-safety": {contentSafetyResponse:async text=>{checked.push(text);return unsafe ? Response.json({error:"Cannot share this content."},{status:422}) : null;}},
@@ -332,8 +333,22 @@ function closedDoorsFixture({ blocked = false, unsafe = false, partialFailure = 
     "@/lib/conversation-stream": conversationStream,
     "@/lib/conversation-json": conversationJson
   });
-  return { rows,checked,attempts:()=>attempts,post:()=>route.POST(new Request("https://example.test/api/closed-doors",{method:"POST",headers:{"content-type":"application/json",accept:"text/event-stream"},body:JSON.stringify({conversation_id:"qa-conversation"})})) };
+  return { rows,checked,prompts,attempts:()=>attempts,post:(stream=true)=>route.POST(new Request("https://example.test/api/closed-doors",{method:"POST",headers:{"content-type":"application/json",accept:stream?"text/event-stream":"application/json"},body:JSON.stringify({conversation_id:"qa-conversation"})})) };
 }
+test("fresh conversations honor the custom goal in both streaming and JSON generation", async () => {
+  const goal = "Compare evaluation methods in this chat only. No calls, email, fundraising or external commitments.";
+  for (const streaming of [true, false]) {
+    const fixture = closedDoorsFixture({goal});
+    const response = await fixture.post(streaming);
+    assert.equal(response.status,200);
+    if (streaming) await conversationStream.readConversationEvents(response,()=>{},new AbortController().signal);
+    else await response.json();
+    assert(fixture.prompts[0].system.includes(goal));
+    assert(fixture.prompts[0].system.includes("takes priority"));
+    assert(fixture.prompts[0].system.includes("availability, dates, durations"));
+    assert(!fixture.prompts[0].system.includes("The FINAL message must end"));
+  }
+});
 test("closed-doors route streams checked, persisted rows before the model finishes", async () => {
   let release;
   const fixture = closedDoorsFixture({pause:new Promise(resolve=>{release=resolve;})});
@@ -511,10 +526,62 @@ test("native login has no social-login or external magic-link action", () => {
 });
 test("required phone capture is distinct from permission to text", () => {
   const phone = load("lib/phone.ts", {});
+  assert.equal(phone.phonePreferencePatch("+12025550123", "capture_only").phone_consent_at, null);
   assert.equal(phone.phonePreferencePatch("+12025550123", "signup", false).phone_consent_at, null);
   assert(phone.phonePreferencePatch("+12025550123", "notification_settings", true).phone_consent_at);
   const sql = fs.readFileSync("supabase/migrations/0009_release_preferences.sql", "utf8");
   assert(sql.includes("case when opted_in then now() else null end"));
+});
+function notificationActions({ user = {id:"qa-owner"}, prefs = null, insertError = null, send = {ok:true}, registration = {ok:true} } = {}) {
+  const calls = {registered:[],sent:[],inserted:[],saved:[],updated:[]};
+  const query = { select(){return query;},eq(){return query;},async maybeSingle(){return {data:prefs};},
+    async insert(row){calls.inserted.push(row);return {error:insertError};},
+    async upsert(row){calls.saved.push(row);return {error:null};},
+    update(row){calls.updated.push(row);return query;},then(resolve,reject){return Promise.resolve({error:null}).then(resolve,reject);} };
+  const actions = load("app/settings/notifications/actions.ts", {
+    "next/navigation":{redirect:url=>{throw new Error(`redirect:${url}`);}},
+    "next/cache":{revalidatePath:()=>{}},
+    "@/lib/supabase/server":{createClient:async()=>({auth:{getUser:async()=>({data:{user}})}}),createServiceClient:()=>({from:()=>query})},
+    "@/lib/phone":load("lib/phone.ts",{}),
+    "@/lib/claw-messenger":{clawMessengerConfigured:()=>true,registerClawRoute:async phone=>{calls.registered.push(phone);return registration;},sendClawMessage:async args=>{calls.sent.push(args);return send;}}
+  });
+  return {...actions,calls};
+}
+test("saving a number without text consent never registers it with Claw", async()=>{
+  const fixture=notificationActions(); const form=new FormData();form.set("phone_number","+12025550123");
+  await assert.rejects(fixture.saveNotificationPrefs(form),/saved=1/);
+  assert.equal(fixture.calls.saved[0].phone_consent_at,null);
+  assert.equal(fixture.calls.saved[0].on_text_notifications,false);
+  assert.equal(fixture.calls.registered.length,0);
+});
+test("text setup failure is visible instead of reporting successful setup", async()=>{
+  const fixture=notificationActions({registration:{ok:false,error:"unavailable"}});const form=new FormData();form.set("phone_number","+12025550123");form.set("on_text_notifications","on");
+  await assert.rejects(fixture.saveNotificationPrefs(form),/error=text_setup/);
+});
+test("text tests require authentication and saved explicit consent",async()=>{
+  for(const options of [{user:null},{prefs:{phone_number:"+12025550123",on_text_notifications:true,phone_consent_at:null}}]){
+    const fixture=notificationActions(options);
+    await assert.rejects(fixture.sendTestText(),/redirect:/);
+    assert.equal(fixture.calls.sent.length,0);assert.equal(fixture.calls.inserted.length,0);
+  }
+});
+test("text test uses the saved owner number, rate limits concurrency and records acceptance only",async()=>{
+  const prefs={phone_number:"+12025550123",on_text_notifications:true,phone_consent_at:"2026-10-17",preferred_messaging_service:"SMS"};
+  const limited=notificationActions({prefs,insertError:{code:"23505"}});
+  await assert.rejects(limited.sendTestText(),/error=test_wait/);assert.equal(limited.calls.sent.length,0);
+  const fixture=notificationActions({prefs});await assert.rejects(fixture.sendTestText(),/test=accepted/);
+  assert.equal(fixture.calls.sent[0].to,prefs.phone_number);assert.equal(fixture.calls.sent[0].service,"SMS");
+  assert.deepEqual(fixture.calls.updated,[{sent_channels:["phone"]}]);
+  const failed=notificationActions({prefs,send:{ok:false,error:"timeout"}});
+  await assert.rejects(failed.sendTestText(),/error=text_failed/);assert.equal(failed.calls.updated.length,0);
+});
+test("notification dispatch survives the serverless response lifecycle",()=>{
+  for(const file of ["app/api/send-message/route.ts","app/api/respond-agreement/route.ts","app/conversations/new/actions.ts","app/dashboard/actions.ts","app/onboarding/actions.ts"]){
+    assert(fs.readFileSync(file,"utf8").includes("after(() => notify"),file);
+  }
+  const notify=fs.readFileSync("lib/notify.ts","utf8");
+  assert(notify.includes("on_text_notifications ?? false"));
+  assert(notify.includes("&& !!recipient.prefs.phone_consent_at"));
 });
 test("privacy disclosures cover phone messaging and mask replay text", () => {
   const privacy = fs.readFileSync("app/privacy/page.tsx", "utf8");

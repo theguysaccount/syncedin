@@ -373,7 +373,7 @@ function notificationFixture({ legacy = false, email = "ok", phone = "ok", disab
       then(resolve, reject) {
         if (update) { updates.push({ update, filters }); return Promise.resolve({ error: null }).then(resolve, reject); }
         if (table === "profiles" && legacy && columns.includes("phone_number")) return Promise.resolve({ data: null, error: { code: "42703" } }).then(resolve, reject);
-        const data = table === "profiles" ? { id: "recipient", email: "recipient@example.com", display_name: "Recipient" } : { on_call_scheduled: !disabled, ...(legacy ? {} : { phone_number: "+12025550123" }) };
+        const data = table === "profiles" ? { id: "recipient", email: "recipient@example.com", display_name: "Recipient" } : { on_call_scheduled: !disabled, ...(legacy ? {} : { phone_number: "+12025550123", on_text_notifications: true, phone_consent_at: "2026-10-17T12:00:00Z" }) };
         return Promise.resolve({ data, error: null }).then(resolve, reject);
       }
     };

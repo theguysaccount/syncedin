@@ -21,7 +21,7 @@ export const runtime = "nodejs";
 const MAX_INPUT_CHARS = 60_000; // ~15k tokens of raw chat text
 
 export async function POST(req: Request) {
-  const supabase = createClient();
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();

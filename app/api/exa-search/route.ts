@@ -7,7 +7,7 @@ import { exaPeopleSearch } from "@/lib/exa";
  * Auth-gated — only signed-in users can search.
  */
 export async function POST(req: Request) {
-  const supabase = createClient();
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();

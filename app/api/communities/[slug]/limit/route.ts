@@ -10,11 +10,9 @@ import { createClient, createServiceClient } from "@/lib/supabase/server";
  */
 export const dynamic = "force-dynamic";
 
-export async function POST(
-  req: Request,
-  { params }: { params: { slug: string } }
-) {
-  const supabase = createClient();
+export async function POST(req: Request, props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();

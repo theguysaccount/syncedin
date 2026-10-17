@@ -5,15 +5,16 @@ import { Wordmark } from "../../../Wordmark";
 import { updateConference, deleteConference } from "./actions";
 import { BrandScrapeFields } from "../../BrandScrapeFields";
 
-export default async function EditConferencePage({
-  params
-}: {
-  params: { slug: string };
-}) {
+export default async function EditConferencePage(
+  props: {
+    params: Promise<{ slug: string }>;
+  }
+) {
+  const params = await props.params;
   const slug = (params.slug || "").toLowerCase();
   if (!slug) notFound();
 
-  const supabase = createClient();
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();

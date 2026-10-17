@@ -7,7 +7,7 @@ import { BrandScrapeFields } from "../BrandScrapeFields";
 import { RoomImageUploads } from "../RoomImageUploads";
 
 export default async function NewConferencePage() {
-  const supabase = createClient();
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();

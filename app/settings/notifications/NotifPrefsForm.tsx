@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useFormStatus } from "react-dom";
+import { Send } from "lucide-react";
 
 type Initial = {
   email_address: string;
@@ -36,7 +38,7 @@ const TOGGLES: Toggle[] = [
     name: "on_text_notifications",
     label: "iMessage / SMS alerts",
     blurb:
-      "Send the important moments to your phone first. Email stays available as backup."
+      "I agree to receive SyncedIn alerts at my saved phone number. I can turn these off here at any time."
   },
   {
     name: "on_new_connection",
@@ -79,11 +81,13 @@ const TOGGLES: Toggle[] = [
 export function NotifPrefsForm({
   initial,
   action,
+  testAction,
   defaultEmail,
   defaultPhone
 }: {
   initial: Initial;
   action: (formData: FormData) => void;
+  testAction: () => void;
   defaultEmail: string;
   defaultPhone: string;
 }) {
@@ -93,8 +97,9 @@ export function NotifPrefsForm({
     <form action={action} className="mt-6 space-y-5">
       <div className="grid gap-4 md:grid-cols-2">
         <div>
-          <label className="retro-label">Phone for iMessage / SMS</label>
+          <label htmlFor="notification_phone" className="retro-label">Phone for iMessage / SMS</label>
           <input
+            id="notification_phone"
             type="tel"
             name="phone_number"
             defaultValue={state.phone_number || defaultPhone}
@@ -108,8 +113,9 @@ export function NotifPrefsForm({
           </p>
         </div>
         <div>
-          <label className="retro-label">Preferred phone route</label>
+          <label htmlFor="notification_service" className="retro-label">Preferred phone route</label>
           <select
+            id="notification_service"
             name="preferred_messaging_service"
             value={state.preferred_messaging_service}
             onChange={(e) =>
@@ -129,8 +135,9 @@ export function NotifPrefsForm({
           </p>
         </div>
         <div className="md:col-span-2">
-          <label className="retro-label">Backup email</label>
+          <label htmlFor="notification_email" className="retro-label">Backup email</label>
           <input
+            id="notification_email"
             type="email"
             name="email_address"
             defaultValue={state.email_address || defaultEmail}
@@ -156,6 +163,7 @@ export function NotifPrefsForm({
               <input
                 type="checkbox"
                 name={t.name}
+                aria-label={t.label}
                 checked={state[t.name]}
                 onChange={(e) =>
                   setState((s) => ({ ...s, [t.name]: e.target.checked }))
@@ -242,10 +250,8 @@ export function NotifPrefsForm({
         </div>
       )}
 
-      <div className="flex items-center gap-3">
-        <button type="submit" className="retro-btn retro-btn-primary">
-          Save settings
-        </button>
+      <div className="flex flex-wrap items-center gap-3">
+        <NotificationButtons testAction={testAction} />
         <span className="retro-dim text-xs">
           You can change these any time. Notifications are batched per recipient
           and never sent twice for the same event.
@@ -253,4 +259,16 @@ export function NotifPrefsForm({
       </div>
     </form>
   );
+}
+
+function NotificationButtons({ testAction }: { testAction: () => void }) {
+  const { pending } = useFormStatus();
+  return <>
+    <button type="submit" disabled={pending} className="retro-btn retro-btn-primary">
+      {pending ? "Working..." : "Save settings"}
+    </button>
+    <button type="submit" formAction={testAction} disabled={pending} className="retro-btn inline-flex items-center gap-2">
+      <Send size={16} aria-hidden="true" /> Send test text
+    </button>
+  </>;
 }

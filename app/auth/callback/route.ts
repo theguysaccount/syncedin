@@ -21,7 +21,7 @@ async function resolveLanding(
   explicitNext: string | null
 ): Promise<string> {
   try {
-    const sb = createClient();
+    const sb = (await createClient());
     const {
       data: { user }
     } = await sb.auth.getUser();
@@ -70,7 +70,7 @@ export async function GET(request: Request) {
   const type = searchParams.get("type");
   const explicitNext = safeAuthNext(searchParams.get("next"));
 
-  const supabase = createClient();
+  const supabase = (await createClient());
   let errMsg = "";
 
   if (code) {

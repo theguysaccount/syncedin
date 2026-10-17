@@ -19,7 +19,7 @@ import { sendEmail, renderEmailHtml } from "@/lib/email";
 const ADMIN_EMAIL = "jacksonjezio@gmail.com";
 
 export async function GET(req: Request) {
-  const supabase = createClient();
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();

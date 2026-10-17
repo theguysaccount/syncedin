@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  outputFileTracingRoot: __dirname,
   // This app uses native images; do not expose the unused image optimizer.
   images: { unoptimized: true },
   // Internal rewrites — keep the URL the user sees, but serve the

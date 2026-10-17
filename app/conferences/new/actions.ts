@@ -13,7 +13,7 @@ function slugify(s: string): string {
 }
 
 export async function createConference(formData: FormData) {
-  const supabase = createClient();
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();

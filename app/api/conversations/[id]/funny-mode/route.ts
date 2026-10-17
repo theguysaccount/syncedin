@@ -13,11 +13,9 @@ import { createClient, createServiceClient } from "@/lib/supabase/server";
  * but explicit.
  */
 
-export async function GET(
-  _req: Request,
-  { params }: { params: { id: string } }
-) {
-  const supabase = createClient();
+export async function GET(_req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();
@@ -44,11 +42,9 @@ export async function GET(
   });
 }
 
-export async function POST(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
-  const supabase = createClient();
+export async function POST(req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();

@@ -19,7 +19,7 @@ export const metadata = { alternates: { canonical: process.env.NEXT_PUBLIC_APP_U
  * Signed-in users still bounce to /dashboard.
  */
 export default async function HomePage() {
-  const supabase = createClient();
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();

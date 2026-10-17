@@ -20,7 +20,7 @@ import { createClient, createServiceClient } from "@/lib/supabase/server";
  * client only if the entire cascade gave up.
  */
 export async function POST() {
-  const supabase = createClient();
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();

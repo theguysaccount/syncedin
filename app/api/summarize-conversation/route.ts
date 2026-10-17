@@ -14,7 +14,7 @@ import type { Profile, TwinProfile, Message } from "@/lib/types";
  * override stays put and is kept as a calibration signal.
  */
 export async function POST(req: Request) {
-  const supabase = createClient();
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();

@@ -154,7 +154,7 @@ export default async function HypernetworkPage() {
 
   // Show the sidebar for signed-in viewers; keep this page public for
   // signed-out marketing viewers (the manifesto + chart are the pitch).
-  const supabase = createClient();
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();

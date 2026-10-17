@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import { connectionBlocked } from "@/lib/user-safety";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { notifyNewConnection } from "@/lib/notify";
@@ -45,7 +46,7 @@ const PENDING_LIMIT = 10;
 
 async function openConversationBetween(userId: string, otherId: string) {
   if (await connectionBlocked(userId, otherId)) redirect("/messages?blocked=account");
-  const supabase = createClient();
+  const supabase = (await createClient());
   // If a conversation between these two already exists, jump to it
   // — guard doesn't apply, we're not creating new dead weight, just
   // returning to existing work.
@@ -77,12 +78,11 @@ async function openConversationBetween(userId: string, otherId: string) {
   }
   // #69 — assign a short_slug for /c/<slug> resolution.
   assignConversationSlug(conv.id as string).catch(() => {});
-  // Fire-and-forget notify both sides of the new connection.
-  notifyNewConnection({
+  after(() => notifyNewConnection({
     conversationId: conv.id as string,
     participantA: userId,
     participantB: otherId
-  }).catch((e) => console.warn("[new-conv] notify failed", e));
+  }).catch((e) => console.warn("[new-conv] notify failed", e)));
   return conv.id as string;
 }
 
@@ -91,7 +91,7 @@ async function openConversationBetween(userId: string, otherId: string) {
  * UI uses startConversationByUserId).
  */
 export async function startConversation(formData: FormData) {
-  const supabase = createClient();
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();
@@ -122,7 +122,7 @@ export async function startConversation(formData: FormData) {
  * Start a conversation by user_id — used by the name-search + Exa picker UI.
  */
 export async function startConversationByUserId(formData: FormData) {
-  const supabase = createClient();
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();

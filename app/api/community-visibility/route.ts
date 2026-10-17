@@ -16,7 +16,7 @@ export const dynamic = "force-dynamic";
 const ALLOWED_VIS = ["public", "request", "private"] as const;
 
 export async function POST(req: Request) {
-  const supabase = createClient();
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();

@@ -8,15 +8,13 @@ import { createClient, createServiceClient } from "@/lib/supabase/server";
  * via a conference share link, or directly when a signed-in user clicks
  * "Join {name}" on an existing conference page. Idempotent: re-joining is a no-op.
  */
-export async function GET(
-  req: Request,
-  { params }: { params: { slug: string } }
-) {
+export async function GET(req: Request, props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
   const url = new URL(req.url);
   const slug = (params.slug || "").toLowerCase();
   if (!slug) return NextResponse.redirect(`${url.origin}/dashboard`);
 
-  const supabase = createClient();
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();

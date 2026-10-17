@@ -22,7 +22,7 @@ export function phoneLooksComplete(raw: string | null | undefined): boolean {
 export function phonePreferencePatch(
   raw: string | null | undefined,
   source: string,
-  consent = true
+  consent = false
 ): Record<string, string | null> | null {
   const value = (raw ?? "").trim();
   if (!value) {

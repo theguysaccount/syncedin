@@ -11,7 +11,7 @@ import { contentSafetyResponse } from "@/lib/content-safety";
  * itself by reading twin_profiles + profile on next visit.
  */
 export async function POST(req: Request) {
-  const supabase = createClient();
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();

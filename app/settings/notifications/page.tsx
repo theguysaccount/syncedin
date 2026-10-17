@@ -1,17 +1,18 @@
 import { redirect } from "next/navigation";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
-import { saveNotificationPrefs } from "./actions";
+import { saveNotificationPrefs, sendTestText } from "./actions";
 import { NotifPrefsForm } from "./NotifPrefsForm";
 import { AppShell } from "../../AppShell";
 
 export const dynamic = "force-dynamic";
 
-export default async function NotificationSettingsPage({
-  searchParams
-}: {
-  searchParams: { saved?: string; error?: string; detail?: string };
-}) {
-  const supabase = createClient();
+export default async function NotificationSettingsPage(
+  props: {
+    searchParams: Promise<{ saved?: string; error?: string; detail?: string; test?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();
@@ -35,7 +36,7 @@ export default async function NotificationSettingsPage({
     email_address: prefs?.email_address ?? profile?.email ?? "",
     phone_number:
       (prefs as any)?.phone_number ?? "",
-    on_text_notifications: (prefs as any)?.on_text_notifications ?? true,
+    on_text_notifications: (prefs as any)?.on_text_notifications ?? false,
     preferred_messaging_service:
       (prefs as any)?.preferred_messaging_service ?? "iMessage",
     on_new_connection: prefs?.on_new_connection ?? true,
@@ -68,10 +69,16 @@ export default async function NotificationSettingsPage({
             : "Could not save notification settings."}
         </p>
       )}
+      {searchParams.test === "accepted" && (
+        <p role="status" className="mt-3 text-sm retro-green">
+          Test accepted by the messaging provider. Check your phone to confirm delivery.
+        </p>
+      )}
 
       <NotifPrefsForm
         initial={initial}
         action={saveNotificationPrefs}
+        testAction={sendTestText}
         defaultEmail={profile?.email ?? ""}
         defaultPhone={initial.phone_number}
       />

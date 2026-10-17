@@ -13,7 +13,7 @@ import { editMagnitude, classifyChange } from "@/lib/edit-magnitude";
  *   message is a steering action and is not logged as voice training.
  */
 export async function POST(req: Request) {
-  const supabase = createClient();
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();

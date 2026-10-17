@@ -25,7 +25,7 @@ import { anthropic, TWIN_MODEL } from "@/lib/anthropic";
  *   non_negotiables → deal_breakers
  */
 export async function POST(req: Request) {
-  const sb = createClient();
+  const sb = (await createClient());
   const {
     data: { user }
   } = await sb.auth.getUser();

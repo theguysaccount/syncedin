@@ -2,7 +2,7 @@
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 export async function reviewSafetyReport(form: FormData) {
-  const { data: { user } } = await createClient().auth.getUser();
+  const { data: { user } } = await (await createClient()).auth.getUser();
   if (user?.email?.toLowerCase() !== "jacksonjezio@gmail.com") throw new Error("Forbidden");
   const id = String(form.get("report_id") ?? "");
   const action = String(form.get("decision") ?? "");

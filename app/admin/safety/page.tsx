@@ -5,7 +5,7 @@ import { AppShell } from "../../AppShell";
 import { reviewSafetyReport } from "./actions";
 export const dynamic = "force-dynamic";
 export default async function SafetyPage() {
-  const { data: { user } } = await createClient().auth.getUser();
+  const { data: { user } } = await (await createClient()).auth.getUser();
   if (user?.email?.toLowerCase() !== "jacksonjezio@gmail.com") notFound();
   const service = createServiceClient();
   const { data: reports, error } = await service.from("account_reports").select("*").eq("status", "open").order("created_at").limit(200);

@@ -30,7 +30,7 @@ import { countReferrals } from "@/lib/invite-stats";
 export const dynamic = "force-dynamic";
 
 export default async function PersonalIntelligencePage() {
-  const supabase = createClient();
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();

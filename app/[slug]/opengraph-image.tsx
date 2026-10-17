@@ -58,9 +58,9 @@ const buildInviteCopy = _buildInviteCopy;
 export default async function InviteOgImage({
   params
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }) {
-  const slug = (params.slug || "").toLowerCase();
+  const slug = ((await params).slug || "").toLowerCase();
   const SITE_URL =
     process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ||
     "https://syncedin.org";

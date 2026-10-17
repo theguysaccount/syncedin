@@ -33,10 +33,10 @@ const json = (value: unknown, status = 200) =>
   });
 async function handle(
   req: Request,
-  { params }: { params: { path: string[] } },
+  { params }: { params: Promise<{ path: string[] }> },
 ) {
   try {
-    const path = params.path.join("/");
+    const path = (await params).path.join("/");
     const db = createServiceClient();
     const origin = req.headers.get("origin");
     if (origin && origin !== new URL(req.url).origin)

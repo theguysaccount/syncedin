@@ -35,11 +35,12 @@ const RESERVED = new Set([
   "sitemap.xml"
 ]);
 
-export async function generateMetadata({
-  params
-}: {
-  params: { slug: string };
-}): Promise<Metadata> {
+export async function generateMetadata(
+  props: {
+    params: Promise<{ slug: string }>;
+  }
+): Promise<Metadata> {
+  const params = await props.params;
   const slug = (params.slug || "").toLowerCase();
   if (!slug || RESERVED.has(slug)) {
     return {};
@@ -123,11 +124,12 @@ export async function generateMetadata({
   };
 }
 
-export default async function InviteLandingPage({
-  params
-}: {
-  params: { slug: string };
-}) {
+export default async function InviteLandingPage(
+  props: {
+    params: Promise<{ slug: string }>;
+  }
+) {
+  const params = await props.params;
   const slug = (params.slug || "").toLowerCase();
   if (!slug || RESERVED.has(slug)) {
     notFound();

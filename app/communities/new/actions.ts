@@ -18,7 +18,7 @@ function slugify(s: string): string {
  * differences are the landing copy + sidebar label + URL prefix.
  */
 export async function createCommunity(formData: FormData) {
-  const supabase = createClient();
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();

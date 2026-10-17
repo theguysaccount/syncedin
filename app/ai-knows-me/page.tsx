@@ -30,12 +30,13 @@ export const metadata: Metadata = withPublicSEO('/ai-knows-me', {
   }
 });
 
-export default async function AiKnowsMePage({
-  searchParams
-}: {
-  searchParams?: { preview?: string };
-}) {
-  const supabase = createClient();
+export default async function AiKnowsMePage(
+  props: {
+    searchParams?: Promise<{ preview?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();

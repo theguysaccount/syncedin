@@ -96,7 +96,7 @@ function BarChart({
 }
 
 export default async function AdminUsagePage() {
-  const supabase = createClient();
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();

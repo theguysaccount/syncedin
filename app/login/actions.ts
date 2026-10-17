@@ -89,7 +89,7 @@ export async function login(formData: FormData) {
   if (!email) returnToLogin(formData, { error: "missing_email" });
   const phone = phoneFromForm(formData);
 
-  const supabase = createClient();
+  const supabase = (await createClient());
   const { error } = await supabase.auth.signInWithOtp({
     email,
     options: {
@@ -113,7 +113,7 @@ export async function signInWithPassword(formData: FormData) {
   if (!email || !password) returnToLogin(formData, { error: "missing_credentials" });
   const phone = phoneFromForm(formData);
 
-  const supabase = createClient();
+  const supabase = (await createClient());
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password
@@ -139,7 +139,7 @@ export async function signUpWithPassword(formData: FormData) {
     returnToLogin(formData, { error: "password_failed", detail: "Password must be at least 8 characters." });
   }
 
-  const supabase = createClient();
+  const supabase = (await createClient());
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -196,7 +196,7 @@ export async function signUpWithPassword(formData: FormData) {
 // These require the provider to be enabled in Supabase → Auth → Providers
 // with OAuth credentials. The code is ready; the provider config is not.
 export async function signInWithGoogle(formData: FormData) {
-  const supabase = createClient();
+  const supabase = (await createClient());
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: { redirectTo: callbackUrl(formData) }
@@ -208,7 +208,7 @@ export async function signInWithGoogle(formData: FormData) {
 }
 
 export async function signInWithApple(formData: FormData) {
-  const supabase = createClient();
+  const supabase = (await createClient());
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "apple",
     options: { redirectTo: callbackUrl(formData) }
@@ -221,7 +221,7 @@ export async function signInWithApple(formData: FormData) {
 
 // ── Sign out ──────────────────────────────────────────────────────────────
 export async function signOut() {
-  const supabase = createClient();
+  const supabase = (await createClient());
   await supabase.auth.signOut();
   redirect("/");
 }

@@ -11,7 +11,7 @@ import { createClient, createServiceClient } from "@/lib/supabase/server";
  * page from a natural-language description) lands as a separate route.
  */
 export async function POST(req: Request) {
-  const supabase = createClient();
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();

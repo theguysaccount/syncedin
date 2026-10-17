@@ -11,19 +11,20 @@ import { TypingParticles } from "./TypingParticles";
 import { AiExportsPanel } from "./AiExportsPanel";
 import { FilesPanel } from "./FilesPanel";
 
-export default async function OnboardingPage({
-  searchParams
-}: {
-  searchParams: {
-    saved?: string;
-    welcome?: string;
-    fromInvite?: string;
-    conv?: string;
-    error?: string;
-    detail?: string;
-  };
-}) {
-  const supabase = createClient();
+export default async function OnboardingPage(
+  props: {
+    searchParams: Promise<{
+      saved?: string;
+      welcome?: string;
+      fromInvite?: string;
+      conv?: string;
+      error?: string;
+      detail?: string;
+    }>;
+  }
+) {
+  const searchParams = await props.searchParams;
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();

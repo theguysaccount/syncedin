@@ -26,9 +26,9 @@ export const contentType = "image/png";
 export default async function OgImage({
   params
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }) {
-  const slug = (params.slug || "").toLowerCase();
+  const slug = ((await params).slug || "").toLowerCase();
   let name = "A SyncedIn room";
   let cover: string | null = null;
   let kind = "conference";

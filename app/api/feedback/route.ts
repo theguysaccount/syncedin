@@ -6,7 +6,7 @@ import { contentSafetyResponse } from "@/lib/content-safety";
  * Submit a feedback post. Must be signed in.
  */
 export async function POST(req: Request) {
-  const supabase = createClient();
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();
@@ -75,7 +75,7 @@ export async function POST(req: Request) {
  * Delete your own post.
  */
 export async function DELETE(req: Request) {
-  const supabase = createClient();
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();

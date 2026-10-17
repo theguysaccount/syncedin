@@ -28,7 +28,7 @@ const MAX_BYTES = 25 * 1024 * 1024; // 25 MB hard cap
 const BUCKET = "chat-attachments";
 
 export async function POST(req: Request) {
-  const supabase = createClient();
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();

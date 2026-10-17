@@ -25,7 +25,7 @@ const ALLOWED_SOURCES = new Set([
 ]);
 
 export async function GET() {
-  const supabase = createClient();
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();
@@ -41,7 +41,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const supabase = createClient();
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();
@@ -82,7 +82,7 @@ export async function POST(req: Request) {
 }
 
 export async function DELETE(req: Request) {
-  const supabase = createClient();
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();

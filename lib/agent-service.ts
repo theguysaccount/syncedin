@@ -239,7 +239,7 @@ export async function draftAgentIntroduction(
 export async function agentOwner() {
   const {
     data: { user },
-  } = await createClient().auth.getUser();
+  } = await (await createClient()).auth.getUser();
   if (!user) throw new AgentError(401, "Sign in to review your profile.");
   return user;
 }

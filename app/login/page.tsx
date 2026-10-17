@@ -6,8 +6,11 @@ import { LoginForm } from "./LoginForm";
 import { ThemeSync } from "../ThemeSync";
 import { BrandMark } from "../BrandMark";
 import { chatgptSignInEnabled } from "@/lib/chatgpt-sign-in";
-export default async function LoginPage({ searchParams }: { searchParams: { sent?: string; error?: string; detail?: string; invite?: string; conference?: string; exists?: string; next?: string } }) {
-  const { data: { user } } = await createClient().auth.getUser();
+export default async function LoginPage(
+  props: { searchParams: Promise<{ sent?: string; error?: string; detail?: string; invite?: string; conference?: string; exists?: string; next?: string }> }
+) {
+  const searchParams = await props.searchParams;
+  const { data: { user } } = await (await createClient()).auth.getUser();
   if (user) redirect(authDestination({ invite: searchParams.invite, conference: searchParams.conference, next:searchParams.next }));
   const chatgptEnabled=await chatgptSignInEnabled();
   return <main className="auth-screen"><ThemeSync /><div className="auth-content">

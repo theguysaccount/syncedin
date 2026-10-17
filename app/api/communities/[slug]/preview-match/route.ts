@@ -15,10 +15,8 @@ import { anthropic, TWIN_MODEL } from "@/lib/anthropic";
  */
 export const dynamic = "force-dynamic";
 
-export async function POST(
-  req: Request,
-  { params }: { params: { slug: string } }
-) {
+export async function POST(req: Request, props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
   let body: { context?: string };
   try {
     body = await req.json();

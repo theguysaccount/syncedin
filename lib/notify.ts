@@ -38,6 +38,7 @@ type Prefs = {
   user_id: string;
   email_address: string | null;
   phone_number: string | null;
+  phone_consent_at: string | null;
   on_text_notifications: boolean;
   preferred_messaging_service: string;
   on_new_connection: boolean;
@@ -75,7 +76,8 @@ async function loadRecipient(
     user_id: userId,
     email_address: prefs?.email_address ?? null,
     phone_number: prefs?.phone_number ?? null,
-    on_text_notifications: prefs?.on_text_notifications ?? true,
+    phone_consent_at: prefs?.phone_consent_at ?? null,
+    on_text_notifications: prefs?.on_text_notifications ?? false,
     preferred_messaging_service:
       prefs?.preferred_messaging_service ?? "iMessage",
     on_new_connection: prefs?.on_new_connection ?? true,
@@ -97,7 +99,7 @@ async function loadRecipient(
 function phoneRoute(recipient: { profile: ProfileRow; prefs: Prefs }) {
   return {
     phone: recipient.prefs.phone_number,
-    textEnabled: recipient.prefs.on_text_notifications,
+    textEnabled: recipient.prefs.on_text_notifications && !!recipient.prefs.phone_consent_at,
     textService: recipient.prefs.preferred_messaging_service
   };
 }
@@ -117,7 +119,7 @@ async function logAndSend(args: {
   smsText?: string;
 }): Promise<void> {
   const service = createServiceClient();
-  const shouldText = !!args.phone && args.textEnabled !== false;
+  const shouldText = !!args.phone && args.textEnabled === true;
   // Reserve an attempt before sending. A reservation is not a delivery receipt.
   const entry = {
     user_id: args.userId,

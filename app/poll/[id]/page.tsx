@@ -21,13 +21,11 @@ export const dynamic = "force-dynamic";
  *   "What's your deepest secret?" → "whats-your-deepest-secret"
  */
 function questionToSlug(q: string): string {
-  return (
-    q
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "")
-      .slice(0, 60) || "poll"
-  );
+  return (q
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60) || "poll");
 }
 
 /**
@@ -36,11 +34,12 @@ function questionToSlug(q: string): string {
  * synthesis. This is the SEO unlock: Google indexes "[question] —
  * SyncedIn" instead of every poll page having identical metadata.
  */
-export async function generateMetadata({
-  params
-}: {
-  params: { id: string };
-}): Promise<Metadata> {
+export async function generateMetadata(
+  props: {
+    params: Promise<{ id: string }>;
+  }
+): Promise<Metadata> {
+  const params = await props.params;
   try {
     const service = createServiceClient();
     // Slug-aware lookup — same logic as the page component.
@@ -153,12 +152,13 @@ type ProfileRow = {
   website_url?: string | null;
 };
 
-export default async function PollDetailPage({
-  params
-}: {
-  params: { id: string };
-}) {
-  const supabase = createClient();
+export default async function PollDetailPage(
+  props: {
+    params: Promise<{ id: string }>;
+  }
+) {
+  const params = await props.params;
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();

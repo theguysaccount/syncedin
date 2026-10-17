@@ -16,7 +16,7 @@ import type { Profile, TwinProfile, Message, EditDelta } from "@/lib/types";
 import { loadBlendedAiExports } from "@/lib/ai-exports";
 
 export async function POST(req: Request) {
-  const supabase = createClient();
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();

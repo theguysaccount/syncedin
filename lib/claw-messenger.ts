@@ -41,6 +41,7 @@ function clawWsUrl(serverUrl: string, apiKey: string): string {
     url.pathname = `${url.pathname.replace(/\/$/, "")}/ws`;
   }
   url.searchParams.set("key", apiKey);
+  url.searchParams.set("client", "syncedin/1.0");
   return url.toString();
 }
 
@@ -64,18 +65,18 @@ export async function registerClawRoute(
         authorization: `Bearer ${apiKey}`,
         "content-type": "application/json"
       },
-      body: JSON.stringify({ phone_number: phone })
+      body: JSON.stringify({ phone_number: phone }),
+      signal: AbortSignal.timeout(15_000)
     });
     if (!res.ok) {
-      const detail = await res.text().catch(() => "");
       return {
         ok: false,
-        error: `route registration failed: ${res.status} ${detail}`.trim()
+        error: `route registration failed (${res.status})`
       };
     }
     return { ok: true };
-  } catch (e: any) {
-    return { ok: false, error: e?.message ?? "route registration failed" };
+  } catch {
+    return { ok: false, error: "route registration unavailable" };
   }
 }
 
@@ -112,7 +113,14 @@ export async function sendClawMessage(args: {
     const timeout = setTimeout(() => {
       finish({ ok: false, error: "claw send timed out" });
     }, args.timeoutMs ?? 30_000);
-    const ws = new WebSocketCtor(clawWsUrl(serverUrl, apiKey));
+    let ws: WebSocket;
+    try {
+      ws = new WebSocketCtor(clawWsUrl(serverUrl, apiKey));
+    } catch {
+      clearTimeout(timeout);
+      resolve({ ok: false, error: "claw connection unavailable" });
+      return;
+    }
 
     function finish(result: ClawSendResult) {
       if (settled) return;
@@ -127,7 +135,8 @@ export async function sendClawMessage(args: {
     }
 
     ws.addEventListener("open", () => {
-      ws.send(JSON.stringify(payload));
+      try { ws.send(JSON.stringify(payload)); }
+      catch { finish({ ok: false, error: "claw send unavailable" }); }
     });
 
     ws.addEventListener("message", (event) => {
@@ -141,8 +150,8 @@ export async function sendClawMessage(args: {
         ws.send(JSON.stringify({ type: "pong" }));
         return;
       }
-      if (data?.id !== id) return;
-      if (data.ok) {
+      if (data?.id !== id || data?.type !== "send.result") return;
+      if (data.ok === true && data.status !== "failed") {
         finish({
           ok: true,
           messageId: data.messageId ? String(data.messageId) : undefined,
@@ -161,8 +170,10 @@ export async function sendClawMessage(args: {
       finish({ ok: false, error: "claw websocket error" });
     });
 
-    ws.addEventListener("close", () => {
-      finish({ ok: false, error: "claw websocket closed before response" });
+    ws.addEventListener("close", (event) => {
+      finish({ ok: false, error: event.code === 4003
+        ? "claw subscription inactive"
+        : "claw websocket closed before response" });
     });
   });
 }

@@ -15,7 +15,7 @@ import { createClient, createServiceClient } from "@/lib/supabase/server";
  * iframe. Jitsi is free + needs no API key; tldraw is also free + open.
  */
 export async function POST(req: Request) {
-  const supabase = createClient();
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();

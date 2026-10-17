@@ -20,7 +20,7 @@ export const metadata = {
  * manifesto + the BulkReachToolkit at full strength.
  */
 export default async function InvitePage() {
-  const supabase = createClient();
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();

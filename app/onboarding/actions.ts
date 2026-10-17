@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import { revalidatePath } from "next/cache";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { slugifyHandle } from "@/lib/handle";
@@ -18,7 +19,7 @@ function s(v: FormDataEntryValue | null): string | null {
 }
 
 export async function saveTwin(formData: FormData) {
-  const supabase = createClient();
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();
@@ -207,11 +208,11 @@ export async function saveTwin(formData: FormData) {
           // kick off the twin-to-twin auto-loop so when the user lands
           // the conversation is already in motion.
           assignConversationSlug(convId).catch(() => {});
-          notifyNewConnection({
+          after(() => notifyNewConnection({
             conversationId: convId,
             participantA: user.id,
             participantB: match.counterpartId
-          }).catch(() => {});
+          }).catch(() => {}));
           void (async () => {
             try {
               const baseUrl = (

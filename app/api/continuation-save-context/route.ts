@@ -20,7 +20,7 @@ export const dynamic = "force-dynamic";
 const MAX_BLOCK_CHARS = 30_000;
 
 export async function POST(req: Request) {
-  const supabase = createClient();
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();

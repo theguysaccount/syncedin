@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { anthropic, TWIN_MODEL } from "@/lib/anthropic";
+import { connectionBlocked } from "@/lib/user-safety";
 
 /**
  * Pre-draft endpoint — returns the text the requesting user's twin
@@ -14,7 +15,7 @@ import { anthropic, TWIN_MODEL } from "@/lib/anthropic";
  * negotiator.
  */
 export async function POST(req: Request) {
-  const supabase = createClient();
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();
@@ -39,7 +40,7 @@ export async function POST(req: Request) {
   const service = createServiceClient();
   const { data: conv } = await service
     .from("conversations")
-    .select("id, participant_a, participant_b")
+    .select("id, participant_a, participant_b, goal_override")
     .eq("id", conversationId)
     .single();
   if (!conv) {
@@ -54,6 +55,9 @@ export async function POST(req: Request) {
 
   const otherId =
     conv.participant_a === user.id ? conv.participant_b : conv.participant_a;
+  if (await connectionBlocked(user.id, otherId)) {
+    return NextResponse.json({ error: "This connection is blocked." }, { status: 403 });
+  }
 
   // Pull both twins + the message history. Twin profile of the
   // requesting user anchors the voice; counterpart twin gives Claude
@@ -120,6 +124,9 @@ ${otherName}'s comm style: ${(otherTwin as any)?.communication_style || "(not sp
   `.trim();
 
   const systemPrompt = `You are drafting the NEXT message ${selfName} should send to ${otherName} in an ongoing conversation. The draft will be shown in a text input so ${selfName} can edit before sending.
+
+Specific goal for THIS conversation (takes priority over general profile interests): ${conv.goal_override?.trim() || "Use the shared goals in the profiles."}
+Honor every exclusion in that goal. Never invent availability, meeting durations, assets, or promises to send materials. Unknown details are questions for the humans, not accepted commitments.
 
 Hard rules:
 - Write in ${selfName}'s voice. Match their communication style and tone.

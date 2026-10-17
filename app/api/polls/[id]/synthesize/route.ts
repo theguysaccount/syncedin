@@ -29,11 +29,9 @@ function clampHeadline(raw: string): string {
  * overrides have come in since the original run. Any signed-in user can
  * trigger this; the new synthesis replaces the old one.
  */
-export async function POST(
-  _req: Request,
-  { params }: { params: { id: string } }
-) {
-  const supabase = createClient();
+export async function POST(_req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();

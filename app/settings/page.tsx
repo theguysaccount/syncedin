@@ -21,7 +21,7 @@ import { BlockedAccounts } from "./BlockedAccounts";
 export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
-  const supabase = createClient();
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();

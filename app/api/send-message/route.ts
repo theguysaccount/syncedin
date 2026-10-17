@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { contentSafetyResponse } from "@/lib/content-safety";
 import { connectionBlocked } from "@/lib/user-safety";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
@@ -34,7 +34,7 @@ async function logEditMetric(
 }
 
 export async function POST(req: Request) {
-  const supabase = createClient();
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();
@@ -134,12 +134,12 @@ export async function POST(req: Request) {
       );
   }
 
-  // Fire-and-forget notification to the counterpart.
-  notifyNewMessage({
+  // Keep dispatch alive after the response on serverless deployments.
+  after(() => notifyNewMessage({
     conversationId: conversation_id,
     messageId: message.id,
     senderUserId: user.id
-  }).catch((e) => console.warn("[send-message] notify failed", e));
+  }).catch((e) => console.warn("[send-message] notify failed", e)));
 
   return NextResponse.json({ message });
 }

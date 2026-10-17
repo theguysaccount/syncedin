@@ -11,11 +11,9 @@ import { createClient, createServiceClient } from "@/lib/supabase/server";
  * marker and returns the substring after the marker. Falls back to
  * the conversation summary if no marker is present.
  */
-export async function GET(
-  _req: Request,
-  { params }: { params: { id: string } }
-) {
-  const supabase = createClient();
+export async function GET(_req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();

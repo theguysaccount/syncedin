@@ -52,7 +52,7 @@ ${clip(blob, 6000) || "(none provided)"}`;
 
 export async function POST(req: Request) {
   const wantsStream = req.headers.get("accept")?.includes("text/event-stream");
-  const supabase = createClient();
+  const supabase = (await createClient());
   const {
     data: { user }
   } = await supabase.auth.getUser();
@@ -149,13 +149,20 @@ export async function POST(req: Request) {
     (bProfile as Profile).email ||
     "Person B";
 
+  const conversationGoal = String(conv.goal_override ?? "").trim();
+  const goalDirective = conversationGoal
+    ? `SPECIFIC GOAL FOR THIS CONVERSATION (takes priority over both general dossiers and the default negotiation format):\n${conversationGoal}\n\nStay within this scope, including every explicit exclusion. General profile interests are background, not permission to change this goal.`
+    : "Use the participants' actual goals and constraints to identify a useful shared outcome.";
+
   const system = `You are running a PRIVATE closed-doors negotiation between two people's AI twins, then distilling it for the humans.
 
-PHASE 1 (private reasoning, never shown): With the FULL context from both sides, find the single HIGHEST-PURPOSE win-win between ${aName} and ${bName}: the concrete exchange with the most mutual value given their actual goals, offers, constraints, and deal-breakers. Pressure-test it. If the obvious idea violates a deal-breaker or timeline, take the next-best angle. Decide who does what, by when, on what channel.
+${goalDirective}
 
-PHASE 2 (your entire output): The distilled human-facing exchange ONLY. 4 to 6 messages alternating between the twins, each 1-2 sentences, zero filler, no discovery theater, no "I saw your profile" preamble. Message 1 is from ${aName}'s twin and opens INSIDE the alignment: name the specific overlap and the proposed exchange immediately. Subsequent messages sharpen terms, surface the one real constraint, and resolve it. The FINAL message must end with a line that begins exactly "${AGREEMENT_MARKER}" followed by 1-3 plain-prose sentences stating the concrete final destination: who does what, by when, on what channel. The agreement line is a contract: no markdown, no emojis, no links.
+PHASE 1 (private reasoning, never shown): With the FULL context from both sides, find the single HIGHEST-PURPOSE win-win between ${aName} and ${bName} WITHIN the specific conversation goal: the concrete exchange with the most mutual value given their actual goals, offers, constraints, and deal-breakers. Pressure-test it. If the obvious idea violates the conversation scope, a deal-breaker or timeline, take the next-best in-scope angle.
 
-Hard rules: never invent facts absent from the contexts. NEVER use em-dashes anywhere, use commas or periods. Each message must contain information the humans need, not process narration.
+PHASE 2 (your entire output): The distilled human-facing exchange ONLY. 4 to 6 messages alternating between the twins, each 1-2 sentences, zero filler, no discovery theater, no "I saw your profile" preamble. Message 1 is from ${aName}'s twin and opens INSIDE the alignment: name the specific overlap and the proposed exchange immediately. Subsequent messages sharpen terms, surface the one real constraint, and resolve it. If an in-scope outcome is supported, the FINAL message ends with a line beginning exactly "${AGREEMENT_MARKER}" followed by 1-3 plain-prose sentences stating the proposed shared outcome for human review. Otherwise end with one concrete unresolved question and no agreement marker. No markdown, emojis or links in an agreement.
+
+Hard rules: never invent facts absent from the contexts, including availability, dates, durations, assets, contact details, or promises to send materials. Do not claim either human has accepted an external commitment. Unknown timing and channels stay unspecified or are a question for the humans, not fabricated terms. Do not redirect an in-chat exchange into calls, email, fundraising or other excluded activities. NEVER use em-dashes anywhere, use commas or periods. Each message must contain information the humans need, not process narration.
 
 ${wantsStream
     ? 'Return the entire exchange through the write_exchange tool. Supply its messages array in chronological order, alternating sender a and b. Do not emit the exchange as ordinary text.'

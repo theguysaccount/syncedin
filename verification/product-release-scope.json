@@ -58,7 +58,7 @@
     "app/twin/PendingProposalsRail.tsx": "9ea7a794c24b423e54f00dfb33d50ae197ea05b3932893f87e0d11d92a3df893",
     "app/api/error-report/route.ts": "65aedb4a29dd5fff711b3b9439d940ffefae18c0f47b87bc156cdbe4a6e55624",
     "package.json": "cd2e67c8cf9bb853b94232887605912ee9dc6da858ed89ff9562c40cff262237",
-    "package-lock.json": "0f4d45cba5b03365a3606b038daf377f37b39f0d3329bb22aef52e577793a141",
+    "package-lock.json": "77270fce7c1aac55ec3f1fd55d436f674b13eacd533a89c22451b7d4f60673c9",
     "app/SyncMeter.tsx": "5e9c89de19dd4e070e0355cd81faa8752d74c648a6a6ad801dda2fd58e503900",
     "app/conversations/new/page.tsx": "3082ae5a26b07f4fc8d754bd864e7e8e75d29e80fd372508adfa67ae2e229330",
     "app/onboarding/page.tsx": "6d2d046bd852e8439e3595d8ad6c2d72706d46f4a9a7d44a1d04ba8620dcaaed",
@@ -71,7 +71,7 @@
     "scripts/test-release-safety.mjs": "09f869a852ca9ac31a4a4fe1d847157ec4338232e55f46150c6ca1f08b1b7358",
     "lib/conversation-stream.ts": "88ac16481e79e427ecdbcc33a5760fd38fce368e6d064929759216a4e9429416",
     "lib/conversation-json.ts": "a40e9fe26835804b6537b18de7678cdff6d7c0f8cf6c5c2844d6e1eb4e45edfa",
-    ".github/workflows/ci.yml": "fd98e1ad63ae09a31f5db389a6f6fe401a38ae7d00071ee0515a6abe5026cec1",
+    ".github/workflows/ci.yml": "a3a4989b8a627e2bde701a028c842fed6e70ae176f00f0aa93fdf0ed4b5bfc38",
     "app/ErrorAutoReport.tsx": "595722907bbaaac45b5e0de664daf98e963cf7a49af97050bfd64001efe1cd9e",
     "app/llms.txt/route.ts": "f6b54638f0d0c1b4c497270d6f96222dc72f1cb9a84c451d196cea0de2f3d2b4",
     "app/login/LoginForm.tsx": "87d2d4f61159656a9b00196ed8774ae8b44bb028164ff7b2f0ee7c6225b3fba4",
@@ -201,7 +201,9 @@
     "lib/notify.ts": "6ce5ff53f18e97ab715bba6a87a4e73bcc6ac0eb0d1c38d8cf375ab1e75f78a0",
     "lib/supabase/server.ts": "f5c8de6296210a95c9a04f1f4a68c84c902af6620475fb2b3ec0984311b559a4",
     "lib/twin-prompt.ts": "bd304e9f8851146b1239966652e9497e0ca06b7d811792d9d3998accaa90e6c5",
-    "next.config.js": "27e6b98aef5ba1cde1943cadaeee764a5dbda7e62c336f32f3d2ff920ca57e58"
+    "next.config.js": "27e6b98aef5ba1cde1943cadaeee764a5dbda7e62c336f32f3d2ff920ca57e58",
+    "tsconfig.json": "89c4447c13b0737988b361ad428f83d12da2fb15a08e29ed83c85e2a0bbdeda3",
+    "next-env.d.ts": "85ae5aee75f011967cf2d25cbc342f62d69314e9d925f7f4aa3456fc2cffcca6"
   },
   "components": {
     "app/admin/reports/page.tsx": "fa3ff87dcdce75f3fed381f4f5f80835a89ce21e676ae126f59b046440dbd0b1",

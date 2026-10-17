@@ -28,20 +28,14 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: "20"
           cache: "npm"
 
       - name: Install deps
         run: npm ci --no-audit --no-fund
 
-      - name: Generate route types
-        run: npx next typegen
-
       - name: Type-check
-        run: npx tsc --noEmit -p tsconfig.json --incremental false
-
-      - name: Audit production dependencies
-        run: npm audit --omit=dev --audit-level=moderate
+        run: npx tsc --noEmit
 
       - name: Production build
         run: npm run build

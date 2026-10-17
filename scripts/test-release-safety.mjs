@@ -258,7 +258,7 @@ test("old JSON responses still work while the streaming release rolls out", asyn
 test("Start and both conversation generation paths use the shared guard and abortable request", () => {
   const source = fs.readFileSync("app/conversations/[id]/ChatUI.tsx", "utf8");
   assert.equal(source.split("const controller = generation.current.begin();").length - 1, 2);
-  assert(source.includes("disabled={running || negotiating || !!editingId}"));
+  assert(source.includes("disabled={running || negotiating || !!editingId || goalOpen}"));
   assert(source.includes('accept: "text/event-stream"'));
   assert(source.includes("generation.current.abort()"));
   assert(!source.includes("setMessages(json.messages)"));
@@ -347,6 +347,32 @@ test("fresh conversations honor the custom goal in both streaming and JSON gener
     assert(fixture.prompts[0].system.includes("takes priority"));
     assert(fixture.prompts[0].system.includes("availability, dates, durations"));
     assert(!fixture.prompts[0].system.includes("The FINAL message must end"));
+  }
+});
+test("the conversation goal editor is reachable without removing Start or the composer", () => {
+  const source=fs.readFileSync("app/conversations/[id]/ChatUI.tsx","utf8");
+  assert(source.includes('aria-label="Edit conversation goal"'));
+  assert(source.includes("setGoalOpen(open => !open)"));
+  assert(source.includes("!!editingId || goalOpen"));
+  assert(source.includes("<PersistentCompose"));
+});
+test("goal editor closes only after a confirmed save and keeps failed edits available", async () => {
+  for(const response of [Response.json({ok:true}),Response.json({error:"unavailable"},{status:503}),Response.json({ok:false})]){
+    const states=["Compare reasoning accuracy in this chat only.",true,false,"",0];
+    const changes=[];let closed=0;const requests=[];
+    const {PerConversationGoal}=load("app/conversations/[id]/PerConversationGoal.tsx",{
+      react:{useState:()=>[states.shift(),value=>changes.push(value)],useEffect:()=>{},useRef:()=>({current:false})},
+      "react/jsx-runtime":jsxRuntime,"lucide-react":icons
+    });
+    const originalFetch=globalThis.fetch;
+    globalThis.fetch=async(url,options)=>{requests.push({url,body:JSON.parse(options.body)});return response;};
+    try{
+      const form=PerConversationGoal({conversationId:"qa-conversation",otherName:"QA",onClose:()=>closed++});
+      await form.props.onSubmit({preventDefault(){}});
+      assert.equal(requests[0].body.goal,"Compare reasoning accuracy in this chat only.");
+      if(response.ok && closed){assert.equal(closed,1);}
+      else {assert.equal(closed,0);assert(changes.some(v=>typeof v==="string"&&v.includes("not saved")));}
+    }finally{globalThis.fetch=originalFetch;}
   }
 });
 test("closed-doors route streams checked, persisted rows before the model finishes", async () => {

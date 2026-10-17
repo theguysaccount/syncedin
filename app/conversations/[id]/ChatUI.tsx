@@ -13,7 +13,7 @@ const NEG_LINES = [
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { Copy, Pencil, Ellipsis } from "lucide-react";
+import { Copy, Pencil, Ellipsis, Target } from "lucide-react";
 import { createConversationRunGuard, readConversationEvents } from "@/lib/conversation-stream";
 import Link from "next/link";
 import type { Message } from "@/lib/types";
@@ -1728,6 +1728,13 @@ export function ChatUI({
             </div>
             {(
               <div className="flex items-center gap-2 shrink-0">
+                <button type="button" onClick={() => setGoalOpen(open => !open)}
+                  disabled={running || negotiating || !!editingId}
+                  aria-label="Edit conversation goal" aria-expanded={goalOpen} aria-controls="conversation-goal"
+                  title="Edit conversation goal" className="retro-btn"
+                  style={{ width: 36, height: 36, padding: 0 }}>
+                  <Target size={17} aria-hidden="true" />
+                </button>
                 {/* Propose destination — explicit manual trigger so the
                     twin doesn't end conversations on its own discretion.
                     Only shown once there's been ≥3 exchanges (after a
@@ -1737,7 +1744,7 @@ export function ChatUI({
                   <button
                     type="button"
                     onClick={() => runLoop({ proposeNow: true })}
-                    disabled={running || negotiating}
+                    disabled={running || negotiating || goalOpen}
                     className="retro-btn text-xs"
                     title="Have your twin wrap up with a concrete proposal now"
                     style={{
@@ -1750,7 +1757,7 @@ export function ChatUI({
                 )}
                 <button
                   type="button"
-                  disabled={running || negotiating || !!editingId}
+                  disabled={running || negotiating || !!editingId || goalOpen}
                   onClick={() =>
                     messages.length === 0 ? closedDoors() : runLoop()
                   }
@@ -2118,18 +2125,12 @@ export function ChatUI({
               should always be there even when the twins are just
               starting"). Only edit mode hides it, since the inline edit
               textarea takes over then. */}
-          {/* Goal-set + let-twins-continue chips removed per Jack's
-              "clean this up a lot more" pass. Goal is now accessed via
-              a tiny pencil icon next to the destination card header
-              (less prominent, no longer competing with the composer
-              for attention). "Let twins continue" was redundant with
-              the ✨ AI button which already drafts the twin's next
-              turn. Keeping the goal form mountable for the case where
-              someone opens it from the OUTCOME card. */}
+          {/* The header goal control opens this editor above the composer. */}
           {goalOpen && (
             <PerConversationGoal
               conversationId={conversationId}
               otherName={other.name}
+              onClose={() => setGoalOpen(false)}
             />
           )}
           <PersistentCompose

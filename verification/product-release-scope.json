@@ -30,7 +30,7 @@
     "app/communities/new/actions.ts": "a52c752fe71e168aa7f305a689263cce9ac2f4cb8d71a2c5025a73ffc5933ca3",
     "app/conferences/[slug]/edit/actions.ts": "e1dc5394380eca0444f78dad986f901b0e521363a0dd21275eb4f9e20e49902d",
     "app/conferences/new/actions.ts": "007c2165011875a8e34af11376a9ccb49ba833aabb104e618d36c0f960409a1c",
-    "app/conversations/[id]/ChatUI.tsx": "fc7b6e7e86c7e983a49d9925e049037f994176da65acc4be0a81e157bc62f95d",
+    "app/conversations/[id]/ChatUI.tsx": "584f59b299da848091b3c2dc2a37908f0c7717d361eea151b10d6833426503ff",
     "app/conversations/[id]/page.tsx": "78955108c7b72229a6803a9c3bc4b9f26a55b21463667eee5b04e9a2586a7f6c",
     "app/conversations/new/actions.ts": "7880345b1954ff4840637faeb2ccbe0043a23c7429f9b1034271838f292d177d",
     "app/dashboard/DiscoverSearch.tsx": "4089ad6f9fe979e265706cddc55a146d84b36717809ba235ca711f8c2e7045cb",
@@ -68,7 +68,7 @@
     "app/personal-intelligence/page.tsx": "78a029c7d1f73705c54f29f5684a7d0f57b56f72c30f07cbe91a2ad8c5394c13",
     "app/api/closed-doors/route.ts": "7c2cdc95f4931e2d32bc9e98cccc8129d3cae26c60eb9c433e50095679b066fb",
     "app/product.css": "6ed21d5773653870e970df07799625900cd196a0c6b878e047d7224f2929d8f7",
-    "scripts/test-release-safety.mjs": "09f869a852ca9ac31a4a4fe1d847157ec4338232e55f46150c6ca1f08b1b7358",
+    "scripts/test-release-safety.mjs": "9bdc39fe4ed170066d12341a53d9c7af5231ea4c28d71b921fb2e6070f768fcf",
     "lib/conversation-stream.ts": "88ac16481e79e427ecdbcc33a5760fd38fce368e6d064929759216a4e9429416",
     "lib/conversation-json.ts": "a40e9fe26835804b6537b18de7678cdff6d7c0f8cf6c5c2844d6e1eb4e45edfa",
     ".github/workflows/ci.yml": "fd98e1ad63ae09a31f5db389a6f6fe401a38ae7d00071ee0515a6abe5026cec1",
@@ -203,7 +203,8 @@
     "lib/twin-prompt.ts": "bd304e9f8851146b1239966652e9497e0ca06b7d811792d9d3998accaa90e6c5",
     "next.config.js": "27e6b98aef5ba1cde1943cadaeee764a5dbda7e62c336f32f3d2ff920ca57e58",
     "tsconfig.json": "89c4447c13b0737988b361ad428f83d12da2fb15a08e29ed83c85e2a0bbdeda3",
-    "next-env.d.ts": "85ae5aee75f011967cf2d25cbc342f62d69314e9d925f7f4aa3456fc2cffcca6"
+    "next-env.d.ts": "85ae5aee75f011967cf2d25cbc342f62d69314e9d925f7f4aa3456fc2cffcca6",
+    "app/conversations/[id]/PerConversationGoal.tsx": "e52d41a625a8cc9bc455c5802565f6a38e55e7f2f2479cf8e72008d952dde6bb"
   },
   "components": {
     "app/admin/reports/page.tsx": "fa3ff87dcdce75f3fed381f4f5f80835a89ce21e676ae126f59b046440dbd0b1",

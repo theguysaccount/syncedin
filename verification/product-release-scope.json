@@ -2,6 +2,9 @@
   "release": "2026-10-08 agent profile onboarding",
   "reason": "Add private agent profile drafts, human-approved existing twin updates, scoped expiring access, ChatGPT provider readiness, and page-specific social metadata. Preserve previous conversation streaming fixes, all controls, and public artwork.",
   "files": {
+    "app/api/bulk-create-invites/route.ts": "23721567fc3dbda7125b82c13c4b4a206b5ae4d880a5c1a0135cad7e6b73b6e5",
+    "app/[slug]/opengraph-image.tsx": "00517d9fe72b70348c5aa06843a8cbc80d1fd91246f5e21b1f3ab8aa2edf67ca",
+    "lib/profile-name.ts": "b2949690d23c06a89f4d5616d1ce715e6278e6ff34efe82c46bafd5796e2d73e",
     "app/AppShell.tsx": "4ce726fdb05a69c0935b51d7072294456dcbdb311dcfbe9359e95975b8722c52",
     "app/FeedbackBubble.tsx": "a84df7d5c0d3cebe99b4a05d75bb1543821034ad5ea54a527a787d53aa02e7ad",
     "app/Footer.tsx": "b8ab1ed9fdbec7319c9f6b39b797d705037c3bcd97e9fe0199e03772cd540cad",
@@ -65,7 +68,7 @@
     "app/personal-intelligence/page.tsx": "8fe91c5fb3599f3400ca1e8f2efe0061938684a3cda8763f61ab2e692234f8fd",
     "app/api/closed-doors/route.ts": "b77bf2b3ea9dbd6f7fe21ca11f7432455580cb65a2dc5d5507ef5bebeca662eb",
     "app/product.css": "6ed21d5773653870e970df07799625900cd196a0c6b878e047d7224f2929d8f7",
-    "scripts/test-release-safety.mjs": "c5212b0024063588c2f0175ed13f62ea6f99bede3470d391677d1070fcec0f27",
+    "scripts/test-release-safety.mjs": "09f869a852ca9ac31a4a4fe1d847157ec4338232e55f46150c6ca1f08b1b7358",
     "lib/conversation-stream.ts": "88ac16481e79e427ecdbcc33a5760fd38fce368e6d064929759216a4e9429416",
     "lib/conversation-json.ts": "a40e9fe26835804b6537b18de7678cdff6d7c0f8cf6c5c2844d6e1eb4e45edfa",
     ".github/workflows/ci.yml": "fd98e1ad63ae09a31f5db389a6f6fe401a38ae7d00071ee0515a6abe5026cec1",

@@ -25,6 +25,71 @@ function load(file, mocks) {
   }, module, module.exports);
   return module.exports;
 }
+const { extractProfileName } = load("lib/profile-name.ts", {});
+test("LinkedIn identity stays Beena Sharma instead of falling through to her location", () => {
+  const scrape = "handle: linkedin.com/in/beena-sharma-808934\nname: Beena Sharma\nheadline:\nlocation: San Francisco Bay Area\nwebsite:\nabout: I lead a vertical development firm.";
+  assert.equal(extractProfileName(scrape), "Beena Sharma");
+  const card = fs.readFileSync("app/[slug]/opengraph-image.tsx", "utf8");
+  assert(card.includes('export const dynamic = "force-dynamic"'));
+  assert(card.includes('export const revalidate = 0'));
+});
+test("missing identity cannot promote a location, employer, or headline into a person's name", () => {
+  for (const scrape of [
+    "handle: @someone\nlocation: San Francisco Bay Area\ncompany: Better People",
+    "name:\nheadline: Chief Executive Officer\nlocation: New York",
+    "full_name: invalid123\nabout: London Research Team",
+  ]) assert.equal(extractProfileName(scrape), null);
+});
+test("profile name extraction handles scraper aliases, split names and real page headings", () => {
+  for (const key of ["full_name", "fullName", "displayName", "display_name", "person name", "profile_name", "name"]) {
+    assert.equal(extractProfileName(`${key}: Beena Sharma\nlocation: San Francisco Bay Area`), "Beena Sharma");
+  }
+  assert.equal(extractProfileName("first_name: Beena\nlast_name: Sharma"), "Beena Sharma");
+  assert.equal(extractProfileName("fullName: Bj\u00f6rk"), "Bj\u00f6rk");
+  assert.equal(extractProfileName("name: \u674e\u96f7"), "\u674e\u96f7");
+  assert.equal(extractProfileName("Jean-Luc Picard | LinkedIn\nResearcher"), "Jean-Luc Picard");
+  assert.equal(extractProfileName("name: Beena Sharma\nexperience:\n  name: Another Company"), "Beena Sharma");
+});
+test("bulk invite creation keeps the scraped person's name in the slug, prompt and saved invite", async () => {
+  const rows = [];
+  const prompts = [];
+  const db = { from(table) {
+    const query = {
+      select() { return query; }, eq() { return query; },
+      async maybeSingle() { return { data: table === "twin_profiles" ? { goals: "Exchange research" } : null }; },
+      async single() { return { data: { display_name: "QA Sender" } }; },
+      async insert(row) { rows.push(row); return { error: null }; },
+    };
+    return query;
+  } };
+  const { POST } = load("app/api/bulk-create-invites/route.ts", {
+    "next/server": { NextResponse: { json: (value, options) => Response.json(value, options) } },
+    "@/lib/supabase/server": { createClient: () => ({ auth: { getUser: async () => ({ data: { user: { id: "qa-sender" } } }) } }), createServiceClient: () => db },
+    "@/lib/anthropic": { TWIN_MODEL: "test", anthropic: { messages: { create: async args => {
+      prompts.push(args);
+      return { content: [{ type: "text", text: JSON.stringify({ "Beena Sharma": { landing: "Beena, let's exchange research.", outbound: "Beena, your research looks relevant." } }) }] };
+    } } } },
+    "@/lib/scrape": { scrapePublicProfile: async () => "handle: linkedin.com/in/beena-sharma-808934\nname: Beena Sharma\nheadline:\nlocation: San Francisco Bay Area\nabout: Vertical development research" },
+    "@/lib/profile-name": { extractProfileName },
+  });
+  const oldFetch = globalThis.fetch;
+  globalThis.fetch = async () => Response.json({ messages: [] });
+  try {
+    const response = await POST(new Request("https://syncedin.org/api/bulk-create-invites", {
+      method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ contacts: [{ name: "Beena Sharma", profile_url: "https://www.linkedin.com/in/beena-sharma-808934/" }] }),
+    }));
+    assert.equal(response.status, 200);
+    const body = await response.json();
+    assert.equal(body.results[0].contact.name, "Beena Sharma");
+    assert.equal(body.results[0].slug, "beena-sharma");
+    assert.equal(rows[0].person_title, "Beena Sharma");
+    assert(rows[0].conversation_starter.startsWith("Beena,"));
+    assert(prompts[0].messages[0].content.includes("- Beena Sharma\n"));
+  } finally {
+    globalThis.fetch = oldFetch;
+  }
+});
 test("agent setup keeps every action and exposes the selected provider accessibly", () => {
   const { BrandMark } = load("app/BrandMark.tsx", { "react/jsx-runtime": jsxRuntime });
   const request = load("lib/agent-request.ts", {});

@@ -7,6 +7,8 @@ import {
 import { proxiedAvatar } from "@/lib/avatar";
 
 export const runtime = "nodejs"; // service client needs node runtime
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 export const alt = "Your twin started a conversation on SyncedIn";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";

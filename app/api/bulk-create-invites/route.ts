@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { anthropic, TWIN_MODEL } from "@/lib/anthropic";
 import { scrapePublicProfile } from "@/lib/scrape";
+import { extractProfileName } from "@/lib/profile-name";
 import type { Profile, TwinProfile } from "@/lib/types";
 
 /**
@@ -120,106 +121,6 @@ export async function POST(req: Request) {
   // name from the scrape and rewrite the contact's name in place, so the
   // landing page says "Ryaan Aqid" instead of "Ryaanaqid" (the URL slug).
   //
-  // Real-name extractor: the scraped payload looks like
-  //   "handle: @ryaanaqid\nfullName: Ryaan Aqid\nbiography: ..."
-  // (Apify-flattened format) or the LinkedIn page-content text usually
-  // starts with the person's full name as the H1. We try several signals.
-  function extractRealName(
-    scrapeText: string,
-    currentName?: string
-  ): string | null {
-    if (!scrapeText) return null;
-    // ASCII-only name regex (no \p{L}) since our TS target predates the
-    // unicode regex flag. Common accented Latin chars (à é ñ ü) are covered
-    // explicitly to handle real-world names.
-    const NAME_CHAR = "[A-Za-zÀ-ÖØ-öø-ÿ'.-]";
-    const NAME_WORD = `[A-ZÀ-Ö]${NAME_CHAR}+`;
-    const fullNameRe = new RegExp(
-      `^${NAME_WORD}(?:\\s+${NAME_CHAR}+){1,3}\\s*$`
-    );
-    const looksLikeName = (s: string): boolean => {
-      const trimmed = s.trim();
-      if (!trimmed) return false;
-      if (!fullNameRe.test(trimmed)) return false;
-      // Reject the URL handle itself — if c.name was "Harqian" we must not
-      // accept "Harqian" again as the "real" name.
-      if (
-        currentName &&
-        trimmed.toLowerCase() === currentName.toLowerCase()
-      ) {
-        return false;
-      }
-      // Reject single-word "names" — slugged handles are often a single
-      // jammed-together word (e.g. "Harqian") which slips past the rest of
-      // the regex because the second word group is optional in some
-      // intermediate iterations. Require at least 2 words.
-      if (trimmed.split(/\s+/).length < 2) return false;
-      return true;
-    };
-
-    // 1. Labelled key:value lines — try every plausible key name across the
-    //    different scraper payloads (ScrapingDog LinkedIn / X / IG, Apify
-    //    Apify-flattened, nested basic_info shapes).
-    const labelKeys = [
-      "full[_\\s]?name",
-      "fullName",
-      "displayName",
-      "display[_\\s]?name",
-      "person[_\\s]?name",
-      "profile[_\\s]?name",
-      "name"
-    ];
-    for (const k of labelKeys) {
-      const re = new RegExp(`(?:^|\\n)\\s*(?:${k})\\s*:\\s*(.+)`, "i");
-      const m = scrapeText.match(re);
-      if (m && m[1]) {
-        const candidate = m[1].split(/\n/)[0].trim().slice(0, 80);
-        if (looksLikeName(candidate)) return candidate;
-      }
-    }
-
-    // 2. first_name + last_name pair — common in ScrapingDog LinkedIn when
-    //    the consolidated `fullName` field is empty.
-    const firstM = scrapeText.match(
-      /(?:^|\n)\s*(?:first[_\s]?name|firstName)\s*:\s*([^\n]+)/i
-    );
-    const lastM = scrapeText.match(
-      /(?:^|\n)\s*(?:last[_\s]?name|lastName)\s*:\s*([^\n]+)/i
-    );
-    if (firstM?.[1] && lastM?.[1]) {
-      const cand = `${firstM[1].trim()} ${lastM[1].trim()}`.slice(0, 80);
-      if (looksLikeName(cand)) return cand;
-    }
-
-    // 3. Headline parsing. LinkedIn headlines almost always start with the
-    //    person's name in some form: "Harrison Qian | Founding Engineer"
-    //    or "Harrison Qian, Founding Engineer at X" or "Harrison Qian –
-    //    Designer". Split on common separators and test the first chunk.
-    const headlineM = scrapeText.match(
-      /(?:^|\n)\s*(?:headline|title|bio|tagline)\s*:\s*([^\n]+)/i
-    );
-    if (headlineM?.[1]) {
-      const firstChunk = headlineM[1].split(/[|,·\-–—@]/)[0].trim();
-      if (looksLikeName(firstChunk)) return firstChunk;
-    }
-
-    // 4. Last resort — many scrape payloads start with the person's full
-    //    name as the very first non-empty line (LinkedIn H1, raw page
-    //    title). Scan the first 6 lines.
-    const head = scrapeText
-      .split("\n")
-      .slice(0, 6)
-      .map((l) => l.trim())
-      .filter(Boolean);
-    for (const line of head) {
-      // Strip a leading "key: " if present so we can test the value alone.
-      const stripped = line.replace(/^[a-zA-Z_]+\s*:\s*/, "").trim();
-      if (looksLikeName(stripped)) return stripped;
-    }
-
-    return null;
-  }
-
   const scrapes: Record<string, string> = {};
   await Promise.all(
     contacts.map(async (c) => {
@@ -241,7 +142,7 @@ export async function POST(req: Request) {
           // Promote the scraped real name to the canonical name so the slug,
           // OG title, and opener all use it. Move the scrape entry under the
           // new key too.
-          const real = extractRealName(text, c.name);
+          const real = extractProfileName(text);
           if (real && real.toLowerCase() !== c.name.toLowerCase()) {
             scrapes[real] = scrapes[c.name];
             delete scrapes[c.name];

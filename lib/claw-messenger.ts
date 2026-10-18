@@ -8,40 +8,27 @@ type ClawSendResult = {
   ok: boolean;
   skipped?: boolean;
   messageId?: string;
+  status?: string;
+  outcomeUnknown?: boolean;
   error?: string;
-  raw?: unknown;
 };
 
-const DEFAULT_SERVER_URL = "wss://claw-messenger.onrender.com";
-const DEFAULT_SERVICE = "iMessage";
+const DEFAULT_SERVER_URL = "https://claw-messenger.onrender.com";
 
 function config() {
   return {
     apiKey: process.env.CLAW_MESSENGER_API_KEY || "",
     serverUrl: process.env.CLAW_MESSENGER_SERVER_URL || DEFAULT_SERVER_URL,
-    preferredService:
-      process.env.CLAW_MESSENGER_PREFERRED_SERVICE || DEFAULT_SERVICE
+    preferredService: process.env.CLAW_MESSENGER_PREFERRED_SERVICE || undefined
   };
 }
 
 function clawHttpUrl(serverUrl: string, path: string): string {
   const url = new URL(serverUrl);
-  url.protocol = url.protocol === "ws:" || url.protocol === "wss:" ? "https:" : url.protocol;
+  if (url.protocol === "wss:") url.protocol = "https:";
+  if (url.protocol === "ws:") url.protocol = "http:";
   url.pathname = path;
   url.search = "";
-  return url.toString();
-}
-
-function clawWsUrl(serverUrl: string, apiKey: string): string {
-  const url = new URL(serverUrl);
-  if (url.protocol === "https:") url.protocol = "wss:";
-  if (url.protocol === "http:") url.protocol = "ws:";
-  if (!url.protocol || url.protocol === ":") url.protocol = "wss:";
-  if (!url.pathname.endsWith("/ws")) {
-    url.pathname = `${url.pathname.replace(/\/$/, "")}/ws`;
-  }
-  url.searchParams.set("key", apiKey);
-  url.searchParams.set("client", "syncedin/1.0");
   return url.toString();
 }
 
@@ -94,86 +81,40 @@ export async function sendClawMessage(args: {
   const { apiKey, serverUrl, preferredService } = config();
   if (!apiKey) return { ok: false, skipped: true, error: "missing_api_key" };
 
-  const WebSocketCtor = globalThis.WebSocket;
-  if (!WebSocketCtor) {
-    return { ok: false, error: "WebSocket is not available in this runtime" };
+  const service = args.service || preferredService;
+  try {
+    // HTTPS sends do not require a persistent listener in a serverless function.
+    // Never retry here: a lost response may follow an accepted send.
+    const res = await fetch(clawHttpUrl(serverUrl, "/api/agent/send-message"), {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${apiKey}`,
+        "content-type": "application/json"
+      },
+      body: JSON.stringify({ phone_number: phone, text, ...(service ? { service } : {}) }),
+      cache: "no-store",
+      redirect: "error",
+      signal: AbortSignal.timeout(args.timeoutMs ?? 30_000)
+    });
+    if (!res.ok) return { ok: false, error: `claw send rejected (${res.status})` };
+
+    const data: unknown = await res.json();
+    if (!data || typeof data !== "object") {
+      return { ok: false, outcomeUnknown: true, error: "claw returned an invalid send response" };
+    }
+    const result = data as { ok?: unknown; status?: unknown; message_id?: unknown; messageId?: unknown };
+    const messageId = result.message_id ?? result.messageId;
+    if (result.ok === false || result.status === "failed") {
+      return { ok: false, error: "claw send rejected" };
+    }
+    if (result.ok !== true || typeof messageId !== "string" || !messageId ||
+      typeof result.status !== "string" ||
+      !["accepted", "not_confirmed", "sent", "delivered", "read"].includes(result.status)) {
+      return { ok: false, outcomeUnknown: true, error: "claw send was not confirmed" };
+    }
+    // Acceptance is not a delivery receipt or proof that replies reach SyncedIn.
+    return { ok: true, messageId, status: result.status };
+  } catch {
+    return { ok: false, outcomeUnknown: true, error: "claw send response unavailable" };
   }
-
-  const id = `send-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-  const payload = {
-    id,
-    type: "send",
-    service: args.service || preferredService,
-    to: phone,
-    parts: [{ type: "text", value: text }]
-  };
-
-  return await new Promise<ClawSendResult>((resolve) => {
-    let settled = false;
-    const timeout = setTimeout(() => {
-      finish({ ok: false, error: "claw send timed out" });
-    }, args.timeoutMs ?? 30_000);
-    let ws: WebSocket;
-    try {
-      ws = new WebSocketCtor(clawWsUrl(serverUrl, apiKey));
-    } catch {
-      clearTimeout(timeout);
-      resolve({ ok: false, error: "claw connection unavailable" });
-      return;
-    }
-
-    function finish(result: ClawSendResult) {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timeout);
-      try {
-        ws.close();
-      } catch {
-        /* noop */
-      }
-      resolve(result);
-    }
-
-    ws.addEventListener("open", () => {
-      try { ws.send(JSON.stringify(payload)); }
-      catch { finish({ ok: false, error: "claw send unavailable" }); }
-    });
-
-    ws.addEventListener("message", (event) => {
-      let data: any;
-      try {
-        data = JSON.parse(String(event.data));
-      } catch {
-        return;
-      }
-      if (data?.type === "ping") {
-        ws.send(JSON.stringify({ type: "pong" }));
-        return;
-      }
-      if (data?.id !== id || data?.type !== "send.result") return;
-      if (data.ok === true && data.status !== "failed") {
-        finish({
-          ok: true,
-          messageId: data.messageId ? String(data.messageId) : undefined,
-          raw: data
-        });
-      } else {
-        finish({
-          ok: false,
-          error: String(data?.error || "send rejected"),
-          raw: data
-        });
-      }
-    });
-
-    ws.addEventListener("error", () => {
-      finish({ ok: false, error: "claw websocket error" });
-    });
-
-    ws.addEventListener("close", (event) => {
-      finish({ ok: false, error: event.code === 4003
-        ? "claw subscription inactive"
-        : "claw websocket closed before response" });
-    });
-  });
 }

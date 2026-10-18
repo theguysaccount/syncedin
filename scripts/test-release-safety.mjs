@@ -584,6 +584,87 @@ test("text setup failure is visible instead of reporting successful setup", asyn
   const fixture=notificationActions({registration:{ok:false,error:"unavailable"}});const form=new FormData();form.set("phone_number","+12025550123");form.set("on_text_notifications","on");
   await assert.rejects(fixture.saveNotificationPrefs(form),/error=text_setup/);
 });
+async function withClawTransport(fetchImpl, run, service) {
+  const oldFetch = globalThis.fetch;
+  const names = ["CLAW_MESSENGER_API_KEY", "CLAW_MESSENGER_SERVER_URL", "CLAW_MESSENGER_PREFERRED_SERVICE"];
+  const oldEnv = Object.fromEntries(names.map(name => [name, process.env[name]]));
+  process.env.CLAW_MESSENGER_API_KEY = "claw-unit-test-key";
+  process.env.CLAW_MESSENGER_SERVER_URL = "wss://claw.example/ws?key=must-not-leak";
+  if (service) process.env.CLAW_MESSENGER_PREFERRED_SERVICE = service;
+  else delete process.env.CLAW_MESSENGER_PREFERRED_SERVICE;
+  globalThis.fetch = fetchImpl;
+  try {
+    const transport = load("lib/claw-messenger.ts", {"server-only":{}, "@/lib/phone":load("lib/phone.ts",{})});
+    return await run(transport);
+  } finally {
+    globalThis.fetch = oldFetch;
+    for (const name of names) {
+      if (oldEnv[name] === undefined) delete process.env[name];
+      else process.env[name] = oldEnv[name];
+    }
+  }
+}
+test("Claw sends use authenticated HTTPS without a WebSocket or key in the URL", async()=>{
+  const calls=[];
+  await withClawTransport(async(url,options)=>{
+    calls.push({url,options});
+    return Response.json({ok:true,status:"accepted",message_id:"controlled-send",phone_number:"+12025550123"});
+  },async({sendClawMessage})=>{
+    const result=await sendClawMessage({to:"2025550123",text:"  Test only.  "});
+    assert.deepEqual(result,{ok:true,messageId:"controlled-send",status:"accepted"});
+  });
+  assert.equal(calls.length,1);
+  const {url,options}=calls[0];
+  assert.equal(url,"https://claw.example/api/agent/send-message");
+  assert.equal(options.headers.authorization,"Bearer claw-unit-test-key");
+  assert.deepEqual(JSON.parse(options.body),{phone_number:"+12025550123",text:"Test only."});
+  assert.equal(options.cache,"no-store");assert.equal(options.redirect,"error");
+  assert(options.signal instanceof AbortSignal);
+});
+test("Claw preserves explicit service choices and recognizes the camel-case message ID",async()=>{
+  const services=[];
+  await withClawTransport(async(url,options)=>{
+    services.push(JSON.parse(options.body).service);
+    return Response.json({ok:true,status:"not_confirmed",messageId:"test-send"});
+  },async({sendClawMessage})=>{
+    assert.equal((await sendClawMessage({to:"+12025550123",text:"Test"})).ok,true);
+    assert.equal((await sendClawMessage({to:"+12025550123",text:"Test",service:"SMS"})).status,"not_confirmed");
+  },"RCS");
+  assert.deepEqual(services,["RCS","SMS"]);
+});
+test("Claw rejects failed, malformed and incomplete acknowledgments without exposing provider data",async()=>{
+  for (const body of [{ok:false,status:"failed",error:"private-provider-detail"},
+    {ok:true,status:"failed",message_id:"test"},{ok:true,status:"accepted"},
+    {ok:"true",status:"accepted",message_id:"test"},{ok:true,status:"unknown",message_id:"test"},null]) {
+    await withClawTransport(async()=>Response.json(body),async({sendClawMessage})=>{
+      const result=await sendClawMessage({to:"+12025550123",text:"Test"});
+      assert.equal(result.ok,false);assert(!JSON.stringify(result).includes("private-provider-detail"));
+    });
+  }
+});
+test("Claw HTTP errors do not leak response bodies and uncertain sends are never automatically retried",async()=>{
+  for (const [response,unknown] of [[()=>new Response("private-provider-detail",{status:429}),false],
+    [()=>{throw new DOMException("private-provider-detail","TimeoutError");},true],
+    [()=>new Response("invalid-json",{status:200}),true]]) {
+    let calls=0;
+    await withClawTransport(async()=>{calls++;return response();},async({sendClawMessage})=>{
+      const result=await sendClawMessage({to:"+12025550123",text:"Test"});
+      assert.equal(result.ok,false);assert(!JSON.stringify(result).includes("private-provider-detail"));
+      assert.equal(!!result.outcomeUnknown,unknown);
+    });
+    assert.equal(calls,1);
+  }
+});
+test("Claw validation and missing credentials never initiate a send",async()=>{
+  let calls=0;
+  await withClawTransport(async()=>{calls++;throw new Error("Unexpected send");},async({sendClawMessage})=>{
+    assert.equal((await sendClawMessage({to:"invalid",text:"Test"})).error,"invalid_phone");
+    assert.equal((await sendClawMessage({to:"+12025550123",text:"  "})).skipped,true);
+    delete process.env.CLAW_MESSENGER_API_KEY;
+    assert.equal((await sendClawMessage({to:"+12025550123",text:"Test"})).error,"missing_api_key");
+  });
+  assert.equal(calls,0);
+});
 test("text tests require authentication and saved explicit consent",async()=>{
   for(const options of [{user:null},{prefs:{phone_number:"+12025550123",on_text_notifications:true,phone_consent_at:null}}]){
     const fixture=notificationActions(options);
@@ -600,6 +681,8 @@ test("text test uses the saved owner number, rate limits concurrency and records
   assert.deepEqual(fixture.calls.updated,[{sent_channels:["phone"]}]);
   const failed=notificationActions({prefs,send:{ok:false,error:"timeout"}});
   await assert.rejects(failed.sendTestText(),/error=text_failed/);assert.equal(failed.calls.updated.length,0);
+  const unknown=notificationActions({prefs,send:{ok:false,outcomeUnknown:true}});
+  await assert.rejects(unknown.sendTestText(),/error=text_unknown/);assert.equal(unknown.calls.updated.length,0);
 });
 test("notification dispatch survives the serverless response lifecycle",()=>{
   for(const file of ["app/api/send-message/route.ts","app/api/respond-agreement/route.ts","app/conversations/new/actions.ts","app/dashboard/actions.ts","app/onboarding/actions.ts"]){

@@ -96,8 +96,9 @@ export async function sendTestText() {
   if (error) redirect("/settings/notifications?error=test_wait&detail=Please%20wait%20before%20sending%20another%20test.");
   const result = await sendClawMessage({
     to: prefs.phone_number, service: prefs.preferred_messaging_service,
-    text: "SyncedIn delivery test. Your phone alerts are connected. Open https://syncedin.org/settings/notifications to manage alerts."
+    text: "SyncedIn delivery test. Manage phone alerts at https://syncedin.org/settings/notifications."
   });
+  if (result.outcomeUnknown) redirect("/settings/notifications?error=text_unknown&detail=The%20provider%20response%20could%20not%20be%20confirmed.%20Check%20your%20phone%20before%20sending%20another%20test.");
   if (!result.ok || result.skipped) redirect("/settings/notifications?error=text_failed&detail=The%20messaging%20provider%20did%20not%20accept%20the%20test.%20Please%20try%20again%20later.");
   await service.from("notification_log").update({ sent_channels: ["phone"] })
     .eq("user_id", user.id).eq("dedupe_key", dedupeKey);

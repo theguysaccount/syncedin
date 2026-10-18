@@ -51,3 +51,17 @@ Final patched release: commit 630fe1ad2fc699c08280ff69d8736056d83f0d32, staged p
 Mobile run 37574504407 successfully uploaded Android to Play Internal Testing and processed iOS 1.0 (9) in TestFlight. Build 9 is now selected and saved on the App Store version, with export compliance completed, replacing build 7. This supersedes the earlier build-selection status above. Apple resubmission has not been sent: the physical-device recording and approval to share the isolated reviewer credentials remain outstanding. No terms were accepted or reviewer credentials disclosed without that approval. Existing screenshots remain inherited, not a verified capture of the new authenticated native experience.
 
 The production dependency audit now reports one remaining critically rated package, Next.js, and no Capacitor or source-map-js finding. This is a package count, not a claim of one advisory or proven exploitability. Development dependencies have additional findings. Prioritize a tested supported-framework upgrade before calling security remediation complete.
+
+## October 17 Messaging and Framework Update
+
+The October 7 framework warning above is superseded by the tested Next.js 15.5.28 / React 19.3.1 upgrade. The production dependency audit reported zero known vulnerabilities; development tooling still has findings. Custom conversation goals now affect streamed conversations and next-message drafts, and the goal editor checks persistence before reporting a save.
+
+Outbound Claw sends use `POST /api/agent/send-message` with the existing API key in the Authorization header and JSON `phone_number` / `text` fields. An optional explicit `service` preference is forwarded; otherwise the provider selects the route. Existing `wss://` server configuration is converted to HTTPS for this endpoint. Never put keys in HTTP URLs or logs, retry uncertain sends automatically, or equate an accepted response with handset delivery.
+
+One explicitly authorized controlled test was accepted through this REST endpoint, and Jack confirmed receipt and replying. The matching reply has not reached our consumer: both tested WebSocket clients disconnect immediately with close code 1005, and `/api/agent/readiness` reports `ready: false`, `connection_state: offline`. Treat outbound delivery as proven for that controlled test only, not full two-way activation or group-chat proof. Sanitized receipts stay in ignored `.qa/`.
+
+Self-serve replies require a persistent WebSocket consumer; the Next.js application has no durable inbound listener. Do not claim an arbitrary caller-supplied webhook works. Resolve the connection closure with Claw before deploying a durable listener or an approved managed webhook. See https://www.clawmessenger.com/docs. Do not resend the controlled test merely to reproduce its receipt.
+
+Text alerts require a saved number, explicit opt-in, and a consent timestamp. Capturing a number does not grant permission to text. QA notification settings remain off. Test-send reservations limit concurrent requests; they are not a durable retry outbox. A timeout is reported as an unknown outcome and must not suggest confirmed rejection.
+
+Android's October 17 mobile workflow uploaded to Play Internal Testing, not a public release. iOS remains blocked by the distribution certificate limit and requires the existing CI signing certificate plus private key. Do not revoke shared certificates to unblock it.

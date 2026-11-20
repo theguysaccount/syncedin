@@ -14,6 +14,15 @@ for (const card of cards) {
   assert(!/\bnoindex\b|\bnone\b/i.test(page.headers.get("x-robots-tag") || ""), card.path + " is blocked by response headers");
   const html = await page.text();
   const document = verifyPublicPage(inspectPublicPage(html), card.path);
+  if (card.path === "/hypernetwork") {
+    for (const phrase of ["registered accounts", "twins with goals", "acceptance responses", "Unavailable is not zero", "not model retraining", "including test activity"]) assert(document.contentText.includes(phrase), "Public activity definition missing: " + phrase);
+    assert(!document.contentText.includes("both humans accepted what their twins proposed"));
+  }
+  if (card.path === "/wins") {
+    assert.deepEqual(document.headings, ["Shared outcomes. In members' words."]);
+    assert(document.contentText.includes("member-reported summaries") && document.contentText.includes("not independent verification"));
+    assert(!document.contentText.includes("accepted this week") && !document.contentText.includes("Nothing on this page is seeded"));
+  }
   assert(!titles.has(document.title[0]), card.path + " duplicate public title");
   titles.add(document.title[0]);
   assert(html.includes('property="og:image"'), card.path + " Open Graph metadata missing");
@@ -47,6 +56,7 @@ const talkResponse = await fetch(new URL("/talk", base), { redirect: "manual", s
 assert.equal(talkResponse.status, 200);
 assert(!/\bnoindex\b|\bnone\b/i.test(talkResponse.headers.get("x-robots-tag") || ""));
 const talkHTML = await talkResponse.text();
+assert(talkHTML.includes('data-clarity-mask="True"'), "Keep the rendered public transcript masked");
 const talk = inspectPublicPage(talkHTML);
 assert.equal(talk.title.length, 1);
 assert.equal(talk.descriptions.length, 1);

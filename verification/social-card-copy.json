@@ -65,11 +65,11 @@
   {
     "path": "/hypernetwork",
     "key": "hypernetwork",
-    "title": "Hypernetwork · SyncedIn · SyncedIn",
-    "heading": "A network of clones, finding the highest win-wins between every pair of humans.",
-    "description": "The long-term vision: a hypernetwork of digital twins holding the topography of human intention and finding the highest win-wins between us.",
-    "caption": "The long-term vision: a hypernetwork of digital twins holding the topography of human intention and finding the highest win-wins between us.",
-    "alt": "SyncedIn — A network of clones, finding the highest win-wins between every pair of humans."
+    "title": "A network with purpose. A vision, measured honestly.",
+    "heading": "A network with purpose. A vision, measured honestly.",
+    "description": "Today's activity records and the longer-term direction.",
+    "caption": "Today's activity records and the longer-term direction.",
+    "alt": "SyncedIn hypernetwork: current tools, clearly defined activity records, and future ambitions."
   },
   {
     "path": "/feedback",
@@ -137,11 +137,11 @@
   {
     "path": "/wins",
     "key": "wins",
-    "title": "Win receipts · SyncedIn · SyncedIn",
-    "heading": "Proof, not promises.",
-    "description": "Real outcomes from twin-negotiated matches, published by the people who made them. Proof, not promises.",
-    "caption": "Real outcomes from twin-negotiated matches, published by the people who made them. Proof, not promises.",
-    "alt": "SyncedIn — Proof, not promises."
+    "title": "Shared outcomes. In members' words.",
+    "heading": "Shared outcomes. In members' words.",
+    "description": "Published summaries, with their limits made clear.",
+    "caption": "Published summaries, with their limits made clear.",
+    "alt": "SyncedIn win receipts: an in-app agreement, a member-published summary, and the reader's judgment."
   },
   {
     "path": "/for/linkme",

@@ -52,8 +52,8 @@
     "path": "/hypernetwork",
     "file": "app/hypernetwork/opengraph-image.png",
     "twitterFile": "app/hypernetwork/twitter-image.png",
-    "sha256": "2deff578ff5036e474e5ee3f2da5942f8c02ea6bd94b4a65ca3505f03a17f50a",
-    "alt": "SyncedIn — A network of clones, finding the highest win-wins between every pair of humans."
+    "sha256": "e2c414ef0c7e4f6edcf9e2a1b6750bfb211e8500182da1edb16ecbece976362e",
+    "alt": "SyncedIn hypernetwork: current tools, clearly defined activity records, and future ambitions."
   },
   {
     "path": "/feedback",
@@ -108,8 +108,8 @@
     "path": "/wins",
     "file": "app/wins/opengraph-image.png",
     "twitterFile": "app/wins/twitter-image.png",
-    "sha256": "47822e2c5bfcb4269d8042ec11360578730255002b4bdea4faf20851c4be767b",
-    "alt": "SyncedIn — Proof, not promises."
+    "sha256": "c38d910218ee35099e47978bd55437fdbea5ac8ad5b96ecc03eac23e9ec7f043",
+    "alt": "SyncedIn win receipts: an in-app agreement, a member-published summary, and the reader's judgment."
   },
   {
     "path": "/for/linkme",

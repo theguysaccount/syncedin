@@ -45,6 +45,10 @@ const specs = [
     alt: "SyncedIn product perspective: selected professional context, an editable conversation draft, and a human decision." },
   { route: "/blog", category: "SyncedIn journal", title: "Product thinking.\nPractical comparisons.", subtitle: "Writing from the team about useful conversations.", labels: ["The product idea", "Different workflows", "A useful next step"],
     alt: "SyncedIn journal: product thinking, practical workflow comparisons, and useful next steps." },
+  { route: "/hypernetwork", category: "SyncedIn vision and activity", title: "A network with purpose.\nA vision, measured honestly.", subtitle: "Today's activity records and the longer-term direction.", labels: ["Current tools", "Defined measures", "Future ambitions"],
+    alt: "SyncedIn hypernetwork: current tools, clearly defined activity records, and future ambitions." },
+  { route: "/wins", category: "SyncedIn member reports", title: "Shared outcomes.\nIn members' words.", subtitle: "Published summaries, with their limits made clear.", labels: ["An in-app agreement", "A member's summary", "Your judgment"],
+    alt: "SyncedIn win receipts: an in-app agreement, a member-published summary, and the reader's judgment." },
 ];
 const requested = new Set(process.argv.slice(2));
 for (const route of requested) if (!specs.some(spec => spec.route === route)) throw new Error(`Unknown social-card route: ${route}`);

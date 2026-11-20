@@ -170,6 +170,65 @@ test("funnel sink ignores cross-origin, opt-out, nonproduction and oversized str
   assert(fs.readFileSync("app/talk/TalkChat.tsx", "utf8").includes('data-clarity-mask="True"'));
 });
 
+function publicRecordsFixture({ failed = false, count = 0, scores = [], receipts = [] } = {}) {
+  const calls = [];
+  const service = { from: table => {
+    const query = { table, field: "", head: false };
+    const builder = { select: (field, options) => { query.field = field; query.head = !!options?.head; calls.push([table, "select", field]); return builder; }, then: (resolve, reject) => {
+      const error = failed ? { message: "private database diagnostic" } : null;
+      const data = failed ? null : table === "win_receipts" ? receipts : table === "conversations" && query.field === "excitement_score" ? scores.map(excitement_score => ({ excitement_score })) : [];
+      return Promise.resolve({ count: failed ? null : count, data, error }).then(resolve, reject);
+    } };
+    for (const method of ["eq", "not", "order", "limit"]) builder[method] = (...args) => { calls.push([table, method, ...args]); return builder; };
+    return builder;
+  } };
+  const shared = { "react/jsx-runtime": jsx, "next/link": nextLink, "@/lib/public-seo": seo, "../Wordmark": wordmark,
+    "@/lib/supabase/server": { createServiceClient: () => service, createClient: async () => ({ auth: { getUser: async () => ({ data: { user: null } }) } }) } };
+  const network = load("app/hypernetwork/page.tsx", { ...shared,
+    "./SignupsChart": load("app/hypernetwork/SignupsChart.tsx", { "react/jsx-runtime": jsx }),
+    "../BulkReachToolkit": { BulkReachToolkit: () => React.createElement("div", null, "Existing reach toolkit") },
+    "../AppShell": { AppShell: ({ children }) => children },
+    "./WorldRadarAnimation": { WorldRadarAnimation: () => React.createElement("div", null, "Existing radar animation") },
+    "../LoomEmbed": load("app/LoomEmbed.tsx", { "react/jsx-runtime": jsx })
+  });
+  const wins = load("app/wins/page.tsx", { ...shared, "../TrackBeacon": { TrackBeacon: () => null } });
+  return { network, wins, calls };
+}
+
+test("public network records distinguish failed queries from real zero and label actual units", async () => {
+  const empty = publicRecordsFixture();
+  const html = renderToStaticMarkup(await empty.network.default());
+  for (const phrase of ["registered accounts", "twins with goals", "acceptance responses", "individual accepted responses, not mutually completed deals", "not external text delivery", "not model retraining", "including test activity", "Unavailable is not zero"]) assert(html.includes(phrase), phrase);
+  for (const href of ["/login", "/feedback", "/onboarding", "/dashboard", "/careers"]) assert(html.includes(`href="${href}"`), href);
+  assert(html.includes("Existing reach toolkit") && html.includes("Existing radar animation"));
+  assert(empty.calls.some(call => call[0] === "profiles" && call[1] === "eq" && call[2] === "is_test_persona" && call[3] === false));
+  const failure = renderToStaticMarkup(await publicRecordsFixture({ failed: true }).network.default());
+  assert(failure.includes("Signup history is temporarily unavailable"));
+  assert(!failure.includes("No signups yet") && !failure.includes("private database diagnostic"));
+  assert((failure.match(/>Unavailable</g) || []).length >= 10);
+  assert(!failure.includes("both humans accepted what their twins proposed"));
+});
+
+test("network averages ignore nonfinite and out-of-range values instead of publishing invalid evidence", async () => {
+  const html = renderToStaticMarkup(await publicRecordsFixture({ count: 2, scores: [NaN, Infinity, -1, 101, 20, 80, "100"] }).network.default());
+  assert(html.includes("50/100"));
+  assert(!html.includes("NaN/100") && !html.includes("Infinity/100"));
+});
+
+test("published receipts use publication dates, honest member reports and a separate unavailable state", async () => {
+  const receipt = { id: "synthetic", party_a: "A SyncedIn member", party_b: "A SyncedIn member", outcome_text: "A fictional QA example, not a customer outcome.", anonymized: true, created_at: new Date(Date.now() - 3600000).toISOString() };
+  const html = renderToStaticMarkup(await publicRecordsFixture({ receipts: [receipt] }).wins.default());
+  assert(html.includes("member-reported summaries") && html.includes("not independent verification"));
+  assert(html.includes("1 receipt published in the last seven days among the latest 50"));
+  assert(html.includes("published anonymously") && html.includes("fictional QA example"));
+  assert(!html.includes("accepted this week") && !html.includes("Nothing on this page is seeded"));
+  const empty = renderToStaticMarkup(await publicRecordsFixture().wins.default());
+  assert(empty.includes("No public receipts to show yet") && empty.includes('href="/ai-knows-me"'));
+  const failure = renderToStaticMarkup(await publicRecordsFixture({ failed: true }).wins.default());
+  assert(failure.includes("Published receipts are temporarily unavailable") && failure.includes('href="/ai-knows-me"'));
+  assert(!failure.includes("No public receipts to show yet") && !failure.includes("private database diagnostic"));
+});
+
 function homepageFixture({ user = null, rows = [], queryFailure = false } = {}) {
   const calls = [];
   const builder = {};

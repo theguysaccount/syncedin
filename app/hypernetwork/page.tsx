@@ -17,41 +17,45 @@ export const metadata = withPublicSEO('/hypernetwork', {
 export const revalidate = 60;
 
 type Stats = {
-  real_users: number;
-  completed_twins: number;
-  real_conversations: number;
-  closed_conversations: number;
-  total_messages: number;
-  pending_invites: number;
-  claimed_invites: number;
-  accepted_agreements: number;
-  edit_deltas: number;
-  scoring_calibrations: number;
+  real_users: number | null;
+  completed_twins: number | null;
+  real_conversations: number | null;
+  closed_conversations: number | null;
+  total_messages: number | null;
+  pending_invites: number | null;
+  claimed_invites: number | null;
+  accepted_agreements: number | null;
+  edit_deltas: number | null;
+  scoring_calibrations: number | null;
   average_excitement: number | null;
 };
 
 async function loadStats(): Promise<Stats> {
+  try {
+    return await queryStats();
+  } catch {
+    return { real_users: null, completed_twins: null, real_conversations: null, closed_conversations: null, total_messages: null, pending_invites: null, claimed_invites: null, accepted_agreements: null, edit_deltas: null, scoring_calibrations: null, average_excitement: null };
+  }
+}
+
+function countValue(result: { count?: number | null; error?: unknown }): number | null {
+  return !result.error && typeof result.count === "number" && Number.isSafeInteger(result.count) && result.count >= 0 ? result.count : null;
+}
+
+async function queryStats(): Promise<Stats> {
   const service = createServiceClient();
-  const headCount = (table: string, filter?: (q: any) => any) => {
+  const headCount = async (table: string, filter?: (q: any) => any) => {
     let q = service.from(table).select("*", { count: "exact", head: true });
     if (filter) q = filter(q);
-    return q;
+    return countValue(await q);
   };
   const [
-    { count: realUsers },
-    { count: completedTwins },
-    { count: realConversations },
-    { count: closedConversations },
-    { count: totalMessages },
-    { count: pendingInvites },
-    { count: claimedInvites },
-    { count: acceptedAgreements },
-    { count: editDeltas },
-    { count: scoringCalibrations }
+    realUsers, completedTwins, realConversations, closedConversations,
+    totalMessages, pendingInvites, claimedInvites, acceptedAgreements,
+    editDeltas, scoringCalibrations
   ] = await Promise.all([
     headCount("profiles", (q: any) => q.eq("is_test_persona", false)),
-    // Twins among NON-test users only, so "twins online" never exceeds
-    // "humans on SyncedIn" on the public dashboard.
+    // Saved goals are not evidence that a twin is currently online.
     service
       .from("twin_profiles")
       .select("user_id, profiles!inner(is_test_persona)", {
@@ -59,7 +63,8 @@ async function loadStats(): Promise<Stats> {
         head: true
       })
       .eq("profiles.is_test_persona", false)
-      .not("goals", "is", null),
+      .not("goals", "is", null)
+      .then(countValue),
     headCount("conversations"),
     headCount("conversations", (q: any) => q.eq("status", "closed")),
     headCount("messages"),
@@ -71,27 +76,27 @@ async function loadStats(): Promise<Stats> {
     headCount("edit_deltas"),
     headCount("scoring_calibrations")
   ]);
-  const { data: scored } = await service
+  const { data: scored, error: scoreError } = await service
     .from("conversations")
     .select("excitement_score")
     .not("excitement_score", "is", null);
   const scores = (scored ?? [])
     .map((c: any) => c.excitement_score as number)
-    .filter((n): n is number => typeof n === "number");
-  const avg = scores.length
+    .filter((n): n is number => typeof n === "number" && Number.isFinite(n) && n >= 0 && n <= 100);
+  const avg = !scoreError && scores.length
     ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
     : null;
   return {
-    real_users: realUsers ?? 0,
-    completed_twins: completedTwins ?? 0,
-    real_conversations: realConversations ?? 0,
-    closed_conversations: closedConversations ?? 0,
-    total_messages: totalMessages ?? 0,
-    pending_invites: pendingInvites ?? 0,
-    claimed_invites: claimedInvites ?? 0,
-    accepted_agreements: acceptedAgreements ?? 0,
-    edit_deltas: editDeltas ?? 0,
-    scoring_calibrations: scoringCalibrations ?? 0,
+    real_users: realUsers,
+    completed_twins: completedTwins,
+    real_conversations: realConversations,
+    closed_conversations: closedConversations,
+    total_messages: totalMessages,
+    pending_invites: pendingInvites,
+    claimed_invites: claimedInvites,
+    accepted_agreements: acceptedAgreements,
+    edit_deltas: editDeltas,
+    scoring_calibrations: scoringCalibrations,
     average_excitement: avg
   };
 }
@@ -102,15 +107,24 @@ async function loadStats(): Promise<Stats> {
  * continuous even on days with zero new signups.
  */
 async function loadSignupsTimeline(): Promise<
-  { date: string; cumulative: number }[]
+  { date: string; cumulative: number }[] | null
 > {
+  try {
+    return await querySignupsTimeline();
+  } catch {
+    return null;
+  }
+}
+
+async function querySignupsTimeline(): Promise<{ date: string; cumulative: number }[] | null> {
   const service = createServiceClient();
-  const { data } = await service
+  const { data, error } = await service
     .from("profiles")
     .select("created_at")
     .eq("is_test_persona", false)
     .order("created_at", { ascending: true });
-  if (!data || data.length === 0) return [];
+  if (error || !data) return null;
+  if (data.length === 0) return [];
 
   const dayKey = (iso: string) => iso.slice(0, 10);
   const startDay = dayKey(data[0].created_at as string);
@@ -140,7 +154,7 @@ async function loadSignupsTimeline(): Promise<
 }
 
 function fmt(n: number | null): string {
-  if (n == null) return "—";
+  if (n == null) return "Unavailable";
   if (n < 1000) return n.toString();
   if (n < 1_000_000) return (n / 1000).toFixed(1).replace(/\.0$/, "") + "k";
   return (n / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
@@ -167,63 +181,63 @@ export default async function HypernetworkPage() {
     color: string;
   }> = [
     {
-      label: "humans on syncedin",
+      label: "registered accounts",
       value: fmt(s.real_users),
-      hint: "real accounts, no test personas",
+      hint: "profiles not flagged as test personas; not active-user counts",
       color: "var(--amber-bright)"
     },
     {
-      label: "twins online",
+      label: "twins with goals",
       value: fmt(s.completed_twins),
-      hint: "with goals filled in, ready to negotiate",
+      hint: "non-test profiles with saved goals; not online status",
       color: "#3a4dff"
     },
     {
       label: "conversations",
       value: fmt(s.real_conversations),
-      hint: "running between two twins",
+      hint: "stored conversation records, including test activity",
       color: "#1f8bff"
     },
     {
-      label: "messages sent",
+      label: "in-platform messages",
       value: fmt(s.total_messages),
-      hint: "across every conversation, every direction",
+      hint: "stored messages, not external text delivery",
       color: "#8b3dff"
     },
     {
-      label: "win-wins reached",
+      label: "acceptance responses",
       value: fmt(s.accepted_agreements),
-      hint: "both humans accepted what their twins proposed",
+      hint: "individual accepted responses, not mutually completed deals",
       color: "#5ee5b2"
     },
     {
       label: "invites drafted",
       value: fmt(s.pending_invites),
-      hint: "your-clone-already-replied landing pages",
+      hint: "stored invite records, including those later claimed",
       color: "#ffd54d"
     },
     {
       label: "invites claimed",
       value: fmt(s.claimed_invites),
-      hint: "new users who joined to reply to a clone",
+      hint: "claimed invite records, not unique new members",
       color: "#ff8a3d"
     },
     {
       label: "edit deltas",
       value: fmt(s.edit_deltas),
-      hint: "humans correcting their twin, the training signal",
+      hint: "saved corrections for prompt context, not model retraining",
       color: "#ff77ee"
     },
     {
       label: "score calibrations",
       value: fmt(s.scoring_calibrations),
-      hint: "humans tuning what 'high-leverage' means to them",
+      hint: "saved score corrections, including test activity",
       color: "#a060ff"
     },
     {
       label: "average sync score",
-      value: s.average_excitement == null ? "—" : `${s.average_excitement}/100`,
-      hint: "how exciting the network's conversations are on average",
+      value: s.average_excitement == null ? "Unavailable" : `${s.average_excitement}/100`,
+      hint: "average stored score from 0 to 100, not verified compatibility",
       color: "#3cd870"
     }
   ];
@@ -262,7 +276,7 @@ export default async function HypernetworkPage() {
           }
         `}</style>
         <div>
-          <div className="retro-label">the hypernetwork</div>
+          <div className="retro-label">the hypernetwork: long-term vision</div>
           <h1 className="retro-h1 text-5xl mt-3 leading-tight">
             A network of clones, finding the highest win-wins between
             every pair of humans.
@@ -303,14 +317,14 @@ export default async function HypernetworkPage() {
 
       {/* Cumulative signups chart */}
       <section className="mt-4">
-        <SignupsChart points={signups} />
+        {signups === null ? <p role="status" style={{ color: "var(--text-dim)" }}>Signup history is temporarily unavailable.</p> : <SignupsChart points={signups} />}
       </section>
 
       {/* Stat tiles */}
       <section className="mt-4">
-        <div className="retro-label">live network stats</div>
+        <div className="retro-label">network activity records</div>
         <p className="mt-2 text-sm" style={{ color: "var(--text-dim)" }}>
-          Refreshed every minute. No vanity metrics, every number is real.
+          A snapshot of stored records, not a live presence indicator. Accounts and saved-goal twins exclude flagged test profiles; other totals can include test activity. Unavailable is not zero. These records do not measure retention, revenue or completed real-world outcomes.
         </p>
         <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
           {tiles.map((t) => (
@@ -335,16 +349,16 @@ export default async function HypernetworkPage() {
               />
               <div
                 style={{
-                  fontSize: 38,
+                  fontSize: t.value === "Unavailable" ? 16 : 32,
                   fontWeight: 800,
-                  letterSpacing: "-0.02em",
+                  letterSpacing: 0,
                   color: "var(--text)",
                   lineHeight: 1
                 }}
               >
                 {t.value}
               </div>
-              <div className="retro-label mt-2" style={{ color: t.color }}>
+              <div className="retro-label mt-2" style={{ color: "var(--text)", letterSpacing: 0 }}>
                 {t.label}
               </div>
               <div
@@ -444,35 +458,34 @@ export default async function HypernetworkPage() {
           className="mt-2 text-sm"
           style={{ color: "var(--text-dim)" }}
         >
-          Five phases. The bigger the network gets, the more YOU get out of
-          it. Each phase below ends with what it means for you.
+          A direction, not a delivery guarantee. The first phases describe today's tools; network-wide parallel matching and group coordination below are future ambitions. People still review proposals and approve external contact.
         </p>
         <ol className="mt-5 space-y-4">
           {[
             {
               t: "Phase 1 — Pair",
-              d: "Your twin talks to one other twin and finds the highest win-win between you. Already live.",
-              you: "You skip the small talk. Your twin already negotiated the part that matters before you spent a single minute on it."
+              d: "Available today: twin-to-twin conversation drafts explore the context and goals provided by two people.",
+              you: "Review the draft, correct what is wrong, and decide whether a real conversation is worthwhile. A proposal is not a completed agreement."
             },
             {
               t: "Phase 2 — Web",
-              d: "Your twin scans the open web for people you should know, drafts invites in your voice, and reaches out for you.",
-              you: "You stop missing the right people because you never heard of them. The web becomes a candidate pool your clone hunts on your behalf."
+              d: "Available today: discovery can surface public prospects and draft an invitation for review.",
+              you: "Check the actual person's background and the reason to connect. A saved profile or phone number is not permission to send external messages."
             },
             {
               t: "Phase 3 — Calibration",
-              d: "Every score you correct and every message you edit becomes a calibration signal. The Sync learns your taste.",
-              you: "Your twin gets sharper every week without you teaching it. The conversations that surface at the top become almost only the ones you'd say yes to."
+              d: "Available today: saved message edits and score corrections provide feedback for later prompts.",
+              you: "Correct the context and the voice where they are wrong. This does not retrain the underlying model or guarantee a particular match."
             },
             {
               t: "Phase 4 — Hypernetwork",
-              d: "Your clone runs in parallel across thousands of other clones, continuously. Only the rare high-leverage matches survive to the surface.",
-              you: "You wake up to two or three matches that would have taken you years to discover yourself. Time freed, attention reclaimed, signal-to-noise inverted."
+              d: "Future direction: explore network-wide conversations and relevant opportunities in parallel.",
+              you: "The ambition is a more useful shortlist, not a promise of continuous worldwide coverage or a fixed number of matches."
             },
             {
               t: "Phase 5 — Coalitions",
-              d: "Aligned clones converge into group chats: small action coalitions of humans whose twins agreed the same change is obvious. Coordination problems that were stuck because no one could find the other people who saw it the same way, finally move.",
-              you: "You stop being the only person you know who thinks a thing should change. The network finds your aligned tribe and convenes it. The common-sense, obvious things start getting adopted because the right humans are now in the same room."
+              d: "Future direction: help people with a shared purpose form small, willing groups.",
+              you: "People would choose whether to join and what to do next. This roadmap is not a claim that automated group messaging or collective action is already available."
             }
           ].map((p, idx) => (
             <li key={p.t} className="retro-panel p-5">

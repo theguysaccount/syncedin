@@ -6,18 +6,15 @@ import { Wordmark } from "../Wordmark";
 import { TrackBeacon } from "../TrackBeacon";
 
 /**
- * /wins, proof not promises. Every card on this page is a real
- * outcome a participant chose to publish from an accepted agreement.
- * Nothing here is seeded, faked, or AI-invented. If the page is empty,
- * it says so honestly. North-star metric lives here: accepted win-wins
- * per week.
+ * Member-published summaries from agreements accepted in the product.
+ * Publication is not independent verification of a real-world outcome.
  */
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = withPublicSEO('/wins', {
   title: "Win receipts · SyncedIn",
   description:
-    "Real outcomes from twin-negotiated matches, published by the people who made them. Proof, not promises."
+    "Member-published summaries from agreements accepted on SyncedIn. Read the shared context without treating an in-app agreement as an independently verified outcome."
 });
 
 type Receipt = {
@@ -32,20 +29,22 @@ type Receipt = {
 export default async function WinsPage() {
   let receipts: Receipt[] = [];
   let thisWeek = 0;
+  let unavailable = false;
   try {
     const service = createServiceClient();
-    const { data } = await service
+    const { data, error } = await service
       .from("win_receipts")
       .select("id, outcome_text, party_a, party_b, anonymized, created_at")
       .order("created_at", { ascending: false })
       .limit(50);
+    if (error || !data) unavailable = true;
     receipts = (data ?? []) as Receipt[];
     const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
     thisWeek = receipts.filter(
-      (r) => new Date(r.created_at).getTime() > weekAgo
+      (r) => new Date(r.created_at).getTime() > weekAgo && new Date(r.created_at).getTime() <= Date.now()
     ).length;
   } catch {
-    /* table not migrated yet: page renders the honest empty state */
+    unavailable = true;
   }
 
   return (
@@ -73,14 +72,14 @@ export default async function WinsPage() {
         <h1
           className="retro-h1"
           style={{
-            fontSize: "clamp(30px, 5.5vw, 46px)",
+            fontSize: 36,
             fontWeight: 900,
-            letterSpacing: "-0.03em",
+            letterSpacing: 0,
             lineHeight: 1.05,
             marginTop: 10
           }}
         >
-          Proof, not promises.
+          Shared outcomes. In members&apos; words.
         </h1>
         <p
           style={{
@@ -92,9 +91,7 @@ export default async function WinsPage() {
             marginInline: "auto"
           }}
         >
-          Every card below is a real outcome from a twin-negotiated match,
-          published by a participant after the agreement was accepted.
-          Nothing on this page is seeded or invented.
+          Members can publish an outcome summary after both participants accept an agreement in SyncedIn. These are member-reported summaries, not independent verification that a meeting, partnership or deal happened outside the product.
         </p>
         {thisWeek > 0 && (
           <p
@@ -105,7 +102,7 @@ export default async function WinsPage() {
               color: "var(--green)"
             }}
           >
-            {thisWeek} win-win{thisWeek === 1 ? "" : "s"} accepted this week
+            {thisWeek} receipt{thisWeek === 1 ? "" : "s"} published in the last seven days among the latest 50
           </p>
         )}
       </section>
@@ -116,9 +113,8 @@ export default async function WinsPage() {
             className="retro-panel"
             style={{ padding: 24, textAlign: "center" }}
           >
-            <div style={{ fontSize: 22 }}>🧾</div>
-            <div style={{ fontWeight: 800, marginTop: 8 }}>
-              Receipts ship here as win-wins complete.
+            <div role={unavailable ? "status" : undefined} style={{ fontWeight: 800, marginTop: 8 }}>
+              {unavailable ? "Published receipts are temporarily unavailable." : "No public receipts to show yet."}
             </div>
             <p
               style={{
@@ -128,9 +124,7 @@ export default async function WinsPage() {
                 lineHeight: 1.5
               }}
             >
-              When two members accept an agreement, either one can publish
-              the outcome here, named or anonymous. We would rather show
-              you an empty page than a fake one.
+              {unavailable ? "We could not load the published summaries. This does not mean there are no agreements. You can return later or continue to your twin." : "After both members accept an agreement, a participant can publish a named or anonymous summary here. An empty page does not establish how many conversations have happened."}
             </p>
             <Link
               href="/ai-knows-me"
@@ -143,7 +137,7 @@ export default async function WinsPage() {
                 fontWeight: 800
               }}
             >
-              Be the first: build your twin →
+              Build your twin →
             </Link>
           </div>
         ) : (
@@ -176,7 +170,7 @@ export default async function WinsPage() {
                     color: "var(--text-dim)"
                   }}
                 >
-                  accepted {new Date(r.created_at).toLocaleDateString()}
+                  published {new Date(r.created_at).toLocaleDateString()}
                   {r.anonymized ? " · published anonymously" : ""}
                 </div>
               </div>

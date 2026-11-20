@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { ArrowLeft, ArrowRight, LoaderCircle, UserRound } from "lucide-react";
 
 type ScrapeResult = {
   ok?: boolean;
@@ -17,6 +18,11 @@ type ScrapeResult = {
 // onboarding flow can pick it up after the user signs in via Google /
 // magic link. Keyed under a single stable key — last import wins.
 const HANDOFF_KEY = "syncedin_linkme_handoff_v1";
+const INTENT_LABELS: Record<string, string> = {
+  booking: "Booking", course: "Course", podcast: "Podcast", video: "Video",
+  social_x: "X", social_ig: "Instagram", social_linkedin: "LinkedIn", social_tiktok: "TikTok",
+  code: "Code", newsletter: "Writing", commerce: "Shop", advisory: "Advisory", email: "Email", other: "Link",
+};
 
 /**
  * Client island for /for/linkme. Single input → fires scrape API →
@@ -72,10 +78,11 @@ export function LinkmeImporter() {
   if (result?.ok) {
     return (
       <div
+        data-clarity-mask="True"
         style={{
-          background: "#fff",
-          border: "1px solid #e8e6f5",
-          borderRadius: 16,
+          background: "var(--panel-solid)",
+          border: "1px solid var(--border)",
+          borderRadius: 8,
           padding: 18,
           boxShadow: "0 12px 36px -16px rgba(31, 89, 255, 0.15)"
         }}
@@ -96,35 +103,39 @@ export function LinkmeImporter() {
               alt={result.name ?? "you"}
               width={56}
               height={56}
+              referrerPolicy="no-referrer"
               style={{
                 width: 56,
                 height: 56,
                 borderRadius: 28,
                 objectFit: "cover",
-                border: "2px solid #fff",
+                border: "2px solid var(--panel-solid)",
                 boxShadow: "0 0 0 1px #e8e6f5"
               }}
             />
           ) : (
             <div
+              role="img"
+              aria-label="No profile photo"
               style={{
                 width: 56,
                 height: 56,
                 borderRadius: 28,
-                background:
-                  "linear-gradient(135deg, #2358ff 0%, #6b2dc9 100%)"
+                background: "var(--panel-2)",
+                color: "var(--text-dim)",
+                display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
               }}
-            />
+            ><UserRound size={23} aria-hidden="true" /></div>
           )}
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontWeight: 800, fontSize: 18 }}>
+            <div style={{ fontWeight: 700, fontSize: 18, overflowWrap: "anywhere" }}>
               {result.name ?? "(no name found)"}
             </div>
             {result.bio && (
               <div
                 style={{
                   fontSize: 13,
-                  color: "#4a5066",
+                  color: "var(--text-dim)",
                   lineHeight: 1.4,
                   marginTop: 2
                 }}
@@ -139,7 +150,7 @@ export function LinkmeImporter() {
         {result.links && result.links.length > 0 && (
           <div
             style={{
-              borderTop: "1px dashed #e8e6f5",
+              borderTop: "1px dashed var(--border)",
               paddingTop: 12,
               marginTop: 6
             }}
@@ -148,14 +159,14 @@ export function LinkmeImporter() {
               style={{
                 fontSize: 11,
                 fontWeight: 800,
-                letterSpacing: "0.12em",
+                letterSpacing: 0,
                 textTransform: "uppercase",
-                color: "#6e768c",
+                color: "var(--text-dim)",
                 marginBottom: 8
               }}
             >
               {result.links.length} link{result.links.length === 1 ? "" : "s"}{" "}
-              your twin will route visitors to
+              found in this preview
             </div>
             <div
               style={{
@@ -175,24 +186,23 @@ export function LinkmeImporter() {
                     gap: 8,
                     padding: "8px 10px",
                     borderRadius: 8,
-                    background: "#f7f5ff",
+                    background: "var(--panel-2)",
                     fontSize: 13
                   }}
                 >
                   <span
                     style={{
-                      fontSize: 9,
+                      fontSize: 11,
                       fontWeight: 800,
-                      letterSpacing: "0.08em",
-                      textTransform: "uppercase",
-                      color: "#6b2dc9",
+                      letterSpacing: 0,
+                      color: "var(--accent)",
                       padding: "2px 6px",
-                      borderRadius: 999,
-                      background: "rgba(107,45,201,0.1)",
+                      borderRadius: 4,
+                      background: "var(--panel-solid)",
                       flexShrink: 0
                     }}
                   >
-                    {l.intent}
+                    {Object.hasOwn(INTENT_LABELS, l.intent) ? INTENT_LABELS[l.intent] : "Link"}
                   </span>
                   <span
                     style={{
@@ -210,7 +220,7 @@ export function LinkmeImporter() {
                 <div
                   style={{
                     fontSize: 11,
-                    color: "#6e768c",
+                    color: "var(--text-dim)",
                     paddingLeft: 8
                   }}
                 >
@@ -228,17 +238,16 @@ export function LinkmeImporter() {
             marginTop: 18,
             width: "100%",
             padding: "14px 16px",
-            borderRadius: 12,
+            borderRadius: 6,
             border: "none",
-            background:
-              "linear-gradient(135deg, #2358ff 0%, #6b2dc9 100%)",
+            background: "#305ce5",
             color: "#fff",
             fontWeight: 800,
             fontSize: 15,
-            cursor: "pointer"
+            cursor: "pointer", minHeight: 44, display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
           }}
         >
-          Continue → build my AI twin
+          Continue to my twin <ArrowRight size={17} aria-hidden="true" />
         </button>
         <button
           type="button"
@@ -250,22 +259,23 @@ export function LinkmeImporter() {
             marginTop: 8,
             width: "100%",
             padding: "10px 16px",
-            borderRadius: 12,
-            border: "1px solid #e8e6f5",
-            background: "#fff",
-            color: "#4a5066",
+            borderRadius: 6,
+            border: "1px solid var(--border)",
+            background: "var(--panel-solid)",
+            color: "var(--text-dim)",
             fontSize: 13,
-            cursor: "pointer"
+            cursor: "pointer", minHeight: 44, display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
           }}
         >
-          ← Try a different URL
+          <ArrowLeft size={16} aria-hidden="true" /> Try a different URL
         </button>
       </div>
     );
   }
 
   return (
-    <div>
+    <div data-clarity-mask="True" aria-busy={busy}>
+      <label htmlFor="linkme-profile-url" style={{ display: "block", marginBottom: 8, fontSize: 14, fontWeight: 600 }}>Public profile URL</label>
       <div
         style={{
           display: "flex",
@@ -274,6 +284,8 @@ export function LinkmeImporter() {
         }}
       >
         <input
+          id="linkme-profile-url"
+          aria-describedby="linkme-import-note"
           type="url"
           value={url}
           onChange={(e) => setUrl(e.target.value)}
@@ -287,12 +299,11 @@ export function LinkmeImporter() {
           style={{
             flex: 1,
             padding: "14px 16px",
-            borderRadius: 12,
-            border: "1px solid #d9d6ec",
-            background: "#fff",
-            color: "#0e1322",
+            borderRadius: 6,
+            border: "1px solid var(--border)",
+            background: "var(--panel-solid)",
+            color: "var(--text)",
             fontSize: 16,
-            outline: "none",
             minWidth: 0
           }}
         />
@@ -302,43 +313,44 @@ export function LinkmeImporter() {
           disabled={busy || !url.trim()}
           style={{
             padding: "0 18px",
-            borderRadius: 12,
+            borderRadius: 6,
             border: "none",
-            background:
-              busy || !url.trim()
-                ? "#d9d6ec"
-                : "linear-gradient(135deg, #2358ff 0%, #6b2dc9 100%)",
+            background: "#305ce5",
+            opacity: busy || !url.trim() ? 0.5 : 1,
             color: "#fff",
             fontWeight: 800,
             fontSize: 14,
             cursor: busy ? "wait" : "pointer",
             whiteSpace: "nowrap",
-            flexShrink: 0
+            flexShrink: 0, minHeight: 48, display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
           }}
         >
-          {busy ? "Reading…" : "Generate"}
+          {busy && <LoaderCircle size={16} className="animate-spin motion-reduce:animate-none" aria-hidden="true" />}
+          {busy ? "Reading..." : "Read profile"}
         </button>
       </div>
       <div
+        id="linkme-import-note"
         style={{
           fontSize: 12,
-          color: "#6e768c",
+          color: "var(--text-dim)",
           marginTop: 8,
           lineHeight: 1.5
         }}
       >
-        Works with link.me/yourname, yourname.link.me, and linktr.ee URLs.
-        Your page stays public; we just read what visitors already see.
+        Accepts link.me/yourname, yourname.link.me, and linktr.ee profile URLs.
+        Results may be incomplete. Review the imported details before continuing.
       </div>
       {err && (
         <div
+          role="alert"
           style={{
             marginTop: 10,
             padding: "10px 12px",
-            borderRadius: 10,
-            background: "#fff0ee",
-            border: "1px solid #ffd6d1",
-            color: "#b3261e",
+            borderRadius: 6,
+            background: "var(--panel-2)",
+            border: "1px solid var(--red)",
+            color: "var(--red)",
             fontSize: 13,
             lineHeight: 1.5
           }}

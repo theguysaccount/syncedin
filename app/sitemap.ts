@@ -64,9 +64,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${APP_URL}/transformer` },
     { url: `${APP_URL}/wins` },
     { url: `${APP_URL}/talk` },
-    { url: `${APP_URL}/for/linkme` },
-    { url: `${APP_URL}/generate-free-portfolio` },
-    { url: `${APP_URL}/ai-knows-me` },
+    { url: `${APP_URL}/for/linkme`, lastModified: "2026-11-20" },
+    { url: `${APP_URL}/generate-free-portfolio`, lastModified: "2026-11-20" },
+    { url: `${APP_URL}/ai-knows-me`, lastModified: "2026-11-20" },
     { url: `${APP_URL}/alternatives/linkedin`, lastModified: "2026-11-19" },
     { url: `${APP_URL}/paper` },
 

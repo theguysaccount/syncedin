@@ -27,15 +27,61 @@ const cards = JSON.parse(fs.readFileSync("verification/social-card-manifest.json
 const seo = load("lib/public-seo.ts", { "@/verification/social-card-manifest.json": { default: cards } });
 const indexNow = load("lib/indexnow.ts", { "@/verification/social-card-manifest.json": { default: cards } });
 const productReference = load("lib/product-reference.ts");
+const profileCopy = load("lib/profile-preview-copy.ts");
+const profileResult = load("lib/profile-preview-result.ts");
 const nextServer = { NextResponse: class extends Response { static json(body, options) { return Response.json(body, options); } } };
 const css = new Proxy({}, { get: (_, name) => String(name) });
 const nextLink = { __esModule: true, default: ({ href, children, ...props }) => React.createElement("a", { href, ...props }, children) };
 const wordmark = load("app/Wordmark.tsx", { "react/jsx-runtime": jsx, "next/link": nextLink });
+const brandLogo = load("app/BrandLogo.tsx", { "react/jsx-runtime": jsx });
+const trustNote = load("app/TrustNote.tsx", { "react/jsx-runtime": jsx, "next/link": nextLink, "lucide-react": icons });
 const theme = load("app/ThemeToggle.tsx", { react: React, "react/jsx-runtime": jsx, "lucide-react": icons });
 const layout = load("app/guides/GuideLayout.tsx", { "react/jsx-runtime": jsx, "next/link": nextLink, "lucide-react": icons, "../Wordmark": wordmark, "../ThemeToggle": theme, "@/lib/networking-guides": guides, "./guides.module.css": { __esModule: true, default: css } });
 const editor = load("app/guides/ConnectionNoteEditor.tsx", { react: React, "react/jsx-runtime": jsx, "lucide-react": icons, "@/lib/networking-guides": guides, "./guides.module.css": { __esModule: true, default: css } });
 const goalBuilder = load("app/guides/ConversationGoalBuilder.tsx", { react: React, "react/jsx-runtime": jsx, "lucide-react": icons, "@/lib/networking-goals": goals, "./guides.module.css": { __esModule: true, default: css } });
 const dependencies = { "react/jsx-runtime": jsx, "next/link": nextLink, "@/lib/public-seo": seo, "@/lib/networking-guides": guides, "../GuideLayout": layout, "../ConnectionNoteEditor": editor, "../ConversationGoalBuilder": goalBuilder, "../guides.module.css": { __esModule: true, default: css } };
+
+function previewComponent(file, states = {}, observe = {}) {
+  let index = 0;
+  return load(file, {
+    "react/jsx-runtime": jsx, "next/link": nextLink, "lucide-react": icons,
+    "../BrandLogo": brandLogo, "../TrustNote": trustNote,
+    "@/lib/profile-preview-copy": profileCopy, "@/lib/profile-preview-result": profileResult,
+    "@/lib/track": { track: (...args) => observe.events?.push(args) },
+    react: { ...React, useEffect: () => {}, useRef: initial => ({ current: initial }), useState: initial => {
+      const key = index++;
+      return [Object.hasOwn(states, key) ? states[key] : typeof initial === "function" ? initial() : initial, value => observe.updates?.push([key, value])];
+    } },
+  });
+}
+
+function elementText(element) {
+  if (Array.isArray(element)) return element.map(elementText).join("");
+  if (React.isValidElement(element)) return elementText(element.props.children);
+  return typeof element === "string" || typeof element === "number" ? String(element) : "";
+}
+
+function findButton(element, label) {
+  if (Array.isArray(element)) {
+    for (const child of element) { const result = findButton(child, label); if (result) return result; }
+  } else if (React.isValidElement(element)) {
+    if (element.type === "button" && elementText(element).trim() === label) return element;
+    return findButton(element.props.children, label);
+  }
+}
+
+function functionBody(file, name) {
+  const source = fs.readFileSync(file, "utf8");
+  const parsed = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+  let result;
+  function visit(node) {
+    if (ts.isFunctionDeclaration(node) && node.name?.text === name) result = node.body.getText(parsed);
+    ts.forEachChild(node, visit);
+  }
+  visit(parsed);
+  assert(result, name + " function missing");
+  return result;
+}
 
 test("connection-note budgets preserve exact text and distinguish 200 from 300 characters", () => {
   for (const limit of [200, 300]) {
@@ -149,6 +195,183 @@ test("About names the existing project team and offers real help with matching e
   assert.equal(schema.about["@id"], "https://syncedin.org/#organization");
   assert.equal(schema.image, "https://syncedin.org/about/opengraph-image.png");
   assert.equal(page.viewport.userScalable, true);
+});
+
+test("profile-preview prompts ask for shareable facts rather than private history or inferred psychology", () => {
+  const prompt = profileCopy.SHAREABLE_PROFILE_PROMPT;
+  assert(prompt.includes("shareable professional summary"));
+  assert(prompt.includes('write "unknown" instead of guessing'));
+  assert(prompt.includes("Do not include credentials, raw conversation transcripts"));
+  assert(prompt.includes("Do not infer psychological traits"));
+  assert(!/Tell me everything|Quote exact phrases|haven't fully admitted|say yes to instantly/.test(prompt));
+  assert.equal(profileCopy.PROFILE_PREVIEW_CONTEXT_LIMIT, 8000);
+  assert(fs.readFileSync("app/api/portfolio-preview/route.ts", "utf8").includes(".slice(0, 8000)"));
+  const html = renderToStaticMarkup(React.createElement(trustNote.TrustNote, { style: { textAlign: "left" } }));
+  assert(html.includes("AI services process your context"));
+  assert(html.includes('href="/privacy"') && html.includes("text-align:left"));
+  assert(!html.includes("never shown to another human"));
+});
+
+test("profile previews reject incomplete responses and normalize only bounded display fields", () => {
+  for (const value of [null, [], "text", {}, { error: "provider detail" }, { headline: "", about: "Text" }, { headline: "Text", about: " " }, { headline: 3, about: "Text" }]) assert.equal(profileResult.parseProfilePreview(value), null);
+  const result = profileResult.parseProfilePreview({ headline: " H ", about: " A ", highlights: [null, " ", " First ", 4, "x".repeat(200), "Third", "Fourth", "Fifth"], people: [null, { name: "A" }, { name: " Alice ", why: "x".repeat(100) }, { name: " Bob " }], secret: "never copy this" });
+  assert.deepEqual(result, { headline: "H", about: "A", highlights: ["First", "x".repeat(160), "Third", "Fourth"], people: [{ name: "Alice", why: "x".repeat(80) }, { name: "Bob", why: "" }] });
+  const bounded = profileResult.parseProfilePreview({ headline: "h".repeat(300), about: "a".repeat(900), people: Array.from({ length: 9 }, () => ({ name: "n".repeat(100) })) });
+  assert.equal(bounded.headline.length, 160);
+  assert.equal(bounded.about.length, 600);
+  assert.equal(bounded.people.length, 5);
+  assert.equal(bounded.people[0].name.length, 60);
+});
+
+test("preview click handlers prevent duplicate requests, reject bad results and allow retry without losing context", async () => {
+  const originalFetch = globalThis.fetch;
+  const originalStorage = Object.getOwnPropertyDescriptor(globalThis, "localStorage");
+  const stored = new Map();
+  Object.defineProperty(globalThis, "localStorage", { configurable: true, value: { setItem: (key, value) => stored.set(key, value) } });
+  try {
+    for (const [file, name, label, resultIndex, errorIndex] of [
+      ["app/ai-knows-me/AiKnowsMeFunnel.tsx", "AiKnowsMeFunnel", "Preview my profile", 10, 4],
+      ["app/generate-free-portfolio/GeneratePortfolioForm.tsx", "GeneratePortfolioForm", "Generate my preview", 5, 4],
+    ]) {
+      const updates = [], events = [], calls = [];
+      const dump = "A synthetic professional summary for QA only.";
+      const component = previewComponent(file, { 0: "Fictional QA", 1: dump }, { updates, events })[name];
+      const button = findButton(component(), label);
+      assert(button, label);
+      let resolveFetch;
+      globalThis.fetch = (url, options) => { calls.push([url, options]); return new Promise(resolve => { resolveFetch = resolve; }); };
+      const pending = button.props.onClick();
+      await button.props.onClick();
+      assert.equal(calls.length, 1, "A second click must not start another provider request");
+      assert.deepEqual(JSON.parse(calls[0][1].body), { name: "Fictional QA", dump });
+      resolveFetch(Response.json({ error: "private upstream detail" }, { status: 500 }));
+      await pending;
+      assert(!updates.some(([key, value]) => key === resultIndex && value), "Failure must not reveal a blank success card");
+      assert(updates.some(([key, value]) => key === errorIndex && String(value).includes("try again")));
+      assert(!JSON.stringify(updates).includes("private upstream detail"));
+      assert(!updates.some(([key]) => key === 1), "Keep the user's summary on failure");
+      assert.equal(JSON.parse(stored.get("syncedin-portfolio-seed")).dump, dump);
+      for (const body of [{ headline: "Only a headline" }, null]) {
+        globalThis.fetch = async () => Response.json(body);
+        await button.props.onClick();
+        assert(!updates.some(([key, value]) => key === resultIndex && value));
+      }
+      globalThis.fetch = async () => ({ ok: true, json: async () => { throw new Error("bad json"); } });
+      await button.props.onClick();
+      assert(!updates.some(([key, value]) => key === resultIndex && value));
+      globalThis.fetch = async () => { throw new Error("private network detail"); };
+      await button.props.onClick();
+      assert(!JSON.stringify(updates).includes("private network detail"));
+      assert(!updates.some(([key, value]) => key === resultIndex && value));
+      const valid = { headline: "Synthetic QA", about: "A reviewed fictional profile.", highlights: ["Example"], people: [{ name: "Fictional Colleague", why: "Synthetic" }] };
+      globalThis.fetch = async () => Response.json(valid);
+      await button.props.onClick();
+      assert(updates.some(([key, value]) => key === resultIndex && value?.headline === valid.headline), "Retry must release the in-flight guard");
+      assert(events.some(([event]) => event === (name === "AiKnowsMeFunnel" ? "decode_done" : "generate_done")));
+      assert(!/minShow|2800/.test(functionBody(file, name === "AiKnowsMeFunnel" ? "decode" : "generate")), "Do not impose a fake minimum generation delay");
+    }
+    assert.equal(JSON.parse(stored.get("syncedin-decode-people"))[0].name, "Fictional Colleague");
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (originalStorage) Object.defineProperty(globalThis, "localStorage", originalStorage);
+    else delete globalThis.localStorage;
+  }
+});
+
+test("both preview tools retain labelled inputs, prompts, data handling notices and their signup handoff", () => {
+  for (const [file, name, prefix] of [["app/ai-knows-me/AiKnowsMeFunnel.tsx", "AiKnowsMeFunnel", "ai-preview"], ["app/generate-free-portfolio/GeneratePortfolioForm.tsx", "GeneratePortfolioForm", "portfolio-preview"]]) {
+    const component = previewComponent(file)[name];
+    const html = renderToStaticMarkup(React.createElement(component));
+    assert(html.includes(`for="${prefix}-name"`) && html.includes(`id="${prefix}-name"`));
+    assert(html.includes(`for="${prefix}-context"`) && html.includes(`id="${prefix}-context"`));
+    assert(html.includes(`aria-describedby="${prefix}-data-note"`));
+    assert(html.includes("SyncedIn and its AI provider"));
+    assert(html.includes("local prefill") && html.includes("8,000"));
+    assert(html.includes('data-clarity-mask="True"'));
+    assert(html.includes("Copy") && html.includes("preview"));
+    const source = fs.readFileSync(file, "utf8");
+    assert(source.includes('fetch("/api/portfolio-preview"'));
+    assert(source.includes('"syncedin-portfolio-seed"'));
+    assert(source.includes('href="/login?next=/onboarding"'));
+    for (const claim of ["Takes ~10 seconds", "usually under 10 seconds", "while you sleep", "full answer here", "pulls out everything"]) assert(!html.includes(claim), claim);
+  }
+  const ai = previewComponent("app/ai-knows-me/AiKnowsMeFunnel.tsx");
+  const html = renderToStaticMarkup(React.createElement(ai.AiKnowsMeFunnel));
+  for (const url of ["https://chatgpt.com", "https://claude.ai/new", "https://gemini.google.com/app", "https://grok.com"]) assert(html.includes(`href="${url}"`), "Keep the existing AI-app links");
+  const share = functionBody("app/ai-knows-me/AiKnowsMeFunnel.tsx", "shareTest");
+  assert(share.includes("SHARE_TEXT") && share.includes("SHARE_URL"));
+  assert(!/\b(?:dump|result|name)\b/.test(share), "Sharing the tool must not share a visitor's profile context");
+});
+
+test("preview loading, failure and result states retain the actions and expose accessible state", () => {
+  const styles = postcss.parse(fs.readFileSync("app/guides/guides.module.css", "utf8"));
+  let accessibleAccent = false;
+  styles.walkRules(".toolSection", rule => rule.walkDecls("--amber-bright", declaration => { accessibleAccent = declaration.value === "var(--accent)"; }));
+  assert(accessibleAccent, "Preview accents must use the contrast-tested guide colour in each theme");
+  const result = { headline: "Fictional QA headline", about: "Synthetic preview, not customer data.", highlights: ["Synthetic example"], people: [{ name: "Fictional Reviewer", why: "Synthetic public context" }] };
+  let component = previewComponent("app/ai-knows-me/AiKnowsMeFunnel.tsx", { 1: "A synthetic professional summary.", 5: "decoding" }).AiKnowsMeFunnel;
+  let html = renderToStaticMarkup(React.createElement(component));
+  assert(html.includes('aria-busy="true"') && html.includes('aria-live="polite"'));
+  component = previewComponent("app/ai-knows-me/AiKnowsMeFunnel.tsx", { 4: "Synthetic validation error" }).AiKnowsMeFunnel;
+  html = renderToStaticMarkup(React.createElement(component));
+  assert(html.includes('role="alert"') && html.includes("Synthetic validation error"));
+  component = previewComponent("app/ai-knows-me/AiKnowsMeFunnel.tsx", { 0: "A".repeat(150), 5: "reveal", 7: result.headline, 9: true, 10: result }).AiKnowsMeFunnel;
+  html = renderToStaticMarkup(React.createElement(component));
+  for (const label of ["Continue to my profile", "Share the preview tool", "Edit my summary", "Names to review"]) assert(html.includes(label), label);
+  assert(html.includes('href="/login?next=/onboarding"'));
+  assert(html.includes("overflow-wrap:anywhere"));
+  component = previewComponent("app/generate-free-portfolio/GeneratePortfolioForm.tsx", { 3: true }).GeneratePortfolioForm;
+  html = renderToStaticMarkup(React.createElement(component));
+  assert(html.includes('aria-busy="true"') && html.includes('disabled=""'));
+  component = previewComponent("app/generate-free-portfolio/GeneratePortfolioForm.tsx", { 5: result }).GeneratePortfolioForm;
+  html = renderToStaticMarkup(React.createElement(component));
+  assert(html.includes("Continue to my portfolio") && html.includes("Edit my summary"));
+});
+
+test("the link-profile tool retains read, continue and retry states and labels inferred categories safely", () => {
+  let component = previewComponent("app/for/linkme/LinkmeImporter.tsx").LinkmeImporter;
+  let html = renderToStaticMarkup(React.createElement(component));
+  assert(html.includes('for="linkme-profile-url"') && html.includes('id="linkme-profile-url"'));
+  assert(html.includes('aria-describedby="linkme-import-note"'));
+  assert(html.includes("Read profile") && html.includes('disabled=""'));
+  component = previewComponent("app/for/linkme/LinkmeImporter.tsx", { 1: true }).LinkmeImporter;
+  html = renderToStaticMarkup(React.createElement(component));
+  assert(html.includes("Reading...") && html.includes('aria-busy="true"'));
+  component = previewComponent("app/for/linkme/LinkmeImporter.tsx", { 3: "Synthetic import error" }).LinkmeImporter;
+  assert(renderToStaticMarkup(React.createElement(component)).includes('role="alert"'));
+  component = previewComponent("app/for/linkme/LinkmeImporter.tsx", { 2: { ok: true, name: "N".repeat(150), bio: "Synthetic test profile", links: [{ label: "A profile link", url: "https://example.invalid", intent: "social_linkedin" }, { label: "Unknown category", url: "https://example.invalid/other", intent: "__proto__" }] } }).LinkmeImporter;
+  html = renderToStaticMarkup(React.createElement(component));
+  for (const label of ["Continue to my twin", "Try a different URL", "LinkedIn", "Unknown category", "No profile photo"]) assert(html.includes(label), label);
+  const source = fs.readFileSync("app/for/linkme/LinkmeImporter.tsx", "utf8");
+  assert(source.includes('"syncedin_linkme_handoff_v1"'));
+  assert(source.includes('"/onboarding?from=linkme"'));
+  assert(source.includes("window.sessionStorage.setItem"));
+});
+
+test("public profile-entry pages preserve signed-in redirects and expose one branded usable experience", async () => {
+  let user = null;
+  const redirect = path => { throw new Error("redirect:" + path); };
+  const ai = previewComponent("app/ai-knows-me/AiKnowsMeFunnel.tsx");
+  const portfolio = previewComponent("app/generate-free-portfolio/GeneratePortfolioForm.tsx");
+  const importer = previewComponent("app/for/linkme/LinkmeImporter.tsx");
+  const common = { ...dependencies, "next/navigation": { redirect }, "@/lib/supabase/server": { createClient: async () => ({ auth: { getUser: async () => ({ data: { user } }) } }) }, "../TrackBeacon": { TrackBeacon: () => null }, "../guides/GuideLayout": layout, "../guides/guides.module.css": { __esModule: true, default: css }, "../../guides/GuideLayout": layout, "../../guides/guides.module.css": { __esModule: true, default: css }, "./AiKnowsMeFunnel": ai, "./GeneratePortfolioForm": portfolio, "./LinkmeImporter": importer };
+  for (const path of ["ai-knows-me", "generate-free-portfolio", "for/linkme"]) {
+    const page = load(`app/${path}/page.tsx`, common);
+    const html = renderToStaticMarkup(await page.default({ searchParams: Promise.resolve({}) }));
+    assert.equal((html.match(/<h1[ >]/g) || []).length, 1);
+    assert(html.includes("SyncedIn home") && html.includes('href="/login"'));
+    assert(html.includes('href="/privacy"') && html.includes('href="/agents"'));
+    for (const claim of ["in seconds", "60 second test", "paid priority", "for $X", "every link you've added"]) assert(!html.includes(claim), claim);
+    assert.equal(page.metadata.alternates.canonical, "https://syncedin.org/" + path);
+    assert.equal(page.viewport.userScalable, true);
+  }
+  user = { id: "synthetic-user" };
+  for (const path of ["ai-knows-me", "generate-free-portfolio"]) {
+    const page = load(`app/${path}/page.tsx`, common);
+    await assert.rejects(() => page.default({ searchParams: Promise.resolve({}) }), /redirect:\/onboarding/);
+  }
+  const preview = load("app/ai-knows-me/page.tsx", common);
+  assert(await preview.default({ searchParams: Promise.resolve({ preview: "1" }) }), "Keep the existing signed-in preview mode");
 });
 
 test("the product FAQ exposes the same reviewed answers in native disclosures and structured data", () => {

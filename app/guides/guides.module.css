@@ -11,7 +11,7 @@
 .brandGroup button { min-width: 44px; min-height: 44px; padding: 0; border-radius: 6px; color: var(--text-dim); }
 .primaryLink, .navigationLinks .primaryLink { background: #305ce5; color: #fff; padding: 12px 16px; border-radius: 6px; font-size: 14px; font-weight: 600; min-height: 44px; justify-content: center; }
 .primaryLink:hover { background: #244bbf; }
-.page a:focus-visible, .page button:focus-visible, .page textarea:focus-visible, .page [tabindex]:focus-visible { outline: 3px solid var(--accent); outline-offset: 4px; }
+.page a:focus-visible, .page button:focus-visible, .page input:focus-visible, .page textarea:focus-visible, .page [tabindex]:focus-visible { outline: 3px solid var(--accent); outline-offset: 4px; }
 .article { max-width: 900px; margin: 0 auto; padding: 36px 32px 96px; }
 .backLink { color: var(--text-dim); font-size: 14px; min-height: 36px; }
 .header { margin: 32px 0; max-width: 790px; }
@@ -104,6 +104,11 @@
 .steps { margin: 24px 0; }
 .steps li { padding: 0 0 14px 12px; }
 .steps h3 { margin: 0 0 8px; }
+.toolSection { --amber-bright: var(--accent); max-width: 760px; margin-top: 28px; }
+.toolSection :global(.retro-panel) { border-radius: 8px; box-shadow: none; }
+.toolSection :global(.retro-label) { letter-spacing: 0; text-transform: none; font: inherit; font-size: 13px; font-weight: 600; }
+.toolSection :global(.retro-btn) { letter-spacing: 0; text-transform: none; }
+.funnelInfo { margin-top: 42px; padding-top: 6px; border-top: 1px solid var(--border); }
 @media (max-width: 900px) { .guideList { grid-template-columns: minmax(0, 1fr); gap: 16px; } .guideList article { display: grid; grid-template-columns: 220px minmax(0, 1fr); column-gap: 24px; } .guideList article a { display: contents; } .guideList img { grid-row: 1 / 6; margin: 0; } .guideList .meta { margin-top: 0; } .guideList h2 { font-size: 24px; } }
 @media (max-width: 600px) {
   .navigation { padding: 18px 20px; gap: 16px; flex-wrap: wrap; }

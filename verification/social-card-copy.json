@@ -146,29 +146,29 @@
   {
     "path": "/for/linkme",
     "key": "for--linkme",
-    "title": "Turn your Link.me into an AI twin · SyncedIn · SyncedIn",
-    "heading": "Your Link.me should speak for you.",
-    "description": "Paste your Link.me URL — we'll build an AI version of you that visitors can talk to, routed to your existing links, with paid priority access when they need the real you.",
-    "caption": "Paste your Link.me URL — we'll build an AI version of you that visitors can talk to, routed to your existing links, with paid priority access when they need the real you.",
-    "alt": "SyncedIn — Your Link.me should speak for you."
+    "title": "Your public profile. A starting point for your twin.",
+    "heading": "Your public profile. A starting point for your twin.",
+    "description": "Read Link.me or Linktree context, then review what was found.",
+    "caption": "Read Link.me or Linktree context, then review what was found.",
+    "alt": "SyncedIn Link.me profile import: a public page, an import preview, and the context you choose for your twin."
   },
   {
     "path": "/generate-free-portfolio",
     "key": "generate-free-portfolio",
-    "title": "Generate your free portfolio · SyncedIn · SyncedIn",
-    "heading": "Paste who you are. Get your portfolio in seconds.",
-    "description": "Paste anything about yourself and get a sharp professional portfolio in seconds — free. Then your AI twin starts finding win-wins for you.",
-    "caption": "Paste anything about yourself and get a sharp professional portfolio in seconds — free. Then your AI twin starts finding win-wins for you.",
-    "alt": "SyncedIn — Paste who you are. Get your portfolio in seconds."
+    "title": "Your work, in your words. A portfolio preview to review.",
+    "heading": "Your work, in your words. A portfolio preview to review.",
+    "description": "A draft headline, about section, and highlights.",
+    "caption": "A draft headline, about section, and highlights.",
+    "alt": "SyncedIn free portfolio preview: a reviewed professional summary, a draft headline and profile, and your review."
   },
   {
     "path": "/ai-knows-me",
     "key": "ai-knows-me",
-    "title": "What does your AI actually know about you? · SyncedIn · SyncedIn chatgpt claude gemini grok",
-    "heading": "Your AI already knows you. See what it says.",
-    "description": "You've talked to ChatGPT or Claude for months. It has a picture of you. Copy one prompt, paste its answer, and see your Personal Intelligence decoded in seconds. Free.",
-    "caption": "You've talked to ChatGPT or Claude for months. It has a picture of you. Copy one prompt, paste its answer, and see your Personal Intelligence decoded in seconds. Free.",
-    "alt": "SyncedIn — Your AI already knows you. See what it says."
+    "title": "Your professional context. A profile you can review.",
+    "heading": "Your professional context. A profile you can review.",
+    "description": "A shareable summary, with your facts and your choices.",
+    "caption": "A shareable summary, with your facts and your choices.",
+    "alt": "SyncedIn AI profile preview: choose professional context, inspect the generated draft, and decide what happens next."
   },
   {
     "path": "/alternatives/linkedin",

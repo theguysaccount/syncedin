@@ -1,10 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
+import { ArrowLeft, ArrowRight, Check, Copy, LoaderCircle, Sparkles } from "lucide-react";
 import { BrandLogo, type BrandKey } from "../BrandLogo";
 import { track } from "@/lib/track";
 import { TrustNote } from "../TrustNote";
+import { PROFILE_PREVIEW_CONTEXT_LIMIT, SHAREABLE_PROFILE_PROMPT } from "@/lib/profile-preview-copy";
+import { parseProfilePreview } from "@/lib/profile-preview-result";
 
 /**
  * GeneratePortfolioForm — the conversion engine for the
@@ -20,9 +23,6 @@ const SOURCES: { key: BrandKey; label: string }[] = [
   { key: "grok", label: "Grok" }
 ];
 
-const COPY_PROMPT =
-  "Write a tight dossier of me: who I am, what I'm working on, what I'm looking for, what I can offer, and my concrete wins with names and numbers. Specific, first-person, no fluff.";
-
 export function GeneratePortfolioForm() {
   const [name, setName] = useState("");
   const [dump, setDump] = useState("");
@@ -34,12 +34,15 @@ export function GeneratePortfolioForm() {
     about: string;
     highlights: string[];
   } | null>(null);
+  const requestInFlight = useRef(false);
 
   async function generate() {
+    if (requestInFlight.current) return;
     if (dump.trim().length < 20) {
       setErr("Paste a bit more about yourself first.");
       return;
     }
+    requestInFlight.current = true;
     setBusy(true);
     setErr(null);
     track("generate_started", { chars: dump.length });
@@ -58,29 +61,27 @@ export function GeneratePortfolioForm() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ name, dump })
       });
-      const j = await res.json().catch(() => ({}) as any);
-      if (j?.error) {
-        setErr(j.detail || "Couldn't generate — add a little more and retry.");
+      const body: unknown = await res.json().catch(() => null);
+      const preview = res.ok ? parseProfilePreview(body) : null;
+      if (!preview) {
+        setErr("Couldn't prepare a complete preview. Your summary is still here; please try again.");
         return;
       }
-      setResult({
-        headline: j.headline || "",
-        about: j.about || "",
-        highlights: Array.isArray(j.highlights) ? j.highlights : []
-      });
+      setResult(preview);
       track("generate_done", { chars: dump.length });
     } catch {
       setErr("Something went wrong. Try again.");
     } finally {
+      requestInFlight.current = false;
       setBusy(false);
     }
   }
 
   if (result) {
     return (
-      <div style={{ maxWidth: 640, margin: "0 auto" }}>
+      <div style={{ maxWidth: 640, margin: "0 auto" }} data-clarity-mask="True">
         <div className="retro-label" style={{ color: "var(--green)" }}>
-          ✦ your portfolio, generated
+          Your portfolio draft
         </div>
         <div
           className="retro-panel retro-shadow"
@@ -90,7 +91,7 @@ export function GeneratePortfolioForm() {
             style={{
               fontSize: 26,
               fontWeight: 850,
-              letterSpacing: "-0.02em",
+              letterSpacing: 0, overflowWrap: "anywhere",
               lineHeight: 1.1,
               color: "var(--text)"
             }}
@@ -136,16 +137,17 @@ export function GeneratePortfolioForm() {
             padding: "14px 16px",
             fontSize: 16,
             fontWeight: 800,
-            display: "block"
+            display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+            background: "#305ce5", borderRadius: 6, minHeight: 44,
           }}
         >
-          Claim my free portfolio →
+          Continue to my portfolio <ArrowRight size={18} aria-hidden="true" />
         </Link>
         <p
           style={{ marginTop: 8, fontSize: 12, color: "var(--text-dim)", textAlign: "center" }}
         >
-          Free. Sign up to publish it at syncedin.org/u/you and let your twin
-          start finding win-wins.
+          Sign in to continue with this draft, then review your profile and
+          onboarding choices.
         </p>
         <button
           type="button"
@@ -157,21 +159,23 @@ export function GeneratePortfolioForm() {
             border: "none",
             cursor: "pointer",
             color: "var(--text-dim)",
-            fontSize: 12
+            fontSize: 13, minHeight: 44, display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
           }}
         >
-          ← edit what I pasted
+          <ArrowLeft size={16} aria-hidden="true" /> Edit my summary
         </button>
       </div>
     );
   }
 
   return (
-    <div style={{ maxWidth: 640, margin: "0 auto" }}>
+    <div style={{ maxWidth: 640, margin: "0 auto" }} data-clarity-mask="True" aria-busy={busy}>
+      <label htmlFor="portfolio-preview-name" style={{ display: "block", fontSize: 14, fontWeight: 600 }}>Professional name (optional)</label>
       <input
+        id="portfolio-preview-name"
         value={name}
         onChange={(e) => setName(e.target.value)}
-        placeholder="Your name"
+        placeholder="Your professional name"
         className="retro-input"
         style={{ marginTop: 4 }}
       />
@@ -185,7 +189,7 @@ export function GeneratePortfolioForm() {
         }}
       >
         <span style={{ fontSize: 12, color: "var(--text-dim)", fontWeight: 600 }}>
-          Pull yours from:
+          Optional AI summary:
         </span>
         {SOURCES.map((s) => (
           <span key={s.key} title={s.label} style={{ display: "inline-flex" }}>
@@ -196,7 +200,7 @@ export function GeneratePortfolioForm() {
           type="button"
           onClick={async () => {
             try {
-              await navigator.clipboard.writeText(COPY_PROMPT);
+              await navigator.clipboard.writeText(SHAREABLE_PROFILE_PROMPT);
               setCopied(true);
               track("prompt_copied");
               setTimeout(() => setCopied(false), 1800);
@@ -205,20 +209,25 @@ export function GeneratePortfolioForm() {
             }
           }}
           className="retro-btn text-xs"
-          style={{ padding: "4px 10px" }}
+          style={{ padding: "6px 10px", display: "inline-flex", alignItems: "center", gap: 6, minHeight: 44, borderRadius: 6 }}
         >
-          {copied ? "✓ copied" : "Copy prompt"}
+          {copied ? <Check size={15} aria-hidden="true" /> : <Copy size={15} aria-hidden="true" />}
+          {copied ? "Prompt copied" : "Copy prompt"}
         </button>
       </div>
+      <label htmlFor="portfolio-preview-context" style={{ display: "block", marginTop: 12, marginBottom: 6, fontSize: 14, fontWeight: 600 }}>Professional summary</label>
       <textarea
+        id="portfolio-preview-context"
+        aria-describedby="portfolio-preview-data-note"
         value={dump}
         onChange={(e) => setDump(e.target.value)}
         rows={7}
-        placeholder="Paste your personal intelligence — your ChatGPT/Claude memory, your bio, or just everything about what you do, what you want, and what you offer."
+        placeholder="Your role, current work, accurate examples, and what you want to explore. Use only information you are comfortable sharing."
         className="retro-input"
-        style={{ fontSize: 14, lineHeight: 1.5 }}
+        style={{ fontSize: 16, lineHeight: 1.65 }}
       />
       <TrustNote />
+      <p id="portfolio-preview-data-note" style={{ marginTop: 10, fontSize: 12, lineHeight: 1.65, color: "var(--text-dim)" }}>Generating sends this summary to SyncedIn and its AI provider and keeps a local prefill for signup in this browser. The preview processes up to {PROFILE_PREVIEW_CONTEXT_LIMIT.toLocaleString("en-US")} characters.</p>
       <button
         type="button"
         onClick={generate}
@@ -229,18 +238,20 @@ export function GeneratePortfolioForm() {
           width: "100%",
           padding: "14px 16px",
           fontSize: 16,
-          fontWeight: 800
+          fontWeight: 700, background: "#305ce5", borderRadius: 6, minHeight: 44,
+          display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
         }}
       >
-        {busy ? "Generating your portfolio…" : "✨ Generate my free portfolio →"}
+        {busy ? <LoaderCircle size={18} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <Sparkles size={18} aria-hidden="true" />}
+        {busy ? "Preparing preview..." : "Generate my preview"}
       </button>
       {err && (
-        <div style={{ marginTop: 8, fontSize: 13, color: "var(--red, #ef4444)" }}>
+        <div role="alert" style={{ marginTop: 8, fontSize: 13, color: "var(--red, #ef4444)" }}>
           {err}
         </div>
       )}
       <p style={{ marginTop: 8, fontSize: 12, color: "var(--text-dim)", textAlign: "center" }}>
-        Free, no account needed to preview. Takes ~10 seconds.
+        Free preview, no account needed. Generation time can vary.
       </p>
     </div>
   );

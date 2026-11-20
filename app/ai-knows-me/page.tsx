@@ -1,149 +1,45 @@
-import { withPublicSEO } from '@/lib/public-seo';
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { Wordmark } from "../Wordmark";
+import { withPublicSEO } from "@/lib/public-seo";
 import { TrackBeacon } from "../TrackBeacon";
+import { GuideNavigation } from "../guides/GuideLayout";
+import styles from "../guides/guides.module.css";
 import { AiKnowsMeFunnel } from "./AiKnowsMeFunnel";
 
-/**
- * /ai-knows-me, a standalone viral landing (Jack: separate from the main
- * funnel so it can be tested without disrupting anything).
- *
- * The hook: the AI you already use has months of memory about you. Copy
- * one prompt, ask it, paste the answer here, and we decode it into your
- * Personal Intelligence profile, free, no account. Claiming it drops the
- * visitor into onboarding with the dump prefilled (same seed key as
- * /generate-free-portfolio), so the twin builds from what they pasted.
- */
 export const dynamic = "force-dynamic";
-
-export const metadata: Metadata = withPublicSEO('/ai-knows-me', {
-  title: "What does your AI actually know about you? · SyncedIn",
-  description:
-    "You've talked to ChatGPT or Claude for months. It has a picture of you. Copy one prompt, paste its answer, and see your Personal Intelligence decoded in seconds. Free.",
-  openGraph: {
-    title: "What does your AI actually know about you?",
-    description:
-      "The 60 second test: ask the AI you already use to describe you, paste its answer, and see your Personal Intelligence decoded.",
-    type: "website"
-  }
+export const viewport: Viewport = { width: "device-width", initialScale: 1, maximumScale: 5, userScalable: true };
+export const metadata: Metadata = withPublicSEO("/ai-knows-me", {
+  title: "AI profile preview: use reviewed context from ChatGPT or Claude",
+  description: "Prepare a shareable professional summary with your AI, review what it says, and preview a SyncedIn profile from the context you choose. No complete-history access.",
 });
 
-export default async function AiKnowsMePage(
-  props: {
-    searchParams?: Promise<{ preview?: string }>;
-  }
-) {
+export default async function AiKnowsMePage(props: { searchParams?: Promise<{ preview?: string }> }) {
   const searchParams = await props.searchParams;
-  const supabase = (await createClient());
-  const {
-    data: { user }
-  } = await supabase.auth.getUser();
-  // Signed-in users already have a twin path. Send them to build it.
-  // ?preview=1 skips the redirect so the experience can be filmed and QA'd
-  // while signed in.
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
   if (user && !searchParams?.preview) redirect("/onboarding");
 
-  return (
-    <main className="max-w-3xl mx-auto px-5 py-6">
-      <TrackBeacon meta={{ door: "ai-knows-me" }} />
-      <div className="flex items-center justify-between">
-        <Wordmark size="md" />
-        <a href="/login" className="retro-dim text-sm hover:text-white">
-          sign in
-        </a>
+  return <div className={styles.page}>
+    <TrackBeacon meta={{ door: "ai-knows-me" }} />
+    <GuideNavigation />
+    <main className={styles.article} id="main-content">
+      <header className={styles.header}>
+        <div className={styles.meta}><span>Your context, reviewed by you</span></div>
+        <h1>AI profile preview</h1>
+        <p className={styles.introduction}>Ask your AI for a shareable professional summary, or write one yourself. Choose what to include, correct the facts, and preview a profile from that context.</p>
+      </header>
+      <section className={styles.toolSection} aria-label="Prepare and preview your profile"><AiKnowsMeFunnel /></section>
+      <div className={`${styles.body} ${styles.funnelInfo}`}>
+        <h2>A summary, not a memory audit</h2>
+        <p>An AI's answer depends on the context and features available to it. It may omit details, make mistakes, or infer things you did not mean. SyncedIn does not gain access to your ChatGPT or Claude account or complete conversation history through this preview.</p>
+        <h2>Choose what belongs in a professional profile</h2>
+        <p>Keep useful work, goals, interests, and what you can offer. Leave out credentials, raw private chats, and unnecessary information about other people. The generated headline, summary, and highlights are drafts to review, not verified facts about you.</p>
+        <h2>Continue when the context feels right</h2>
+        <p>The preview does not need an account. Signing up continues into onboarding with a local prefill from this browser. Review your profile and twin context there before sharing a public link.</p>
+        <p>Prefer your agent to prepare a private draft for approval? Use <Link href="/agents">agent-assisted setup</Link>. For the next exchange, start with a <Link href="/guides/networking-goals">specific conversation goal</Link>. See <Link href="/privacy">how data is processed</Link> before sharing context.</p>
       </div>
-
-      <section className="mt-10 text-center">
-        <div
-          style={{
-            fontSize: 12,
-            fontWeight: 800,
-            letterSpacing: "0.16em",
-            textTransform: "uppercase",
-            color: "var(--amber-bright)"
-          }}
-        >
-          The 60 second test
-        </div>
-        <h1
-          className="retro-h1"
-          style={{
-            fontSize: "clamp(32px, 6vw, 52px)",
-            fontWeight: 900,
-            letterSpacing: "-0.03em",
-            lineHeight: 1.03,
-            marginTop: 10
-          }}
-        >
-          Your AI already knows you.
-          <br />
-          See what it says.
-        </h1>
-        <p
-          style={{
-            marginTop: 14,
-            fontSize: 17,
-            lineHeight: 1.55,
-            color: "var(--text-dim)",
-            maxWidth: 560,
-            marginInline: "auto"
-          }}
-        >
-          You&apos;ve been talking to ChatGPT or Claude for months. It has a
-          picture of you that your resume never will. Copy one prompt, ask
-          your AI, paste the answer here, and we decode it into your
-          Personal Intelligence. Free, in seconds.
-        </p>
-      </section>
-
-      <section className="mt-8">
-        <AiKnowsMeFunnel />
-      </section>
-
-      <section className="mt-12" style={{ maxWidth: 640, margin: "48px auto 0" }}>
-        <div
-          style={{
-            display: "grid",
-            gap: 12,
-            gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))"
-          }}
-        >
-          {[
-            {
-              icon: "🧠",
-              t: "One prompt",
-              d: "Your AI describes you better than your bio does. The prompt pulls all of it out, memories included."
-            },
-            {
-              icon: "⚡",
-              t: "Instant decode",
-              d: "Paste the answer and see your Personal Intelligence profile in seconds. No account needed."
-            },
-            {
-              icon: "🤝",
-              t: "Then it works for you",
-              d: "Claim it and your AI twin starts talking to other twins, surfacing real win-wins for you."
-            }
-          ].map((c) => (
-            <div key={c.t} className="retro-panel" style={{ padding: 16 }}>
-              <div style={{ fontSize: 22 }}>{c.icon}</div>
-              <div style={{ fontWeight: 800, marginTop: 6, fontSize: 14 }}>{c.t}</div>
-              <div
-                style={{
-                  fontSize: 13,
-                  color: "var(--text-dim)",
-                  marginTop: 4,
-                  lineHeight: 1.45
-                }}
-              >
-                {c.d}
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
     </main>
-  );
+  </div>;
 }

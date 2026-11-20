@@ -115,22 +115,22 @@
     "path": "/for/linkme",
     "file": "app/for/linkme/opengraph-image.png",
     "twitterFile": "app/for/linkme/twitter-image.png",
-    "sha256": "cc80f9944dfe7c7bf9afe3b101bf1ffb2a226b376d620c8a0b924444b4a78d73",
-    "alt": "SyncedIn — Your Link.me should speak for you."
+    "sha256": "4338a45632f19bdc860a539659764c906351ee8a38560cf91dc8168277155acf",
+    "alt": "SyncedIn Link.me profile import: a public page, an import preview, and the context you choose for your twin."
   },
   {
     "path": "/generate-free-portfolio",
     "file": "app/generate-free-portfolio/opengraph-image.png",
     "twitterFile": "app/generate-free-portfolio/twitter-image.png",
-    "sha256": "abc30f23fbce2a8a97002464450d0ea385c4db6c133bcc69424358d08b6029fc",
-    "alt": "SyncedIn — Paste who you are. Get your portfolio in seconds."
+    "sha256": "85eed9118b5bae2d6bdc403f99eeddb20052457ccf858a761658f9aa573b6f82",
+    "alt": "SyncedIn free portfolio preview: a reviewed professional summary, a draft headline and profile, and your review."
   },
   {
     "path": "/ai-knows-me",
     "file": "app/ai-knows-me/opengraph-image.png",
     "twitterFile": "app/ai-knows-me/twitter-image.png",
-    "sha256": "74fef03698b31b3264a0de808b41d7436d2e8944154a3f03696a9b7660e9fccd",
-    "alt": "SyncedIn — Your AI already knows you. See what it says."
+    "sha256": "98d0c493f7fb0995cbc93787c193c1ac25c5f97b84baa725ec8340a57a592d3e",
+    "alt": "SyncedIn AI profile preview: choose professional context, inspect the generated draft, and decide what happens next."
   },
   {
     "path": "/alternatives/linkedin",

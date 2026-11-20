@@ -1,11 +1,9 @@
 import Link from "next/link";
+import { LockKeyhole } from "lucide-react";
 
 /**
- * TrustNote, the hard product rule, shown next to every surface where
- * someone pastes their personal intelligence. One sentence, everywhere
- * the same: dumps are read by your twin, never displayed to another
- * human. Server-safe (no hooks) so it drops into server and client
- * trees alike.
+ * Consistent processing notice next to context inputs. Do not promise
+ * zero retention or that generated output can never reveal context.
  */
 export function TrustNote({
   style
@@ -16,18 +14,19 @@ export function TrustNote({
     <p
       style={{
         marginTop: 8,
-        fontSize: 11.5,
-        lineHeight: 1.5,
+        fontSize: 13,
+        lineHeight: 1.6,
         color: "var(--text-dim)",
         textAlign: "center",
         ...style
       }}
     >
-      🔒 Your intelligence stays yours. What you paste is read by your
-      twin, never shown to another human.{" "}
+      <LockKeyhole size={14} aria-hidden="true" style={{ display: "inline", verticalAlign: "-2px", marginRight: 5 }} />
+      Choose what you share. AI services process your context to generate
+      drafts. Review the result before publishing.{" "}
       <Link
         href="/privacy"
-        style={{ color: "var(--amber-bright)", textDecoration: "none" }}
+        style={{ color: "inherit", textDecoration: "underline", textUnderlineOffset: 3 }}
       >
         How we handle data
       </Link>

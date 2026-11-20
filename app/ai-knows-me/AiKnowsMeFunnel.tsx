@@ -2,9 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { ArrowLeft, ArrowRight, Check, Copy, Share2, Sparkles } from "lucide-react";
 import { BrandLogo, type BrandKey } from "../BrandLogo";
 import { track } from "@/lib/track";
 import { TrustNote } from "../TrustNote";
+import { PROFILE_PREVIEW_CONTEXT_LIMIT, SHAREABLE_PROFILE_PROMPT } from "@/lib/profile-preview-copy";
+import { parseProfilePreview } from "@/lib/profile-preview-result";
 
 /**
  * AiKnowsMeFunnel, the conversion engine for /ai-knows-me.
@@ -24,22 +27,6 @@ import { TrustNote } from "../TrustNote";
  * /generate-free-portfolio so signup → onboarding prefills the twin.
  */
 
-const PROMPT = `Tell me everything you actually know about me, no flattery, no hedging. Who I am, what I'm building, my goals, how I think and communicate, my strengths, my blind spots, the people and projects that matter to me, and what I would say yes to instantly.
-
-Be specific and concrete. Quote exact phrases I use. Reference real moments from our chats and anything in your stored memories about me. If you don't know something, write "unknown" instead of guessing.
-
-Structure it exactly like this:
-# Who I am
-# What I'm working on
-# Goals (next 6 to 12 months)
-# How I think and communicate
-# Strengths
-# Blind spots (be honest)
-# People and projects that matter to me
-# Opportunities I'd say yes to instantly
-# One sentence that would make a stranger want to meet me
-# The thing I keep circling back to but haven't fully admitted to myself`;
-
 const APPS: { key: BrandKey; label: string; url: string }[] = [
   { key: "chatgpt", label: "ChatGPT", url: "https://chatgpt.com" },
   { key: "claude", label: "Claude", url: "https://claude.ai/new" },
@@ -49,17 +36,17 @@ const APPS: { key: BrandKey; label: string; url: string }[] = [
 
 const SHARE_URL = "https://syncedin.org/ai-knows-me";
 const SHARE_TEXT =
-  "What does your AI actually know about you? Take the 60 second test:";
+  "Create a profile preview from professional context with SyncedIn:";
 
 // Honest narration of what the decoder is doing with the paste. The API
 // call reads the dump and writes headline + about + highlights; these
 // lines walk through exactly that.
 const DECODE_LINES = [
-  "Reading what your AI remembers about you…",
-  "Mapping goals, projects, and how you think…",
-  "Pulling out the wins worth leading with…",
-  "Writing your headline…",
-  "Polishing your Personal Intelligence card…"
+  "Reading the context you provided...",
+  "Selecting details from your summary...",
+  "Drafting your headline...",
+  "Writing an about section...",
+  "Preparing highlights for review..."
 ];
 
 type Phase = "idle" | "decoding" | "reveal";
@@ -82,6 +69,7 @@ export function AiKnowsMeFunnel() {
     people: { name: string; why: string }[];
   } | null>(null);
   const cardRef = useRef<HTMLDivElement | null>(null);
+  const requestInFlight = useRef(false);
 
   useEffect(() => {
     setReduceMotion(
@@ -131,7 +119,7 @@ export function AiKnowsMeFunnel() {
 
   async function copyPrompt() {
     try {
-      await navigator.clipboard.writeText(PROMPT);
+      await navigator.clipboard.writeText(SHAREABLE_PROFILE_PROMPT);
       setCopied(true);
       track("prompt_copied");
       setTimeout(() => setCopied(false), 2200);
@@ -156,10 +144,12 @@ export function AiKnowsMeFunnel() {
   }
 
   async function decode() {
+    if (requestInFlight.current) return;
     if (dump.trim().length < 20) {
-      setErr("Paste your AI's full answer first, the more the sharper.");
+      setErr("Add a reviewed professional summary of at least 20 characters.");
       return;
     }
+    requestInFlight.current = true;
     setErr(null);
     setPhase("decoding");
     setDecodeLine(0);
@@ -174,31 +164,20 @@ export function AiKnowsMeFunnel() {
       } catch {
         /* storage blocked, still works, just no prefill */
       }
-      const api = fetch("/api/portfolio-preview", {
+      const response = await fetch("/api/portfolio-preview", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ name, dump })
-      }).then((r) => r.json().catch(() => ({}) as any));
-      // Pacing only: let the scanner play at least 2.8s while the REAL
-      // call runs. If the API is slower, we wait for the API.
-      const minShow = new Promise((r) =>
-        setTimeout(r, reduceMotion ? 0 : 2800)
-      );
-      const [j] = await Promise.all([api, minShow]);
-      if (j?.error) {
+      });
+      const body: unknown = await response.json().catch(() => null);
+      const preview = response.ok ? parseProfilePreview(body) : null;
+      if (!preview) {
         track("decode_failed");
-        setErr(j.detail || "Couldn't decode that, add a little more and retry.");
+        setErr("Couldn't prepare a complete preview. Your summary is still here; please try again.");
         setPhase("idle");
         return;
       }
-      const people = Array.isArray(j.people)
-        ? j.people
-            .filter(
-              (p: any) => p && typeof p.name === "string" && p.name.length > 1
-            )
-            .slice(0, 5)
-            .map((p: any) => ({ name: String(p.name), why: String(p.why ?? "") }))
-        : [];
+      const people = preview.people;
       // Re-stash with people so /ghosts can prefill one-tap targets
       // after signup. Same key onboarding already reads.
       try {
@@ -216,18 +195,15 @@ export function AiKnowsMeFunnel() {
       } catch {
         /* storage blocked */
       }
-      setResult({
-        headline: j.headline || "",
-        about: j.about || "",
-        highlights: Array.isArray(j.highlights) ? j.highlights : [],
-        people
-      });
+      setResult(preview);
       track("decode_done", { chars: dump.length, people: people.length });
       setPhase("reveal");
     } catch {
       track("decode_failed");
       setErr("Something went wrong. Try again.");
       setPhase("idle");
+    } finally {
+      requestInFlight.current = false;
     }
   }
 
@@ -239,7 +215,7 @@ export function AiKnowsMeFunnel() {
       .filter(Boolean)
       .slice(0, 12);
     return (
-      <div style={{ maxWidth: 640, margin: "0 auto" }}>
+      <div style={{ maxWidth: 640, margin: "0 auto" }} data-clarity-mask="True" aria-busy="true">
         <KeyframeStyles />
         <div
           className="retro-panel retro-shadow"
@@ -304,7 +280,7 @@ export function AiKnowsMeFunnel() {
             <div className="aikm-progress" />
           </div>
           <p className="retro-dim" style={{ marginTop: 10, fontSize: 12 }}>
-            Live decode, usually under 10 seconds.
+            Preparing a draft from your summary. Generation time can vary.
           </p>
         </div>
       </div>
@@ -314,7 +290,7 @@ export function AiKnowsMeFunnel() {
   /* ----------------------------- REVEAL ----------------------------- */
   if (phase === "reveal" && result) {
     return (
-      <div style={{ maxWidth: 640, margin: "0 auto", position: "relative" }}>
+      <div style={{ maxWidth: 640, margin: "0 auto", position: "relative" }} data-clarity-mask="True">
         <KeyframeStyles />
         {confetti && <ConfettiBurst />}
         <div
@@ -322,7 +298,7 @@ export function AiKnowsMeFunnel() {
           style={{ animationDelay: "0s" }}
         >
           <div className="retro-label" style={{ color: "var(--green)" }}>
-            ✦ decoded · this is what your AI knows
+            Draft profile preview
           </div>
         </div>
 
@@ -345,7 +321,7 @@ export function AiKnowsMeFunnel() {
               style={{
                 fontSize: 10,
                 fontWeight: 800,
-                letterSpacing: "0.18em",
+                letterSpacing: 0,
                 textTransform: "uppercase",
                 color: "var(--amber-bright)"
               }}
@@ -362,7 +338,7 @@ export function AiKnowsMeFunnel() {
                 color: "var(--text-dim)"
               }}
             >
-              decoded ✦
+              For review
             </div>
           </div>
 
@@ -371,12 +347,12 @@ export function AiKnowsMeFunnel() {
               marginTop: 10,
               fontSize: 26,
               fontWeight: 850,
-              letterSpacing: "-0.02em",
+              letterSpacing: 0, overflowWrap: "anywhere",
               lineHeight: 1.1,
               color: "var(--text)"
             }}
           >
-            {name || "What your AI knows"}
+            {name || "Your profile preview"}
           </div>
 
           <div
@@ -437,12 +413,12 @@ export function AiKnowsMeFunnel() {
                 style={{
                   fontSize: 10,
                   fontWeight: 800,
-                  letterSpacing: "0.14em",
+                  letterSpacing: 0,
                   textTransform: "uppercase",
                   color: "var(--text-dim)"
                 }}
               >
-                people your AI mentioned
+                Names to review
               </div>
               <div
                 style={{
@@ -477,8 +453,8 @@ export function AiKnowsMeFunnel() {
                   lineHeight: 1.5
                 }}
               >
-                Claim your twin and watch it open the conversation with them
-                first.
+                Check these mentions before using them in a profile or
+                introduction.
               </p>
             </div>
           )}
@@ -512,10 +488,11 @@ export function AiKnowsMeFunnel() {
               padding: "14px 16px",
               fontSize: 16,
               fontWeight: 800,
-              display: "block"
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+              background: "#305ce5", borderRadius: 6, minHeight: 44,
             }}
           >
-            Claim this as my live profile →
+            Continue to my profile <ArrowRight size={18} aria-hidden="true" />
           </Link>
           <p
             style={{
@@ -525,20 +502,17 @@ export function AiKnowsMeFunnel() {
               textAlign: "center"
             }}
           >
-            {result.people.length > 0
-              ? `Free. Publishes at syncedin.org/u/you, then your twin opens conversations with ${result.people
-                  .slice(0, 2)
-                  .map((p) => p.name.split(" ")[0])
-                  .join(" and ")} first.`
-              : "Free. Publishes at syncedin.org/u/you, then your twin starts finding win-wins while you sleep."}
+            Sign in to continue with this draft, then review your profile and
+            onboarding choices.
           </p>
           <button
             type="button"
             onClick={shareTest}
             className="retro-btn"
-            style={{ marginTop: 10, width: "100%", padding: "10px 14px" }}
+            style={{ marginTop: 10, width: "100%", padding: "10px 14px", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, minHeight: 44, borderRadius: 6 }}
           >
-            {shared ? "✓ link ready to paste" : "Dare a friend to take the test"}
+            {shared ? <Check size={17} aria-hidden="true" /> : <Share2 size={17} aria-hidden="true" />}
+            {shared ? "Tool link ready" : "Share the preview tool"}
           </button>
           <button
             type="button"
@@ -554,10 +528,10 @@ export function AiKnowsMeFunnel() {
               border: "none",
               cursor: "pointer",
               color: "var(--text-dim)",
-              fontSize: 12
+              fontSize: 13, minHeight: 44, display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
             }}
           >
-            ← edit what I pasted
+            <ArrowLeft size={16} aria-hidden="true" /> Edit my summary
           </button>
         </div>
       </div>
@@ -566,29 +540,29 @@ export function AiKnowsMeFunnel() {
 
   /* ------------------------------ IDLE ------------------------------ */
   return (
-    <div style={{ maxWidth: 640, margin: "0 auto" }}>
+    <div style={{ maxWidth: 640, margin: "0 auto" }} data-clarity-mask="True">
       <KeyframeStyles />
       <div className="retro-panel retro-shadow" style={{ padding: 20 }}>
-        <div className="retro-label">step 1 · copy the test prompt</div>
+        <div className="retro-label">Step 1 / Prepare a summary</div>
         <p
           className="retro-dim"
           style={{ marginTop: 6, fontSize: 13, lineHeight: 1.5 }}
         >
-          One prompt that pulls out everything your AI remembers about you,
-          including the last line most people screenshot: the thing you keep
-          circling back to but haven&apos;t fully admitted to yourself.
+          Ask for work, goals, interests, and what you can offer. Review the
+          answer and remove anything that does not belong in a professional profile.
         </p>
         <button
           type="button"
           onClick={copyPrompt}
           className="retro-btn retro-btn-primary w-full"
-          style={{ marginTop: 12, padding: "12px 14px", fontWeight: 800 }}
+          style={{ marginTop: 12, padding: "12px 14px", fontWeight: 700, background: "#305ce5", borderRadius: 6, minHeight: 44, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
         >
-          {copied ? "✓ Copied. Now ask your AI" : "Copy the prompt"}
+          {copied ? <Check size={17} aria-hidden="true" /> : <Copy size={17} aria-hidden="true" />}
+          {copied ? "Prompt copied" : "Copy the prompt"}
         </button>
 
         <div className="retro-label" style={{ marginTop: 18 }}>
-          step 2 · ask the AI you already use
+          Step 2 / Use your AI
         </div>
         <div
           style={{
@@ -609,7 +583,7 @@ export function AiKnowsMeFunnel() {
                 display: "inline-flex",
                 alignItems: "center",
                 gap: 8,
-                justifyContent: "center"
+                justifyContent: "center", borderRadius: 6, minHeight: 44,
               }}
             >
               <BrandLogo brand={a.key} size={16} />
@@ -620,30 +594,36 @@ export function AiKnowsMeFunnel() {
       </div>
 
       <div className="retro-label" style={{ marginTop: 18 }}>
-        step 3 · paste its answer
+        Step 3 / Review and preview
       </div>
+      <label htmlFor="ai-preview-name" style={{ display: "block", marginTop: 12, fontSize: 14, fontWeight: 600 }}>Professional name (optional)</label>
       <input
+        id="ai-preview-name"
         value={name}
         onChange={(e) => setName(e.target.value)}
-        placeholder="Your name"
+        placeholder="Your professional name"
         className="retro-input"
         style={{ marginTop: 8 }}
       />
+      <label htmlFor="ai-preview-context" style={{ display: "block", marginTop: 18, fontSize: 14, fontWeight: 600 }}>Professional summary</label>
       <textarea
+        id="ai-preview-context"
+        aria-describedby="ai-preview-data-note"
         value={dump}
         onChange={(e) => setDump(e.target.value)}
         rows={7}
-        placeholder="Paste your AI's full answer here. Long is good, the more it remembers, the sharper your decode."
+        placeholder="Your work, goals, what you can offer, and what you want to explore. Review the facts and remove private details first."
         className="retro-input"
-        style={{ marginTop: 8, fontSize: 14, lineHeight: 1.5 }}
+        style={{ marginTop: 8, fontSize: 16, lineHeight: 1.65 }}
       />
       <TrustNote />
+      <p id="ai-preview-data-note" style={{ marginTop: 10, fontSize: 12, lineHeight: 1.65, color: "var(--text-dim)" }}>Generating sends this summary to SyncedIn and its AI provider and keeps a local prefill for signup in this browser. The preview processes up to {PROFILE_PREVIEW_CONTEXT_LIMIT.toLocaleString("en-US")} characters.</p>
       {dump.trim().length >= 20 && (
         <div
           className="retro-dim"
           style={{ marginTop: 6, fontSize: 11, textAlign: "right" }}
         >
-          {dump.length.toLocaleString()} characters loaded
+          {dump.length.toLocaleString()} characters in your summary
         </div>
       )}
       <button
@@ -655,17 +635,18 @@ export function AiKnowsMeFunnel() {
           width: "100%",
           padding: "14px 16px",
           fontSize: 16,
-          fontWeight: 800,
+          fontWeight: 700, background: "#305ce5", borderRadius: 6, minHeight: 44,
+          display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
           animation:
             dump.trim().length >= 20 && !reduceMotion
               ? "aikm-glow 1.8s ease infinite"
               : undefined
         }}
       >
-        ✨ Decode my Personal Intelligence →
+        <Sparkles size={18} aria-hidden="true" /> Preview my profile
       </button>
       {err && (
-        <div style={{ marginTop: 8, fontSize: 13, color: "var(--red, #ef4444)" }}>
+        <div role="alert" style={{ marginTop: 8, fontSize: 13, color: "var(--red, #ef4444)" }}>
           {err}
         </div>
       )}
@@ -677,7 +658,7 @@ export function AiKnowsMeFunnel() {
           textAlign: "center"
         }}
       >
-        Free, no account needed to see your decode. Takes ~10 seconds.
+        Free preview, no account needed. Generation time can vary.
       </p>
     </div>
   );

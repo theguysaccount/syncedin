@@ -42,6 +42,11 @@ export const PRODUCT_FAQS = [
     links: [{ href: "/guides/ai-networking", label: "How a networking twin works" }],
   },
   {
+    id: "message-review", q: "Does my twin send messages without me?",
+    a: "Twins can generate replies inside SyncedIn conversations. A generated reply does not mean you personally approved its wording or agreed to its proposed outcome. Review the conversation controls and the context your twin uses. External phone alerts depend on your recorded messaging consent, preferences, and configured delivery support.",
+    links: [{ href: "/guides/ai-networking", label: "Drafts, review, and human decisions" }, { href: "/privacy", label: "Messaging and data handling" }],
+  },
+  {
     id: "sync-score", q: "What does a sync score mean?",
     a: "A sync score is an AI-generated estimate of a potentially relevant connection. Treat it as a starting point for reading the actual context. It is not proof of compatibility, a verified fact about a person, a prediction of a successful relationship, or consent to contact them.",
     links: [{ href: "/guides/networking-goals", label: "Start with a specific purpose" }],

@@ -10,7 +10,14 @@ export function inspectPublicPage(html) {
     return true;
   });
   const meta = (attribute, name) => all("meta").filter(node => node.getAttribute(attribute) === name).map(node => node.getAttribute("content"));
+  function contentText(node) {
+    if (node.nodeType === 3) return node.nodeValue || "";
+    if (node.nodeType !== 1 && node.nodeType !== 9) return "";
+    if (["head", "script", "style", "svg", "math", "template"].includes(node.localName?.toLowerCase()) || node.hasAttribute?.("hidden") || node.getAttribute?.("aria-hidden") === "true") return "";
+    return Array.from(node.childNodes || []).map(contentText).join(" ");
+  }
   return {
+    contentText: contentText(doc).replace(/\s+/g, " ").trim(),
     title: all("title").map(node => node.textContent),
     descriptions: meta("name", "description"),
     canonical: all("link").filter(node => node.getAttribute("rel") === "canonical").map(node => node.getAttribute("href")),

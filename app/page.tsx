@@ -1,12 +1,17 @@
 import Link from "next/link";
+import type { Viewport } from "next";
+import { Compass, Handshake, Lightbulb, UsersRound } from "lucide-react";
 import { redirect } from "next/navigation";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
-import { Wordmark } from "./Wordmark";
 import { LandingHandleHero } from "./LandingHandleHero";
 import { LoomEmbed } from "./LoomEmbed";
 import { TrackBeacon } from "./TrackBeacon";
+import { ThemeToggle } from "./ThemeToggle";
+import { PRODUCT_FAQS } from "@/lib/product-faq";
 
 export const metadata = { alternates: { canonical: process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "https://syncedin.org" } };
+export const viewport: Viewport = { width: "device-width", initialScale: 1, maximumScale: 5, userScalable: true };
+const HOME_FAQS = ["message-review", "edit-a-message", "context-and-privacy", "pricing"].map(id => PRODUCT_FAQS.find(item => item.id === id)!);
 
 /**
  * Public home page — completely redesigned May 2026 per Jack: "we
@@ -25,12 +30,8 @@ export default async function HomePage() {
   } = await supabase.auth.getUser();
   if (user) redirect("/dashboard");
 
-  // Jack: "use real photos also on the homepage rather than these weird
-  // ones next to the 40+ founders syncing thing. Use real photos of
-  // people on the platform." Pull a handful of real users with an
-  // actual uploaded avatar (filter out the DiceBear-default ones) so
-  // the social-proof strip is genuine. Falls back to the prior dicebear
-  // SVGs if the query 500s or returns nothing.
+  // Show only non-test profiles with a public handle. Never derive a
+  // public display name from a private email address.
   let realFaces: Array<{
     id: string;
     name: string;
@@ -41,7 +42,9 @@ export default async function HomePage() {
     const service = createServiceClient();
     const { data: rows } = await service
       .from("profiles")
-      .select("id, display_name, email, avatar_url, handle, last_active_at")
+      .select("id, display_name, avatar_url, handle")
+      .eq("is_test_persona", false)
+      .not("handle", "is", null)
       .not("avatar_url", "is", null)
       // DiceBear / robohash / gravatar identicon fallbacks aren't "real"
       // — filter to actual uploaded photos. The pattern catches every
@@ -52,39 +55,48 @@ export default async function HomePage() {
       .order("last_active_at", { ascending: false, nullsFirst: false })
       .limit(8);
     realFaces = ((rows ?? []) as any[])
-      .filter((r) => (r.display_name || r.email))
+      .filter((r) => typeof r.handle === "string" && r.handle.trim() && typeof r.avatar_url === "string" && r.avatar_url.trim())
       .slice(0, 5)
       .map((r) => ({
         id: r.id as string,
-        name: (r.display_name as string) || (r.email as string).split("@")[0],
+        name: (r.display_name as string) || (r.handle as string),
         avatar_url: r.avatar_url as string,
         handle: (r.handle as string) ?? null
       }));
   } catch {
-    /* fall back to placeholder avatars in the hero */
+    /* The hero remains usable without a photo strip. */
   }
 
   return (
-    <main>
+    <main id="main-content">
       <TrackBeacon meta={{ door: "landing" }} />
       <style>{`
         .lh-page {
+          --home-accent: #305ce5;
           min-height: 100vh;
           background: var(--bg);
           color: var(--text);
         }
+        :root[data-theme="dark"] .lh-page { --home-accent: #a8beff; }
+        .lh-page a:focus-visible, .lh-page button:focus-visible, .lh-page input:focus-visible, .lh-page summary:focus-visible { outline: 3px solid var(--home-accent); outline-offset: 4px; }
         .lh-topbar {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 22px 32px;
+          padding: 22px 24px;
+          flex-wrap: wrap;
+          gap: 18px;
           max-width: 1180px;
           margin: 0 auto;
         }
+        .lh-brand-group { display: flex; align-items: center; gap: 18px; }
+        .lh-home-logo { display: block; width: 220px; height: auto; }
+        .lh-brand-group button { min-width: 44px; min-height: 44px; padding: 0; color: var(--text-dim); border-radius: 6px; }
         .lh-topbar-links {
           display: inline-flex;
           align-items: center;
           gap: 22px;
+          min-height: 44px;
           font-size: 14px;
           font-weight: 600;
           color: var(--text-dim);
@@ -95,9 +107,12 @@ export default async function HomePage() {
           transition: color 0.15s ease;
         }
         .lh-topbar-links a:hover { color: var(--text); }
-        .lh-topbar-cta {
+        .lh-topbar-links a.lh-topbar-cta, .lh-topbar-links a.lh-topbar-cta:hover {
           padding: 9px 16px;
-          border-radius: 999px;
+          border-radius: 6px;
+          display: inline-flex;
+          align-items: center;
+          min-height: 44px;
           background: var(--text);
           color: var(--bg);
           font-weight: 700;
@@ -118,7 +133,7 @@ export default async function HomePage() {
         }
         .lh-how-card {
           padding: 26px;
-          border-radius: 18px;
+          border-radius: 8px;
           border: 1px solid var(--border);
           background: var(--panel-solid);
           transition:
@@ -138,7 +153,7 @@ export default async function HomePage() {
           width: 32px; height: 32px;
           border-radius: 999px;
           background: rgba(31, 89, 255, 0.10);
-          color: #1f59ff;
+          color: var(--home-accent);
           font-weight: 800;
           font-size: 13px;
           margin-bottom: 12px;
@@ -146,9 +161,15 @@ export default async function HomePage() {
         .lh-how-card h3 {
           font-size: 17px;
           font-weight: 800;
-          letter-spacing: -0.005em;
+          letter-spacing: 0;
           margin: 0 0 6px;
         }
+        @media (max-width: 600px) {
+          .lh-topbar { padding: 18px 20px; }
+          .lh-topbar-links { width: 100%; justify-content: space-between; gap: 12px; }
+          .lh-home-logo { width: 180px; }
+        }
+        @media (max-width: 360px) { .lh-topbar { padding-block: 16px; gap: 14px; } }
         .lh-how-card p {
           font-size: 14px;
           line-height: 1.55;
@@ -158,16 +179,9 @@ export default async function HomePage() {
       `}</style>
 
       <div className="lh-page" id="top">
-        {/* Top nav — minimal. Wordmark bumped sm→md on desktop per
-            Jack "Landing page logo too small on desktop." */}
         <header className="lh-topbar">
-          <span className="lh-mark-desktop">
-            <Wordmark size="lg" href={null} />
-          </span>
-          <span className="lh-mark-mobile">
-            <Wordmark size="md" href={null} />
-          </span>
-          <nav className="lh-topbar-links">
+          <div className="lh-brand-group"><img src="/syncedin-wordmark-tight.png" alt="SyncedIn" width={220} height={54} className="lh-home-logo wordmark-themed" /><ThemeToggle /></div>
+          <nav className="lh-topbar-links" aria-label="SyncedIn home navigation">
             <a href="/article">How it works</a>
             <a href="/hypernetwork">Network</a>
             <Link href="/login" className="lh-topbar-cta">
@@ -175,19 +189,7 @@ export default async function HomePage() {
             </Link>
           </nav>
         </header>
-        <style>{`
-          .lh-mark-mobile { display: inline-flex; }
-          .lh-mark-desktop { display: none; }
-          @media (min-width: 800px) {
-            .lh-mark-mobile { display: none; }
-            .lh-mark-desktop { display: inline-flex; }
-          }
-        `}</style>
 
-        {/* Hero — handle picker, the only conversion surface above the fold.
-            realFaces fetched above so the 40+ founders social proof strip
-            shows actual platform users (Jack: "use real photos also on
-            the homepage rather than these weird ones"). */}
         <LandingHandleHero realFaces={realFaces} />
 
         {/* Manifesto line — the soul of the project. Jack: "under
@@ -205,10 +207,10 @@ export default async function HomePage() {
         >
           <p
             style={{
-              fontSize: "clamp(22px, 3.4vw, 32px)",
+              fontSize: 30,
               fontWeight: 600,
               lineHeight: 1.25,
-              letterSpacing: "-0.015em",
+              letterSpacing: 0,
               fontStyle: "italic",
               color: "var(--text)",
               margin: 0
@@ -244,17 +246,17 @@ export default async function HomePage() {
             {
               k: "1",
               t: "Build your twin",
-              d: "Paste a profile URL or your existing AI memory. We extract goals, voice, dealbreakers, and recent wins into a working clone."
+              d: "Start with a public profile or a reviewed professional summary. Choose the goals, background, and preferences your twin should use."
             },
             {
               k: "2",
-              t: "Twins talk for you",
-              d: "Two twins run a full conversation toward a concrete win-win. Edit any message and the rest regenerates around your edit."
+              t: "Explore a conversation",
+              d: "Twins can draft an exchange around a specific purpose. Review names, facts, tone, and the proposed next step."
             },
             {
               k: "3",
-              t: "You walk in synced",
-              d: "Once both twins agree, you and the other person meet already aligned on the deal. No 30-min discovery calls, no missed angles."
+              t: "Choose the real next step",
+              d: "A draft can clarify an overlap or reveal a mismatch. Confirm interest and commitments with the actual people."
             }
           ].map((c) => (
             <article key={c.k} className="lh-how-card">
@@ -276,33 +278,33 @@ export default async function HomePage() {
             What are you looking for?
           </h2>
           <p className="lh-section-sub">
-            Pick the one that&apos;s on your mind right now. Your twin
-            negotiates from this angle first.
+            Start with the purpose that matters to you. You can refine
+            the context and boundaries during onboarding.
           </p>
           <div className="lh-who-grid">
             {[
               {
-                emoji: "🤝",
+                Icon: Handshake,
                 title: "A co-founder",
-                line: "Find someone whose stack complements yours, with shared conviction on the same problem.",
+                line: "Explore complementary work, a shared problem, and what you would want to test together.",
                 qs: "cofounder"
               },
               {
-                emoji: "💰",
+                Icon: UsersRound,
                 title: "Investors",
-                line: "Get warm intros to operators-turned-investors who actually back your category.",
+                line: "Clarify why your project may fit someone's focus before asking for an introduction.",
                 qs: "investors"
               },
               {
-                emoji: "🧭",
+                Icon: Compass,
                 title: "Advisors",
-                line: "Senior operators who've shipped what you're shipping. Trade time-for-equity at fair rates.",
+                line: "Bring a specific question and enough context for someone to decide whether they can help.",
                 qs: "advisors"
               },
               {
-                emoji: "💡",
+                Icon: Lightbulb,
                 title: "Someone with an idea",
-                line: "You want to build. They have the spark. Twins find the alignment + the missing pieces.",
+                line: "Compare what each person wants to build, contribute, and learn from a first exchange.",
                 qs: "idea"
               }
             ].map((c) => (
@@ -314,7 +316,7 @@ export default async function HomePage() {
                 className="lh-who-card"
               >
                 <div className="lh-who-emoji" aria-hidden="true">
-                  {c.emoji}
+                  <c.Icon size={25} aria-hidden="true" />
                 </div>
                 <div className="lh-who-title">{c.title}</div>
                 <p className="lh-who-line">{c.line}</p>
@@ -328,29 +330,28 @@ export default async function HomePage() {
         <section className="lh-why">
           <div className="lh-section-tag">why now</div>
           <h2 className="lh-section-h2">
-            Cold DMs are a coin flip. Your twin already knows the deal.
+            A useful introduction needs more than a polished opener.
           </h2>
           <div className="lh-why-grid">
             <div className="lh-why-item">
-              <div className="lh-why-stat">94%</div>
+              <div className="lh-why-stat">Context</div>
               <p>
-                of LinkedIn cold DMs go unanswered. The signal is
-                drowned in noise — even when the match is real.
+                Give the other person a real reason to care. Specific
+                shared work is more informative than a generic pitch.
               </p>
             </div>
             <div className="lh-why-item">
-              <div className="lh-why-stat">30 min</div>
+              <div className="lh-why-stat">Purpose</div>
               <p>
-                wasted per discovery call where you and your counterpart
-                circle the same context their LinkedIn already showed.
+                Start with one question or possible exchange. A clear
+                purpose makes a proposal easier to accept, change, or decline.
               </p>
             </div>
             <div className="lh-why-item">
-              <div className="lh-why-stat">~0 sec</div>
+              <div className="lh-why-stat">Choice</div>
               <p>
-                for your twin to read theirs and surface the highest-
-                leverage win-win between you — before either of you
-                lifts a finger.
+                A match score and a simulated reply are not consent.
+                The people decide whether the next step is worthwhile.
               </p>
             </div>
           </div>
@@ -363,41 +364,40 @@ export default async function HomePage() {
             Agent-to-agent. Then human-to-human.
           </h2>
           <p className="lh-section-sub">
-            Your twin reads their twin. They negotiate in seconds. You
-            walk into the meeting already aligned on the destination.
+            Use selected context to explore the overlap. Read the draft,
+            correct it, and confirm the actual next step together.
           </p>
           <div className="lh-diff-row">
             <div className="lh-diff-col lh-diff-old">
-              <div className="lh-diff-h">The old way</div>
+              <div className="lh-diff-h">An unclear first message</div>
               <ul>
-                <li>Cold DM with a templated opener</li>
-                <li>Wait days, hope they reply</li>
-                <li>Spend the first 20 min of the call re-explaining context</li>
-                <li>Realize on min 25 it&apos;s not actually a fit</li>
+                <li>An opener that could go to anyone</li>
+                <li>A broad ask without a reason for this person</li>
+                <li>Missing context about what you can offer</li>
+                <li>No clear choice about the next step</li>
               </ul>
             </div>
             <div className="lh-diff-col lh-diff-new">
               <div className="lh-diff-h">SyncedIn</div>
               <ul>
-                <li>Twins exchange full context in seconds</li>
-                <li>They draft a concrete proposal, edited by you</li>
-                <li>You walk in already on the same page</li>
-                <li>Calls become signing the deal — not finding it</li>
+                <li>Context you choose for this purpose</li>
+                <li>An editable conversation and possible proposal</li>
+                <li>Facts and assumptions for you to review</li>
+                <li>A next step the actual people decide</li>
               </ul>
             </div>
           </div>
         </section>
 
-        {/* SOCIAL PROOF — quick. */}
         <section className="lh-proof">
-          <div className="lh-section-tag">already syncing</div>
+          <div className="lh-section-tag">different reasons to connect</div>
           <h2 className="lh-section-h2">
-            40+ founders. 4.9 avg. Zero cold DMs.
+            For the conversations worth exploring.
           </h2>
           <p className="lh-section-sub">
-            VCs ↔ founders. Founders ↔ cofounders. Operators ↔ advisors.
-            Anyone whose first conversation should have happened months
-            ago.
+            Founders, collaborators, researchers, and advisors can start
+            with the exchange they have in mind. A direct human message
+            may still be the right tool for a simple request.
           </p>
         </section>
 
@@ -405,40 +405,12 @@ export default async function HomePage() {
         <section className="lh-faq">
           <div className="lh-section-tag">questions you have</div>
           <h2 className="lh-section-h2">Before you build your twin.</h2>
-          <details className="lh-faq-item">
-            <summary>Does my twin send messages without me?</summary>
-            <p>
-              No. Your twin drafts, you approve. Every outbound message
-              is yours — your twin just writes the first version so you
-              don&apos;t stare at a blank textbox.
-            </p>
-          </details>
-          <details className="lh-faq-item">
-            <summary>
-              What if my twin doesn&apos;t sound like me?
-            </summary>
-            <p>
-              Edit any message. The rest of the conversation regenerates
-              around your edit, so your voice propagates forward.
-            </p>
-          </details>
-          <details className="lh-faq-item">
-            <summary>Who sees my data?</summary>
-            <p>
-              Your context only powers YOUR twin. We never share raw
-              context with anyone else — only the proposals your twin
-              sends. Delete your account in settings, and everything
-              wipes.
-            </p>
-          </details>
-          <details className="lh-faq-item">
-            <summary>Is it actually free?</summary>
-            <p>
-              Yes for early users. Pro tier ($) unlocks unlimited
-              conversations + premium destinations once we&apos;ve
-              earned your trust.
-            </p>
-          </details>
+          {HOME_FAQS.map(item => <details className="lh-faq-item" key={item.id}>
+            <summary>{item.q}</summary>
+            <p>{item.a}</p>
+            <p>{item.links.map((link, index) => <span key={link.href}>{index > 0 && " / "}<Link href={link.href}>{link.label}</Link></span>)}</p>
+          </details>)}
+          <p><Link href="/faq">All questions and answers</Link></p>
         </section>
 
         {/* BOTTOM CTA — scroll back to the hero form. Jack: "AT THE
@@ -449,48 +421,38 @@ export default async function HomePage() {
           <LoomEmbed
             id="f1a22bc84d914c6399f0ea20e955ccc8"
             title="See SyncedIn in action"
-            caption="Two minutes on what it is and why it works."
+            caption="A product walkthrough from the team."
           />
         </section>
 
         <section className="lh-bottom-cta">
           <h2 className="lh-section-h2">
-            Your twin is 30 seconds away.
+            Start with your context.
           </h2>
           <p className="lh-section-sub">
-            Paste a handle. We do the rest. The first deal your twin
-            lands pays for itself.
+            Bring a public profile, review the information, and choose
+            what you want your twin to explore.
           </p>
           <a href="#top" className="lh-bottom-btn">
             Build my twin →
           </a>
-          <p
-            style={{
-              marginTop: 12,
-              fontSize: 12,
-              color: "var(--text-dim)"
-            }}
-          >
-            Takes you back to the top.
-          </p>
         </section>
 
         <style>{`
           html { scroll-behavior: smooth; }
 
           .lh-section-tag {
-            font-size: 11px;
+            font-size: 13px;
             font-weight: 800;
-            letter-spacing: 0.16em;
-            text-transform: uppercase;
-            color: #1f59ff;
+            letter-spacing: 0;
+            color: var(--home-accent);
           }
           .lh-section-h2 {
             margin: 8px 0 10px;
-            font-size: clamp(28px, 4.2vw, 42px);
-            font-weight: 900;
-            letter-spacing: -0.025em;
-            line-height: 1.1;
+            font-size: 36px;
+            font-weight: 750;
+            letter-spacing: 0;
+            line-height: 1.2;
             color: var(--text);
           }
           .lh-section-sub {
@@ -527,7 +489,7 @@ export default async function HomePage() {
             flex-direction: column;
             gap: 8px;
             padding: 22px;
-            border-radius: 18px;
+            border-radius: 8px;
             border: 1.5px solid var(--border);
             background: var(--panel-solid);
             color: var(--text);
@@ -549,7 +511,7 @@ export default async function HomePage() {
           .lh-who-title {
             font-size: 18px;
             font-weight: 800;
-            letter-spacing: -0.01em;
+            letter-spacing: 0;
           }
           .lh-who-line {
             margin: 0;
@@ -562,7 +524,7 @@ export default async function HomePage() {
             margin-top: 8px;
             font-size: 13px;
             font-weight: 800;
-            color: #1f59ff;
+            color: var(--home-accent);
           }
 
           .lh-why-grid {
@@ -578,16 +540,15 @@ export default async function HomePage() {
           }
           .lh-why-item {
             padding: 22px;
-            border-radius: 16px;
+            border-radius: 8px;
             background: rgba(31, 89, 255, 0.05);
             border: 1px solid rgba(31, 89, 255, 0.18);
           }
           .lh-why-stat {
-            font-family: IBM Plex Mono, ui-monospace, monospace;
-            font-size: 32px;
-            font-weight: 900;
-            letter-spacing: -0.02em;
-            color: #1f59ff;
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: 0;
+            color: var(--home-accent);
             margin-bottom: 8px;
           }
           .lh-why-item p {
@@ -608,25 +569,20 @@ export default async function HomePage() {
           }
           .lh-diff-col {
             padding: 22px;
-            border-radius: 16px;
+            border-radius: 8px;
             border: 1.5px solid var(--border);
           }
           .lh-diff-col.lh-diff-old {
             background: rgba(127, 127, 127, 0.06);
           }
           .lh-diff-col.lh-diff-new {
-            background: linear-gradient(
-              135deg,
-              rgba(31, 89, 255, 0.10) 0%,
-              rgba(107, 45, 201, 0.10) 100%
-            );
-            border-color: rgba(31, 89, 255, 0.45);
+            background: var(--panel-solid);
+            border-color: var(--home-accent);
           }
           .lh-diff-h {
-            font-size: 11px;
+            font-size: 13px;
             font-weight: 800;
-            letter-spacing: 0.14em;
-            text-transform: uppercase;
+            letter-spacing: 0;
             color: var(--text-dim);
             margin-bottom: 10px;
           }
@@ -640,13 +596,13 @@ export default async function HomePage() {
             padding: 3px 0;
           }
           .lh-diff-new .lh-diff-h {
-            color: #1f59ff;
+            color: var(--home-accent);
           }
 
           .lh-faq-item {
             padding: 14px 16px;
             border: 1px solid var(--border);
-            border-radius: 12px;
+            border-radius: 8px;
             margin-bottom: 8px;
             background: var(--panel-solid);
           }
@@ -655,6 +611,7 @@ export default async function HomePage() {
             font-weight: 700;
             font-size: 15px;
             color: var(--text);
+            min-height: 30px;
           }
           .lh-faq-item p {
             margin: 10px 0 0;
@@ -662,6 +619,7 @@ export default async function HomePage() {
             line-height: 1.6;
             color: var(--text-dim);
           }
+          .lh-faq a { color: var(--home-accent); text-decoration: underline; text-underline-offset: 3px; }
 
           .lh-bottom-cta {
             text-align: center;
@@ -681,13 +639,18 @@ export default async function HomePage() {
             font-size: 17px;
             font-weight: 800;
             color: #fff;
-            background: #1f59ff;
-            border-radius: 16px;
+            background: #305ce5;
+            border-radius: 6px;
             text-decoration: none;
             box-shadow: 0 16px 36px -10px rgba(31, 89, 255, 0.5);
             transition: transform 0.15s ease;
           }
           .lh-bottom-btn:hover { transform: translateY(-2px); }
+          @media (max-width: 600px) { .lh-section-h2 { font-size: 28px; } }
+          @media (prefers-reduced-motion: reduce) {
+            html { scroll-behavior: auto; }
+            .lh-page *, .lh-page *::before, .lh-page *::after { animation: none !important; transition: none !important; }
+          }
         `}</style>
       </div>
     </main>

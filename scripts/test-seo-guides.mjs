@@ -48,6 +48,8 @@ function previewComponent(file, states = {}, observe = {}) {
   return load(file, {
     "react/jsx-runtime": jsx, "next/link": nextLink, "lucide-react": icons,
     "../BrandLogo": brandLogo, "../TrustNote": trustNote,
+    "./BrandLogo": brandLogo,
+    "next/navigation": { useRouter: () => ({ push: url => observe.navigations?.push(url) }) },
     "@/lib/profile-preview-copy": profileCopy, "@/lib/profile-preview-result": profileResult,
     "@/lib/track": { track: (...args) => observe.events?.push(args) },
     react: { ...React, useEffect: () => {}, useRef: initial => ({ current: initial }), useState: initial => {
@@ -83,6 +85,23 @@ function functionBody(file, name) {
   visit(parsed);
   assert(result, name + " function missing");
   return result;
+}
+
+function homepageFixture({ user = null, rows = [], queryFailure = false } = {}) {
+  const calls = [];
+  const builder = {};
+  for (const method of ["select", "eq", "not", "order"]) builder[method] = (...args) => { calls.push([method, ...args]); return builder; };
+  builder.limit = async (...args) => { calls.push(["limit", ...args]); if (queryFailure) throw new Error("Synthetic private database detail"); return { data: rows }; };
+  const page = load("app/page.tsx", {
+    "react/jsx-runtime": jsx, "next/link": nextLink, "lucide-react": icons,
+    "next/navigation": { redirect: path => { throw new Error("redirect:" + path); } },
+    "@/lib/supabase/server": { createClient: async () => ({ auth: { getUser: async () => ({ data: { user } }) } }), createServiceClient: () => ({ from: name => { calls.push(["from", name]); return builder; } }) },
+    "./Wordmark": wordmark, "./LandingHandleHero": previewComponent("app/LandingHandleHero.tsx"),
+    "./LoomEmbed": load("app/LoomEmbed.tsx", { "react/jsx-runtime": jsx }),
+    "./TrackBeacon": { TrackBeacon: () => null }, "./ThemeToggle": theme,
+    "@/lib/product-faq": productFaq,
+  });
+  return { page, calls };
 }
 
 test("connection-note budgets preserve exact text and distinguish 200 from 300 characters", () => {
@@ -271,6 +290,83 @@ test("the journal retains all article and signup actions, matching visible items
   styles.walkRules(rule => { if (rule.selector.includes(".guideList") && rule.selector.includes("a")) rule.walkDecls("display", declaration => assert.notEqual(declaration.value, "contents", "Keep a real focusable box around each whole article link")); });
 });
 
+test("the homepage preserves its paths and native controls without unsupported ratings or private-name fallbacks", async () => {
+  const { page, calls } = homepageFixture({ rows: [
+    { id: "qa-public", display_name: "", handle: "fictional-public", avatar_url: "https://example.invalid/public.jpg", email: "private-qa-address@example.invalid" },
+    { id: "qa-unpublished", display_name: "Not public", handle: null, avatar_url: "https://example.invalid/private.jpg" },
+  ] });
+  const html = renderToStaticMarkup(await page.default());
+  const parsed = inspectPublicPage(`<html><body>${html}</body></html>`);
+  assert.equal(parsed.headings.length, 1);
+  assert(parsed.headings[0].includes("AI networking."));
+  for (const claim of ["4.9 average", "4.9 avg", "40+", "94%", "~0 sec", "in 30 seconds", "30 seconds away", "everything wipes", "unlimited conversations", "first deal your twin", "private-qa-address", "example.invalid/private.jpg", "api.dicebear.com"]) assert(!html.includes(claim), claim);
+  assert(html.includes("fictional-public"));
+  assert(html.includes('src="/syncedin-wordmark-tight.png"'), "Use the actual tight brand artwork, not a padded logo container");
+  assert(calls.some(call => call[0] === "eq" && call[1] === "is_test_persona" && call[2] === false));
+  assert(calls.some(call => call[0] === "not" && call[1] === "handle" && call[2] === "is" && call[3] === null));
+  assert(calls.filter(call => call[0] === "select").every(call => !call[1].includes("email")));
+  assert.equal((html.match(/<details[ >]/g) || []).length, 4, "Keep four native FAQ controls");
+  for (const id of ["message-review", "edit-a-message", "context-and-privacy", "pricing"]) {
+    const item = productFaq.PRODUCT_FAQS.find(item => item.id === id);
+    assert(item && html.includes(item.q.replaceAll("'", "&#x27;")));
+  }
+  for (const href of ["/article", "/hypernetwork", "/login", "#top", "/faq"]) assert(parsed.links.some(link => link.href === href), href);
+  const intents = parsed.links.filter(link => link.href.startsWith("/login?next="));
+  assert.equal(intents.length, 4, "Preserve all four audience choices");
+  assert.deepEqual(intents.map(link => new URL(new URL(link.href, "https://syncedin.org").searchParams.get("next"), "https://syncedin.org").searchParams.get("intent")), ["cofounder", "investors", "advisors", "idea"]);
+  assert(html.includes("f1a22bc84d914c6399f0ea20e955ccc8"), "Preserve the existing product walkthrough");
+  assert(html.includes("What if the real superintelligence was the friends we"), "Preserve the user's manifesto");
+  assert.equal(page.viewport.userScalable, true);
+  const failure = homepageFixture({ queryFailure: true });
+  const fallback = renderToStaticMarkup(await failure.page.default());
+  assert(fallback.includes("Build my twin") && !fallback.includes("Synthetic private database detail"));
+  const signedIn = homepageFixture({ user: { id: "isolated-qa" } });
+  await assert.rejects(() => signedIn.page.default(), /redirect:\/dashboard/);
+  assert.equal(signedIn.calls.length, 0);
+});
+
+test("public content checks do not mistake animation percentages, SVG coordinates or scripts for marketing claims", () => {
+  const page = inspectPublicPage('<html><head><style>@keyframes x {94% {opacity:1}}</style></head><body><h1>AI networking</h1><p>Context and choice.</p><svg><title>4.9 average</title><path d="M4.9 0"/></svg><script>const old="40+ founders";</script><div hidden>Private fallback</div><span aria-hidden="true">Decorative</span></body></html>');
+  assert.equal(page.contentText, "AI networking Context and choice.");
+  assert(inspectPublicPage('<html><body><p>4.9 average</p></body></html>').contentText.includes("4.9 average"), "Real unsupported content must still be detectable");
+});
+
+test("the homepage handle entry keeps every platform and signup handoff while labelling and masking the input", async () => {
+  const file = "app/LandingHandleHero.tsx";
+  const initial = previewComponent(file).LandingHandleHero;
+  const html = renderToStaticMarkup(React.createElement(initial));
+  assert(html.includes('role="group" aria-label="Profile platform"'));
+  assert(html.includes('for="signup-profile-handle"') && html.includes('id="signup-profile-handle"'));
+  assert(html.includes('data-clarity-mask="True"'));
+  assert(html.includes('aria-pressed="true"'));
+  assert(!/4\.9\s+(?:average|avg|rating)/.test(html) && !html.includes("dicebear") && !html.includes('role="tab"'));
+  const descriptor = Object.getOwnPropertyDescriptor(globalThis, "sessionStorage");
+  const stored = new Map();
+  Object.defineProperty(globalThis, "sessionStorage", { configurable: true, value: { setItem: (key, value) => stored.set(key, value) } });
+  try {
+    for (const label of ["Instagram", "X", "LinkedIn", "Facebook"]) {
+      const updates = [], navigations = [];
+      const choose = previewComponent(file, {}, { updates }).LandingHandleHero;
+      findButton(choose({}), label).props.onClick();
+      const selected = updates.find(([index]) => index === 0)[1];
+      const component = previewComponent(file, { 0: selected, 1: "@fictional-qa" }, { navigations }).LandingHandleHero;
+      await findButton(component({}), "Build my twin").props.onClick();
+      const intent = JSON.parse(stored.get("syncedin.signupIntent"));
+      assert.equal(intent.platform, selected.key);
+      assert.equal(intent.profile_url, `https://${selected.prefix}fictional-qa`);
+      assert.equal(new URL(navigations[0], "https://syncedin.org").searchParams.get("next"), "/onboarding?welcome=1");
+    }
+    const navigations = [];
+    const component = previewComponent(file, { 1: "https://www.linkedin.com/in/fictional-person/?tracking=synthetic" }, { navigations }).LandingHandleHero;
+    await findButton(component({}), "Build my twin").props.onClick();
+    assert.equal(JSON.parse(stored.get("syncedin.signupIntent")).profile_url, "https://linkedin.com/in/fictional-person");
+    assert.equal(navigations.length, 1);
+  } finally {
+    if (descriptor) Object.defineProperty(globalThis, "sessionStorage", descriptor);
+    else delete globalThis.sessionStorage;
+  }
+});
+
 test("profile-preview prompts ask for shareable facts rather than private history or inferred psychology", () => {
   const prompt = profileCopy.SHAREABLE_PROFILE_PROMPT;
   assert(prompt.includes("shareable professional summary"));
@@ -453,7 +549,7 @@ test("the product FAQ exposes the same reviewed answers in native disclosures an
   const html = renderToStaticMarkup(React.createElement(page.default));
   const parsed = inspectPublicPage(`<html><body>${html}</body></html>`);
   assert.equal(parsed.headings.length, 1);
-  assert.equal(new Set(productFaq.PRODUCT_FAQS.map(item => item.id)).size, 16);
+  assert.equal(new Set(productFaq.PRODUCT_FAQS.map(item => item.id)).size, 17);
   assert.equal((html.match(/<details[ >]/g) || []).length, productFaq.PRODUCT_FAQS.length);
   assert.equal((html.match(/<summary[ >]/g) || []).length, productFaq.PRODUCT_FAQS.length);
   const schema = parsed.schemas.find(item => item["@type"] === "FAQPage");

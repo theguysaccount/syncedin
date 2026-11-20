@@ -27,6 +27,37 @@ for (const card of cards) {
     assert.equal(crypto.createHash("sha256").update(bytes).digest("hex"), card.sha256);
   }
 }
+const homeResponse = await fetch(new URL("/", base), { headers: { cookie: "syncedin_landing_ab=a" }, redirect: "manual", signal: AbortSignal.timeout(20000) });
+assert.equal(homeResponse.status, 200, "Homepage variant A must remain reachable");
+assert(!/\bnoindex\b|\bnone\b/i.test(homeResponse.headers.get("x-robots-tag") || ""));
+const homeHTML = await homeResponse.text();
+const home = inspectPublicPage(homeHTML);
+assert.equal(home.title.length, 1);
+assert.equal(home.descriptions.length, 1);
+assert.equal(home.canonical.length, 1);
+assert.equal(new URL(home.canonical[0]).href, "https://syncedin.org/");
+assert.equal(home.headings.length, 1);
+assert(home.headings[0].includes("AI networking."));
+assert(!home.robots.some(value => /\bnoindex\b|\bnone\b/i.test(value)));
+assert(home.schemas.length > 0);
+assert(!/4\.9\s+(?:average|avg|rating)|40\+ founders|94%|~0 sec|everything wipes|unlimited conversations/.test(home.contentText));
+assert(homeHTML.includes('id="signup-profile-handle"') && homeHTML.includes('data-clarity-mask="True"'));
+assert.equal(home.links.filter(link => link.href.startsWith("/login?next=")).length, 4, "Keep all four audience signup destinations");
+const approvedHomeGIF = fs.readFileSync("public/social/syncedin-preview.gif");
+const approvedHomeHash = crypto.createHash("sha256").update(approvedHomeGIF).digest("hex");
+assert(home.openGraphImages.length && home.twitterImages.length);
+for (const imageURL of new Set([...home.openGraphImages, ...home.twitterImages])) {
+  const image = new URL(imageURL);
+  assert.equal(image.origin, "https://syncedin.org");
+  const response = await fetch(new URL(image.pathname + image.search, base), { signal: AbortSignal.timeout(20000) });
+  assert.equal(response.status, 200);
+  assert(response.headers.get("content-type")?.includes("image/gif"));
+  const bytes = Buffer.from(await response.arrayBuffer());
+  assert.equal(bytes.subarray(0, 6).toString(), "GIF89a");
+  assert.equal(bytes.readUInt16LE(6), 600);
+  assert.equal(bytes.readUInt16LE(8), 338);
+  assert.equal(crypto.createHash("sha256").update(bytes).digest("hex"), approvedHomeHash, "Preserve the actual approved homepage animation, not a transparent fallback");
+}
 const sitemap = await fetch(new URL("/sitemap.xml", base), { signal: AbortSignal.timeout(20000) });
 assert.equal(sitemap.status, 200);
 assert(sitemap.headers.get("content-type")?.includes("xml"));
@@ -111,4 +142,4 @@ const mcp=await fetch(new URL('/api/mcp',base),{method:'POST',headers:{'Content-
 assert.equal(mcp.status,200);
 const wire=await mcp.text(),tools=JSON.parse(wire.startsWith('data:')?wire.trim().slice(5):wire.match(/^data: (.+)$/m)?.[1]||wire);
 assert.deepEqual(tools.result.tools.map(t=>t.name).sort(),['draft_introduction','find_matches','get_my_profile','prepare_signup','signup_status']);
-console.log(`Public release verified at ${base.origin}: ${cards.length} unique titles, H1s, canonical pages and share-card pairs; canonical sitemap; reviewed references and article export; non-mutating and owner-only IndexNow; private-route protection, agent resources, and actual MCP tool discovery.`);
+console.log(`Public release verified at ${base.origin}: ${cards.length} unique public page/card pairs plus homepage identity, controls and original GIF bytes; canonical sitemap; reviewed references and article export; non-mutating and owner-only IndexNow; private-route protection, agent resources, and actual MCP tool discovery.`);

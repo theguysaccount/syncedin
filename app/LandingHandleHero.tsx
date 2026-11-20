@@ -3,30 +3,9 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BrandLogo, type BrandKey } from "./BrandLogo";
+import { ArrowRight } from "lucide-react";
 
-/**
- * Elite/modern landing hero. Single conversion surface:
- *   - Social-proof row + 3 face avatars (warm trust)
- *   - Bold sans headline
- *   - Tight subhead
- *   - Platform pill row (Instagram / TikTok / X / LinkedIn / YouTube)
- *   - One @handle input — accepts EITHER bare handle OR full profile URL
- *   - Oversized blue CTA
- *   - Micro-trust copy
- *
- * Submit flow: paste handle → POST to /api/bulk-create-invites
- * (single-contact, unauthed-safe path) to ensure we route the user
- * to /login with a `next=/[slug]` so the demo-conversation lands
- * the moment they sign in. If unauthed, we just route to
- * /login?next=/onboarding so they start a twin first.
- *
- * Per Jack: "we need to look more modern and elite."
- *
- * Placeholder cycling: greys text rotates between "yourhandle" and
- * "linkedin.com/in/yourhandle" form every ~2.6s so the user instantly
- * sees that either is accepted. Jack: "FOR LINKEDIN AND ALL IT SHOULD
- * BE HANDLE OR FULL LINK THE GREY TEXT CAN SWITCH BACK AND FORTH."
- */
+/** Keep bare-handle and full-URL entry compatible with the onboarding handoff. */
 type Platform = {
   key: BrandKey;
   label: string;
@@ -110,12 +89,7 @@ function parseInput(
 export function LandingHandleHero({
   realFaces = []
 }: {
-  /** Real platform users with uploaded avatars. Server-fetched in
-   *  app/page.tsx and passed in so the social-proof avatar strip
-   *  shows actual people, not DiceBear placeholders. Jack: "use real
-   *  photos also on the homepage rather than these weird ones next
-   *  to the 40+ founders syncing thing." Empty array falls back to
-   *  the previous DiceBear avatars below. */
+  /** Public, non-test profiles only. No synthetic customer-photo fallback. */
   realFaces?: Array<{
     id: string;
     name: string;
@@ -134,6 +108,7 @@ export function LandingHandleHero({
   // 0 = handle-only, 1 = full URL.
   const [phIdx, setPhIdx] = useState(0);
   useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const t = setInterval(() => setPhIdx((i) => (i + 1) % 2), 2600);
     return () => clearInterval(t);
   }, []);
@@ -186,14 +161,16 @@ export function LandingHandleHero({
         .lh-hero {
           max-width: 860px;
           margin: 0 auto;
-          padding: 24px 24px 72px;
+          padding: 20px 24px 24px;
           color: var(--text);
         }
-        .lh-proof {
+        .lh-social-context {
           display: inline-flex;
           align-items: center;
           gap: 14px;
-          margin-bottom: 28px;
+          margin-top: 16px;
+          color: var(--text-dim);
+          font-size: 12px;
         }
         .lh-avatars { display: inline-flex; }
         .lh-avatars img {
@@ -203,29 +180,26 @@ export function LandingHandleHero({
           margin-left: -10px;
         }
         .lh-avatars img:first-child { margin-left: 0; }
-        .lh-proof-text {
-          display: flex; flex-direction: column; gap: 2px;
-        }
-        .lh-proof-headline {
-          font-size: 16px; font-weight: 800; letter-spacing: -0.01em;
-        }
-        .lh-proof-sub {
-          display: inline-flex; align-items: center; gap: 8px;
-          font-size: 13px; color: var(--text-dim);
-        }
-        .lh-stars { color: #fbbf24; letter-spacing: 1px; font-size: 13px; }
-
         .lh-h1 {
-          font-size: clamp(44px, 7vw, 78px);
+          font-size: 64px;
           font-weight: 900;
-          letter-spacing: -0.03em;
+          letter-spacing: 0;
           line-height: 1.0;
           margin: 0;
           color: var(--text);
+          overflow-wrap: anywhere;
+        }
+        @media (max-width: 600px) { .lh-h1 { font-size: 36px; line-height: 1.1; } .lh-hero { padding-inline: 20px; } }
+        @media (max-width: 360px) {
+          .lh-h1 { font-size: 28px; line-height: 1.12; }
+          .lh-hero { padding-top: 12px; padding-bottom: 12px; }
+          .lh-hero .lh-sub { margin-top: 12px; font-size: 16px; }
+          .lh-hero .lh-platforms { margin-top: 18px; }
+          .lh-hero .lh-input-label { margin-top: 16px; }
         }
         .lh-sub {
-          margin-top: 22px;
-          font-size: 19px;
+          margin-top: 16px;
+          font-size: 17px;
           line-height: 1.5;
           color: var(--text-dim);
           max-width: 640px;
@@ -234,18 +208,19 @@ export function LandingHandleHero({
 
         .lh-platforms {
           display: flex; flex-wrap: wrap; gap: 8px;
-          margin-top: 32px;
+          margin-top: 24px;
         }
         .lh-pill {
           display: inline-flex; align-items: center; gap: 8px;
           padding: 10px 16px;
-          border-radius: 999px;
+          border-radius: 6px;
           background: transparent;
           border: 1px solid var(--border);
           color: var(--text);
           font-size: 14px;
           font-weight: 600;
           cursor: pointer;
+          min-height: 44px;
           transition:
             background 0.15s ease,
             border-color 0.15s ease,
@@ -260,8 +235,9 @@ export function LandingHandleHero({
 
         .lh-input-wrap {
           position: relative;
-          margin-top: 14px;
+          margin-top: 8px;
         }
+        .lh-input-label { display: block; margin-top: 20px; font-size: 14px; font-weight: 600; }
         .lh-input-prefix {
           position: absolute;
           left: 18px;
@@ -273,31 +249,32 @@ export function LandingHandleHero({
         }
         .lh-input {
           width: 100%;
-          padding: 18px 18px 18px 38px;
+          padding: 15px 18px 15px 38px;
           font-size: 17px;
-          border-radius: 14px;
+          border-radius: 6px;
           border: 1.5px solid var(--border);
           background: transparent;
           color: var(--text);
           transition: border-color 0.15s ease, box-shadow 0.15s ease;
         }
         .lh-input:focus {
-          outline: none;
-          border-color: #1f8bff;
+          outline: 3px solid var(--home-accent, #305ce5);
+          outline-offset: 3px;
+          border-color: var(--home-accent, #305ce5);
           box-shadow: 0 0 0 4px rgba(31, 139, 255, 0.14);
         }
 
         .lh-cta {
-          margin-top: 14px;
+          margin-top: 10px;
           width: 100%;
-          padding: 19px 22px;
-          font-size: 17px;
+          padding: 15px 22px;
+          font-size: 16px;
           font-weight: 700;
-          letter-spacing: -0.005em;
+          letter-spacing: 0;
           color: #fff;
-          background: #1f59ff;
+          background: #305ce5;
           border: none;
-          border-radius: 14px;
+          border-radius: 6px;
           cursor: pointer;
           display: inline-flex;
           align-items: center;
@@ -319,8 +296,8 @@ export function LandingHandleHero({
         .lh-cta:hover .arrow { transform: translateX(3px); }
 
         .lh-microcopy {
-          margin-top: 14px;
-          font-size: 13px;
+          margin-top: 10px;
+          font-size: 12px;
           color: var(--text-dim);
           text-align: center;
         }
@@ -333,86 +310,38 @@ export function LandingHandleHero({
         }
       `}</style>
 
-      {/* Social proof — real platform users when we have them, dicebear
-          placeholders otherwise. The pile reads as authentic when these
-          are recognizable faces (founders, builders, advisors), so the
-          server-side fetch in app/page.tsx prioritizes most-active users
-          with uploaded avatars over the auto-generated identicons. */}
-      <div className="lh-proof">
-        <div className="lh-avatars" aria-hidden="true">
-          {realFaces.length >= 3 ? (
-            // Top 3 real users, eagerly loaded so they render with the
-            // hero (no lazy flicker).
-            realFaces.slice(0, 3).map((f) => (
-              <img
-                key={f.id}
-                src={f.avatar_url}
-                alt={f.name}
-                title={f.name}
-                loading="eager"
-                referrerPolicy="no-referrer"
-              />
-            ))
-          ) : (
-            <>
-              <img
-                src="https://api.dicebear.com/9.x/notionists/svg?seed=marina"
-                alt=""
-              />
-              <img
-                src="https://api.dicebear.com/9.x/notionists/svg?seed=darius"
-                alt=""
-              />
-              <img
-                src="https://api.dicebear.com/9.x/notionists/svg?seed=ari"
-                alt=""
-              />
-            </>
-          )}
-        </div>
-        <div className="lh-proof-text">
-          <span className="lh-proof-headline">
-            40+ founders syncing
-          </span>
-          <span className="lh-proof-sub">
-            <span className="lh-stars">★★★★★</span>
-            <span>4.9 average</span>
-          </span>
-        </div>
-      </div>
-
       <h1 className="lh-h1">
-        Your twin already knows
+        AI networking.
         <br />
-        the deal you should be making.
+        With your context.
       </h1>
       <p className="lh-sub">
-        Paste your handle. We build a digital twin of you in 30 seconds —
-        then it talks to other people&apos;s twins to find the highest
-        win-win between you, before either of you spends a minute on
-        a call.
+        Start from a public profile. Review the context your twin uses
+        and the conversation it drafts before choosing what to share.
       </p>
 
       {/* Platform pills */}
-      <div className="lh-platforms" role="tablist">
+      <div className="lh-platforms" role="group" aria-label="Profile platform">
         {PLATFORMS.map((p) => (
           <button
             key={p.key}
             type="button"
-            role="tab"
-            aria-selected={platform.key === p.key}
+            aria-pressed={platform.key === p.key}
             onClick={() => setPlatform(p)}
             className={`lh-pill ${platform.key === p.key ? "active" : ""}`}
           >
-            <BrandLogo brand={p.key} size={14} />
+            <span aria-hidden="true"><BrandLogo brand={p.key} size={14} tone={platform.key === p.key ? "mono" : "brand"} /></span>
             <span>{p.label}</span>
           </button>
         ))}
       </div>
 
+      <label className="lh-input-label" htmlFor="signup-profile-handle">Your public profile handle or URL</label>
       <div className="lh-input-wrap">
-        <span className="lh-input-prefix">@</span>
+        <span className="lh-input-prefix" aria-hidden="true">@</span>
         <input
+          id="signup-profile-handle"
+          data-clarity-mask="True"
           type="text"
           value={handle}
           onChange={(e) => setHandle(e.target.value)}
@@ -437,16 +366,20 @@ export function LandingHandleHero({
         disabled={!handle.trim() || busy}
         className="lh-cta"
       >
-        <span>{busy ? "building…" : "Build my twin"}</span>
-        <span className="arrow" aria-hidden="true">→</span>
+        <span>{busy ? "Continuing..." : "Build my twin"}</span>
+        <ArrowRight size={19} className="arrow" aria-hidden="true" />
       </button>
 
       <p className="lh-microcopy">
-        Free. No commitment. Your twin learns your voice — you stay in
-        control of every message.
+        Continue to sign-in and review your profile during onboarding.
       </p>
 
-      {err && <p className="lh-error">{err}</p>}
+      {realFaces.length > 0 && <div className="lh-social-context">
+        <div className="lh-avatars" aria-hidden="true">{realFaces.slice(0, 3).map(face => <img key={face.id} src={face.avatar_url} alt={face.name} title={face.name} loading="eager" referrerPolicy="no-referrer" />)}</div>
+        <span>People with public profiles on SyncedIn</span>
+      </div>}
+
+      {err && <p className="lh-error" role="alert">{err}</p>}
     </section>
   );
 }

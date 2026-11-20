@@ -50,6 +50,7 @@
     "@types/node": "^22.20.5",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "@xmldom/xmldom": "0.9.10",
     "autoprefixer": "^10.4.20",
     "postcss": "^8.5.28",
     "tailwindcss": "^3.4.13",

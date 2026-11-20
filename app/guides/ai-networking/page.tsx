@@ -19,7 +19,7 @@ export default function AINetworkingGuide() {
     <p>A twin is a working representation of goals, background, preferences, and examples you choose to provide. It is not a complete copy of you. A profile can be incomplete, a public source can be outdated, and a model can interpret the same facts differently from you.</p>
     <p>That matters especially on an invitation page built from someone's public footprint. A simulated reply is a sketch to inspect and correct, not something that person actually said. Treat the distinction as part of the product, not a footnote.</p>
     <h2>Four different jobs often called "AI networking"</h2>
-    <div className={styles.tableWrap}><table><caption>Different jobs need different checks.</caption><thead><tr><th scope="col">Job</th><th scope="col">What AI may help prepare</th><th scope="col">What you still decide</th></tr></thead><tbody>
+    <div className={styles.tableWrap} role="region" aria-label="AI networking workflow comparison" tabIndex={0}><table><caption>Different jobs need different checks.</caption><thead><tr><th scope="col">Job</th><th scope="col">What AI may help prepare</th><th scope="col">What you still decide</th></tr></thead><tbody>
       <tr><th scope="row">Discovery</th><td>People whose public professional work seems relevant to a goal.</td><td>Whether the evidence supports a real reason to connect.</td></tr>
       <tr><th scope="row">A first note</th><td>A short draft grounded in that reason.</td><td>The final wording, truthfulness, channel, and whether to send.</td></tr>
       <tr><th scope="row">Twin-to-twin exploration</th><td>A draft conversation that explores a possible overlap.</td><td>Whether the simulated responses resemble your position.</td></tr>

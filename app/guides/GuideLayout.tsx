@@ -1,14 +1,16 @@
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, BookOpen } from "lucide-react";
-import { GUIDE_REVIEW_DATE, NETWORKING_GUIDES, type NetworkingGuide } from "@/lib/networking-guides";
+import { ThemeToggle } from "../ThemeToggle";
+import { NETWORKING_GUIDES, type NetworkingGuide } from "@/lib/networking-guides";
 import styles from "./guides.module.css";
 
 export function GuideNavigation() {
   return (
-    <nav className={styles.navigation} aria-label="SyncedIn guides navigation">
-      <Link href="/" className={styles.brand} aria-label="SyncedIn home"><img src="/syncedin-wordmark-tight.png" alt="SyncedIn" width={180} height={44} className="wordmark-themed" /></Link>
+    <nav className={styles.navigation} aria-label="SyncedIn resources navigation">
+      <div className={styles.brandGroup}><Link href="/" className={styles.brand} aria-label="SyncedIn home"><img src="/syncedin-wordmark-tight.png" alt="SyncedIn" width={180} height={44} className="wordmark-themed" /></Link><ThemeToggle /></div>
       <div className={styles.navigationLinks}>
         <Link href="/guides"><BookOpen size={17} aria-hidden="true" /> Guides</Link>
+        <Link href="/about">About</Link>
         <Link href="/login" className={styles.primaryLink}>Create your twin <ArrowRight size={17} aria-hidden="true" /></Link>
       </div>
     </nav>
@@ -27,7 +29,7 @@ export function GuideLayout({ guide, children }: { guide: NetworkingGuide; child
           <div className={styles.meta}><span>{guide.topic}</span><span>{guide.readTime}</span></div>
           <h1>{guide.title}</h1>
           <p className={styles.introduction}>{guide.description}</p>
-          <p className={styles.byline}>By SyncedIn <span aria-hidden="true">/</span> Reviewed <time dateTime={GUIDE_REVIEW_DATE}>November 19, 2026</time></p>
+          <p className={styles.byline}>By SyncedIn <span aria-hidden="true">/</span> Reviewed <time dateTime={guide.reviewedAt}>{new Date(`${guide.reviewedAt}T00:00:00Z`).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" })}</time></p>
         </header>
         <div className={styles.body}>{children}</div>
         <aside className={styles.nextStep} aria-labelledby="next-step-heading">
@@ -51,7 +53,7 @@ export function GuideLayout({ guide, children }: { guide: NetworkingGuide; child
         "@context": "https://schema.org",
         "@graph": [
           { "@type": "Article", "@id": `${url}#article`, headline: guide.title, description: guide.description,
-            datePublished: GUIDE_REVIEW_DATE, dateModified: GUIDE_REVIEW_DATE,
+            datePublished: guide.publishedAt, dateModified: guide.reviewedAt,
             author: { "@type": "Organization", name: "SyncedIn", url: "https://syncedin.org" },
             publisher: { "@type": "Organization", name: "SyncedIn", url: "https://syncedin.org" },
             image: `${url}/opengraph-image.png`, mainEntityOfPage: url, inLanguage: "en" },

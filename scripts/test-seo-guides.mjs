@@ -7,6 +7,8 @@ import React from "react";
 import jsx from "react/jsx-runtime";
 import { renderToStaticMarkup } from "react-dom/server";
 import * as icons from "lucide-react";
+import postcss from "postcss";
+import { inspectPublicPage, inspectSitemap, verifyPublicPage } from "../verification/public-page.mjs";
 
 function load(file, dependencies = {}) {
   const module = { exports: {} };
@@ -18,14 +20,17 @@ function load(file, dependencies = {}) {
   return module.exports;
 }
 const guides = load("lib/networking-guides.ts");
+const goals = load("lib/networking-goals.ts");
 const cards = JSON.parse(fs.readFileSync("verification/social-card-manifest.json", "utf8"));
 const seo = load("lib/public-seo.ts", { "@/verification/social-card-manifest.json": { default: cards } });
 const css = new Proxy({}, { get: (_, name) => String(name) });
 const nextLink = { __esModule: true, default: ({ href, children, ...props }) => React.createElement("a", { href, ...props }, children) };
 const wordmark = load("app/Wordmark.tsx", { "react/jsx-runtime": jsx, "next/link": nextLink });
-const layout = load("app/guides/GuideLayout.tsx", { "react/jsx-runtime": jsx, "next/link": nextLink, "lucide-react": icons, "../Wordmark": wordmark, "@/lib/networking-guides": guides, "./guides.module.css": { __esModule: true, default: css } });
+const theme = load("app/ThemeToggle.tsx", { react: React, "react/jsx-runtime": jsx, "lucide-react": icons });
+const layout = load("app/guides/GuideLayout.tsx", { "react/jsx-runtime": jsx, "next/link": nextLink, "lucide-react": icons, "../Wordmark": wordmark, "../ThemeToggle": theme, "@/lib/networking-guides": guides, "./guides.module.css": { __esModule: true, default: css } });
 const editor = load("app/guides/ConnectionNoteEditor.tsx", { react: React, "react/jsx-runtime": jsx, "lucide-react": icons, "@/lib/networking-guides": guides, "./guides.module.css": { __esModule: true, default: css } });
-const dependencies = { "react/jsx-runtime": jsx, "next/link": nextLink, "@/lib/public-seo": seo, "@/lib/networking-guides": guides, "../GuideLayout": layout, "../ConnectionNoteEditor": editor, "../guides.module.css": { __esModule: true, default: css } };
+const goalBuilder = load("app/guides/ConversationGoalBuilder.tsx", { react: React, "react/jsx-runtime": jsx, "lucide-react": icons, "@/lib/networking-goals": goals, "./guides.module.css": { __esModule: true, default: css } });
+const dependencies = { "react/jsx-runtime": jsx, "next/link": nextLink, "@/lib/public-seo": seo, "@/lib/networking-guides": guides, "../GuideLayout": layout, "../ConnectionNoteEditor": editor, "../ConversationGoalBuilder": goalBuilder, "../guides.module.css": { __esModule: true, default: css } };
 
 test("connection-note budgets preserve exact text and distinguish 200 from 300 characters", () => {
   for (const limit of [200, 300]) {
@@ -64,7 +69,8 @@ test("every guide renders one source-backed article, matching schema and intenti
     const schemas = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map(match => JSON.parse(match[1]));
     const graph = schemas.find(schema => schema["@graph"])["@graph"];
     assert.equal(graph[0].headline, guide.title);
-    assert.equal(graph[0].dateModified, guides.GUIDE_REVIEW_DATE);
+    assert.equal(graph[0].dateModified, guide.reviewedAt);
+    assert.equal(graph[0].datePublished, guide.publishedAt);
     assert.equal(graph[1]["@type"], "BreadcrumbList");
     assert.equal(page.metadata.alternates.canonical, `https://syncedin.org/guides/${guide.slug}`);
     assert.equal(page.metadata.twitter.card, "summary_large_image");
@@ -72,6 +78,143 @@ test("every guide renders one source-backed article, matching schema and intenti
     assert(html.length > 4500, "A full substantive guide must not be replaced with a placeholder");
     assert(!/free forever|10x|response rates 10/.test(html));
   }
+});
+
+test("conversation briefs count their labels and line breaks within the real 500-character goal budget", () => {
+  const empty = { purpose: "", contribution: "", nextStep: "", boundary: "" };
+  assert.deepEqual(goals.conversationBriefBudget(empty), { text: "", count: 0, remaining: 500, fits: true, ready: false });
+  assert.equal(goals.conversationBriefBudget({ ...empty, boundary: "No pitch" }).ready, false);
+  assert.equal(goals.formatConversationBrief({ ...empty, purpose: "  Compare methods  ", boundary: " No pitch " }), "Purpose: Compare methods\nBoundaries: No pitch");
+  const exact = goals.conversationBriefBudget({ ...empty, purpose: "x".repeat(491) });
+  assert.equal(exact.count, 500);
+  assert(exact.fits && exact.ready);
+  assert(!goals.conversationBriefBudget({ ...empty, purpose: "x".repeat(492) }).fits);
+  assert.equal(goals.conversationBriefBudget({ ...empty, purpose: "\ud83d\ude00" }).count, 11);
+  for (const example of goals.CONVERSATION_BRIEF_EXAMPLES) {
+    const budget = goals.conversationBriefBudget(example.brief);
+    assert(budget.ready && budget.fits, example.id);
+    assert(budget.text.includes("Boundaries:"));
+  }
+  const productEditor = fs.readFileSync("app/conversations/[id]/PerConversationGoal.tsx", "utf8");
+  assert(productEditor.includes(`maxLength={${goals.CONVERSATION_BRIEF_LIMIT}}`));
+});
+
+test("the goal builder starts empty, masks every field and does not transmit or persist context", () => {
+  const html = renderToStaticMarkup(React.createElement(goalBuilder.ConversationGoalBuilder));
+  assert(html.includes('data-clarity-mask="True"'));
+  for (const field of ["purpose", "contribution", "nextStep", "boundary"]) assert(html.includes(`id="brief-${field}"`));
+  assert(html.includes('id="conversation-brief-output"') && /readonly=""/i.test(html));
+  assert(/<button[^>]*disabled=""[^>]*>[\s\S]*?Copy brief/.test(html));
+  assert(html.includes('role="status"'));
+  const source = fs.readFileSync("app/guides/ConversationGoalBuilder.tsx", "utf8");
+  assert(!/fetch\(|localStorage|sessionStorage|\.track\(/.test(source));
+  assert(source.includes("disabled={!budget.ready || !budget.fits}"));
+  assert(source.includes("currentRevision !== revision.current"));
+});
+
+test("all comparisons retain actions, cite the vendor and describe actual workflow differences", () => {
+  const shell = load("app/vs/VsPageShell.tsx", { "react/jsx-runtime": jsx, "next/link": nextLink, "lucide-react": icons, "../ThemeToggle": theme });
+  for (const slug of ["clay", "lemlist", "linkedin-dms"]) {
+    const page = load(`app/vs/${slug}/page.tsx`, { ...dependencies, "../VsPageShell": shell });
+    const html = renderToStaticMarkup(React.createElement(page.default));
+    assert.equal((html.match(/<h1[ >]/g) || []).length, 1);
+    assert((html.match(/href="\/login"/g) || []).length >= 3, "Keep all existing signup actions");
+    assert(html.includes('href="/article"'));
+    assert(html.includes('href="/guides/networking-goals"'));
+    assert(html.includes("Sources and disclosure"));
+    assert(html.includes("not an independent benchmark"));
+    for (const claim of ["Free forever", "$149", "$159", "20% better", "500 cold emails", "training signal for both twins"]) assert(!html.includes(claim), claim);
+    const schemas = inspectPublicPage(`<html><body>${html}</body></html>`).schemas;
+    const faq = schemas.find(schema => schema["@type"] === "FAQPage");
+    assert.equal(faq.mainEntity.length, 5);
+    for (const question of faq.mainEntity) {
+      assert(question.name && question.acceptedAnswer.text);
+      assert(html.includes(question.name.replaceAll("'", "&#x27;")), question.name);
+    }
+    assert.equal(page.metadata.alternates.canonical, `https://syncedin.org/vs/${slug}`);
+  }
+});
+
+test("About names the existing project team and offers real help with matching entity markup", () => {
+  const page = load("app/about/page.tsx", { ...dependencies, "lucide-react": icons, "../guides/GuideLayout": layout, "../guides/guides.module.css": { __esModule: true, default: css } });
+  const html = renderToStaticMarkup(React.createElement(page.default));
+  assert(html.includes("Jackson Jesionowski") && html.includes("Persist Ventures"));
+  for (const path of ["/support", "/privacy", "/terms", "/guides", "/login"]) assert(html.includes(`href="${path}"`));
+  const schema = inspectPublicPage(`<html><body>${html}</body></html>`).schemas.find(item => item["@type"] === "AboutPage");
+  assert.equal(schema.about["@id"], "https://syncedin.org/#organization");
+  assert.equal(schema.image, "https://syncedin.org/about/opengraph-image.png");
+  assert.equal(page.viewport.userScalable, true);
+});
+
+test("the release parser handles HTML attributes, entities, nested JSON and XML sitemap namespaces", () => {
+  const path = "/guides";
+  const image = "https://syncedin.org/guides/opengraph-image.png";
+  const html = `<html><head><title>Guides &amp; context</title><meta content="Useful guides" name="description"><link href="https://syncedin.org/guides" rel="canonical"><meta content="${image}" property="og:image"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:type" content="image/png"><meta name="twitter:image" content="https://syncedin.org/guides/twitter-image.png"><meta name="twitter:card" content="summary_large_image"></head><body><h1>Networking <span>guides</span></h1><script type="application/ld+json">{"@type":"CollectionPage","name":"Guides"}</script></body></html>`;
+  const page = inspectPublicPage(html);
+  assert.equal(page.title[0], "Guides & context");
+  assert.equal(page.headings[0], "Networking guides");
+  for (const svg of ['<svg xmlns="http://www.w3.org/2000/svg">', "<svg>"]) {
+    const withIcon = html.replace("<h1>", `${svg}<title>chatgpt</title></svg><h1>`);
+    assert.deepEqual(inspectPublicPage(withIcon).title, ["Guides & context"], "An SVG icon title is not the document title");
+  }
+  verifyPublicPage(page, path);
+  assert.throws(() => verifyPublicPage({ ...page, robots: ["noindex, nofollow"] }, path), /noindex/);
+  assert.throws(() => verifyPublicPage({ ...page, canonical: ["https://other.example/guides"] }, path), /canonical/);
+  assert.throws(() => verifyPublicPage({ ...page, headings: [] }, path), /H1/);
+  assert.throws(() => inspectPublicPage('<html><script type="application/ld+json">invalid</script></html>'));
+  const xml = '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>https://syncedin.org/guides</loc><lastmod>2026-11-19</lastmod></url></urlset>';
+  assert.deepEqual(inspectSitemap(xml), [{ url: "https://syncedin.org/guides", lastModified: "2026-11-19" }]);
+  assert.throws(() => inspectSitemap('<sitemapindex/>'), /canonical URL sitemap/);
+  assert.throws(() => inspectSitemap('<urlset xmlns="https://wrong.example"/>'), /namespace/);
+  assert.throws(() => inspectSitemap('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url>'));
+  assert.deepEqual(inspectSitemap(xml.replaceAll("<url", "<sm:url").replaceAll("</url", "</sm:url").replace('xmlns=', 'xmlns:sm=').replaceAll("<loc", "<sm:loc").replaceAll("</loc", "</sm:loc").replaceAll("<lastmod", "<sm:lastmod").replaceAll("</lastmod", "</sm:lastmod")), [{ url: "https://syncedin.org/guides", lastModified: "2026-11-19" }]);
+});
+
+test("guide text and status colours remain readable in both existing themes", () => {
+  const sheet = postcss.parse(fs.readFileSync("app/guides/guides.module.css", "utf8"));
+  const palettes = [];
+  sheet.walkRules(rule => {
+    if (rule.selector !== ".page" && rule.selector !== ':global(:root[data-theme="dark"]) .page') return;
+    const values = {};
+    rule.walkDecls(declaration => { values[declaration.prop] = declaration.value; });
+    palettes.push({ theme: rule.selector.includes("dark") ? "dark" : "light", values });
+  });
+  function luminance(hex) {
+    let value = hex.slice(1);
+    if (value.length === 3) value = [...value].map(c => c + c).join("");
+    const rgb = [0, 2, 4].map(index => parseInt(value.slice(index, index + 2), 16) / 255).map(c => c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+    return rgb[0] * 0.2126 + rgb[1] * 0.7152 + rgb[2] * 0.0722;
+  }
+  assert.equal(palettes.length, 2);
+  for (const { theme, values } of palettes) {
+    const background = luminance(theme === "dark" ? "#131829" : "#ffffff");
+    for (const name of ["--accent", "--green", "--red"]) {
+      const foreground = luminance(values[name]);
+      const ratio = (Math.max(foreground, background) + 0.05) / (Math.min(foreground, background) + 0.05);
+      assert(ratio >= 4.5, `${theme} ${name} contrast ${ratio.toFixed(2)}`);
+    }
+  }
+});
+
+test("shared entity markup remains factual and does not advertise a retired public search box", () => {
+  const stub = name => ({ [name]: () => null });
+  const root = load("app/layout.tsx", {
+    "react/jsx-runtime": jsx, "./globals.css": {}, "./product.css": {},
+    "next/script": { __esModule: true, default: props => React.createElement("script", props) },
+    "./Footer": stub("Footer"), "./ChunkErrorRecovery": stub("ChunkErrorRecovery"),
+    "./ErrorAutoReport": stub("ErrorAutoReport"), "./FeedbackBubble": stub("FeedbackBubble"),
+  });
+  const html = renderToStaticMarkup(React.createElement(root.default, {}, "Page content"));
+  const schemas = inspectPublicPage(html).schemas;
+  const website = schemas.find(schema => schema["@type"] === "WebSite");
+  const organization = schemas.find(schema => schema["@type"] === "Organization");
+  const application = schemas.find(schema => schema["@type"] === "SoftwareApplication");
+  assert.equal(website.publisher["@id"], organization["@id"]);
+  assert.equal(website.potentialAction, undefined);
+  assert.equal(application.operatingSystem, "Web browser");
+  assert.equal(organization.foundingDate, undefined, "Do not publish an unsupported founding year");
+  assert(html.includes('data-clarity-mask="True"'));
+  assert(!JSON.stringify(schemas).includes("before either human spends a minute"));
 });
 
 test("new guide routes have unique dimensioned artwork and explicit canonical sitemap membership", () => {

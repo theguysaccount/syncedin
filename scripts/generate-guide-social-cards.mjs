@@ -17,12 +17,24 @@ const specs = [
     alt: "SyncedIn AI-networking guide: your context, a twin-to-twin draft, and a proposal for human review." },
   { route: "/alternatives/linkedin", title: "A network to find people.\nContext to go further.", subtitle: "LinkedIn and SyncedIn: different jobs, different workflows.", labels: ["Professional identity", "A relevant introduction", "Human choice"],
     alt: "LinkedIn and SyncedIn comparison: professional identity, context-led introductions, and human choice." },
+  { route: "/guides/networking-goals", title: "One conversation.\nOne clear purpose.", subtitle: "A private goal brief for a useful next step.", labels: ["Your purpose", "What you can offer", "Clear boundaries"],
+    alt: "SyncedIn networking-goal guide: a specific purpose, something useful to offer, and clear boundaries." },
+  { route: "/about", title: "Better introductions.\nWith your judgment intact.", subtitle: "The purpose, people, and review behind SyncedIn.", labels: ["Context you choose", "An editable twin", "Your next step"],
+    alt: "About SyncedIn: context-led introductions, editable digital twins, and human judgment." },
+  { route: "/vs/clay", title: "SyncedIn and Clay.\nChoose the workflow.", subtitle: "Networking conversations, data enrichment, and GTM research.", labels: ["The work you need", "Accurate context", "A useful outcome"],
+    alt: "SyncedIn and Clay comparison: networking-twin conversations and data-driven GTM workflows." },
+  { route: "/vs/lemlist", title: "SyncedIn and lemlist.\nConversation or campaign?", subtitle: "Human-reviewed twins and AI-assisted outbound workflows.", labels: ["A relevant introduction", "Campaign operations", "Human review"],
+    alt: "SyncedIn and lemlist comparison: a relevant introduction, campaign operations, and human review." },
+  { route: "/vs/linkedin-dms", title: "A message. A conversation.\nChoose what helps.", subtitle: "LinkedIn DMs and shareable SyncedIn twin conversations.", labels: ["An honest opener", "Useful context", "The person's choice"],
+    alt: "SyncedIn and LinkedIn DMs comparison: an honest opener, useful context, and the recipient's choice." },
 ];
 const manifestPath = "verification/social-card-manifest.json";
 const existing = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+const copyPath = "verification/social-card-copy.json";
+const copy = JSON.parse(fs.readFileSync(copyPath, "utf8"));
 for (const spec of specs) {
   const image = new ImageResponse(h("div", { style: { width: "100%", height: "100%", display: "flex", flexDirection: "column", background: "#f8fafc", color: "#20232b", padding: "44px 64px", borderBottom: "10px solid #305ce5", fontFamily: "sans-serif" } },
-    h("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between" } }, h("img", { src: mark, width: 248, height: 60 }), h("span", { style: { fontSize: 19, color: "#117c59" } }, spec.route.startsWith("/guides") ? "SyncedIn guides" : "SyncedIn comparisons")),
+    h("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between" } }, h("img", { src: mark, width: 248, height: 60 }), h("span", { style: { fontSize: 19, color: "#117c59" } }, spec.route === "/about" ? "About SyncedIn" : spec.route.startsWith("/guides") ? "SyncedIn guides" : "SyncedIn comparisons")),
     h("div", { style: { display: "flex", flexDirection: "column", marginTop: 44, fontSize: spec.route.includes("ai-networking") ? 53 : 56, lineHeight: 1.15, fontWeight: 700 } }, ...spec.title.split("\n").map(line => h("span", { key: line }, line))),
     h("div", { style: { fontSize: 23, lineHeight: 1.5, marginTop: 20, color: "#586174", display: "flex" } }, spec.subtitle),
     h("div", { style: { display: "flex", alignItems: "center", gap: 16, marginTop: 34 } }, ...spec.labels.flatMap((label, index) => [
@@ -42,6 +54,11 @@ for (const spec of specs) {
   const index = existing.findIndex(item => item.path === spec.route);
   if (index === -1) existing.push(entry);
   else existing[index] = entry;
+  const copyEntry = { path: spec.route, key: spec.route.slice(1).replaceAll("/", "--"), title: spec.title.replace("\n", " "), heading: spec.title.replace("\n", " "), description: spec.subtitle, caption: spec.subtitle, alt: spec.alt };
+  const copyIndex = copy.findIndex(item => item.path === spec.route);
+  if (copyIndex === -1) copy.push(copyEntry);
+  else copy[copyIndex] = copyEntry;
   console.log(`${spec.route}: ${bytes.length} bytes`);
 }
 fs.writeFileSync(manifestPath, JSON.stringify(existing, null, 2) + "\n");
+fs.writeFileSync(copyPath, JSON.stringify(copy, null, 2) + "\n");

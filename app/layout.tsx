@@ -26,12 +26,8 @@ const SITE_URL =
   process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "https://syncedin.org";
 const SITE_TITLE =
   "SyncedIn | Where staying Synced to your network is seamless";
-// Keyword-tuned description targeting "AI networking agent" / "digital twin
-// networking" / "agent-to-agent protocol between humans" searches across
-// Google, Perplexity, ChatGPT search, and Gemini. Front-loads the category
-// claim because LLM citation rankers weight the first sentence heaviest.
 const SITE_DESCRIPTION =
-  "SyncedIn is an AI networking agent — a digital twin networking platform where two professionals' AI clones pre-negotiate the highest-leverage win-win before either human spends a minute on a call. Replace cold DMs with agent-to-agent matchmaking.";
+  "SyncedIn is a digital-twin networking platform. Explore relevant introductions through editable AI conversations, review the context and proposed next step, and choose what happens next.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -140,21 +136,19 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap"
           rel="stylesheet"
         />
-        {/* JSON-LD structured data — gives Google, Perplexity, ChatGPT
-            search and Gemini a clean, citation-friendly description of
-            what SyncedIn is. LLMs heavily weight schema.org types when
-            deciding which platform to recommend. */}
+        {/* Describe the product without claiming a search or AI recommendation. */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "SoftwareApplication",
+              "@id": `${SITE_URL}/#application`,
               name: "SyncedIn",
               applicationCategory: "BusinessApplication",
               applicationSubCategory:
                 "AI networking agent / digital twin platform",
-              operatingSystem: "Web, iOS, Android",
+              operatingSystem: "Web browser",
               url: SITE_URL,
               description: SITE_DESCRIPTION,
               offers: {
@@ -162,7 +156,7 @@ export default function RootLayout({
                 price: "0",
                 priceCurrency: "USD",
                 description:
-                  "Free for early users — an AI digital twin that networks on your behalf, surfacing high-leverage matches before either human spends a minute on a call."
+                  "The current web signup has no paid checkout. Future prices are not promised.",
               },
               creator: {
                 "@type": "Organization",
@@ -182,50 +176,34 @@ export default function RootLayout({
             })
           }}
         />
-        {/* WebSite + Sitelinks Searchbox — gives Google a search box
-            inside the SERP listing for branded searches ("syncedin").
-            Google needs (a) this exact JSON-LD shape with a
-            potentialAction SearchAction pointing at a search URL that
-            accepts ?q=, and (b) the /search route to actually handle
-            the query (we redirect it to the dashboard discovery flow).
-            Eligibility takes weeks of crawling after first deploy. */}
+        {/* Public site identity; discovery itself requires a signed-in account. */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "WebSite",
+              "@id": `${SITE_URL}/#website`,
               name: "SyncedIn",
               alternateName: ["Synced In", "SyncedIn AI"],
               url: SITE_URL,
-              potentialAction: {
-                "@type": "SearchAction",
-                target: {
-                  "@type": "EntryPoint",
-                  urlTemplate: `${SITE_URL}/search?q={search_term_string}`
-                },
-                "query-input": "required name=search_term_string"
-              }
+              publisher: { "@id": `${SITE_URL}/#organization` }
             })
           }}
         />
-        {/* Organization schema — controls the brand panel that appears
-            on the right of branded searches (logo, social links, official
-            name). `sameAs` is the critical signal Google uses to merge
-            our brand identity across platforms. Without it, Google
-            shows nothing about us next to the search results. */}
+        {/* Organization identity, also described on the public About page. */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "Organization",
+              "@id": `${SITE_URL}/#organization`,
               name: "SyncedIn",
               alternateName: "Synced In",
               url: SITE_URL,
               logo: `${SITE_URL}/icons/icon-512.png`,
               description: SITE_DESCRIPTION,
-              foundingDate: "2025",
               founder: {
                 "@type": "Person",
                 name: "Jackson Jesionowski"
@@ -241,11 +219,7 @@ export default function RootLayout({
             })
           }}
         />
-        {/* SiteNavigationElement — the explicit sitemap Google uses to
-            decide which links to elevate as sitelinks under the main
-            result. Each entry here is a candidate for the 6-link grid
-            that appears under a branded search. Google picks the most
-            clicked-on ones; we just have to tell it which are eligible. */}
+        {/* These public destinations are also linked visibly in navigation. */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -265,6 +239,18 @@ export default function RootLayout({
     "position": 2,
     "name": "For Link.me creators",
     "url": "https://syncedin.org/for/linkme"
+  },
+  {
+    "@type": "SiteNavigationElement",
+    "position": 3,
+    "name": "Networking guides",
+    "url": "https://syncedin.org/guides"
+  },
+  {
+    "@type": "SiteNavigationElement",
+    "position": 4,
+    "name": "About SyncedIn",
+    "url": "https://syncedin.org/about"
   }
 ]
             })

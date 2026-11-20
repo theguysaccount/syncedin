@@ -41,6 +41,23 @@ Run regression tests, type check, build and original-source release gate. Only r
 
 ## Status
 
-Research and source isolation complete. Four new guide routes and two comparison refreshes are implemented locally. Tests: 104 passed, 0 failed, 3 optional live-model checks skipped. The updated production build and the 26-card/392-original-source gate passed. Interactive clipboard, budget, template and empty-draft checks passed in a local browser. The original tight wordmark is legible. Desktop, 390px and 320px checks found no document overflow; keyboard focus is visible. The temporary browser tab was closed, viewport reset, and local QA server stopped. The only recorded browser error predates this pass and occurred while the earlier local server was being restarted. No new page is deployed or claimed indexed by this checkpoint.
+Research and source isolation are complete. Batch one is deployed and publicly verified, as detailed below. Batch two has passed its local build, regression, responsive, theme and metadata checks and is ready for staging. No new page is claimed indexed. The original tight wordmark, product controls and unpublished local product branch are preserved.
 
 Publishing permission: Jack explicitly approved tested SEO-only batches during this sprint. Preserve the unrelated local product commits. Animated OG media remains pending creative playback review; do not describe it as completed.
+
+### Batch One: Deployed and Verified
+
+- Commit `86f073ee4d18423fa13d13ca0703eb2f7bc42472` is on the isolated sprint branch and origin main, without the 14 existing local product commits.
+- Staged deployment `dpl_72NYEnKBHfLL92PcwLWc3ST2YjjX` matched all 610 uploaded source files. Six changed destinations passed staged canonical, H1, and exact share-image checks before promotion. A subsequent Git deployment of the same commit, `dpl_3Btd6LMq94we1pkxd1zSrN134QRD`, became current production.
+- Anonymous production checks passed all 26 page-specific card pairs, private routes, agent resources, and actual MCP tool discovery. A live browser verified the guide hub, note editing and copying, and the signup destination. No account was created or message sent. Task tabs were closed.
+- Current `/vs/clay` has its own canonical. Three historical login-query examples return noindex. A real missing slug returns 404; `/guides/` permanently redirects to `/guides`. These are response checks, not Search Console validation or new index inclusion.
+
+### Batch Two: Local Verification
+
+About and a networking-goal guide address distinct gaps: product identity and a specific conversation purpose. The private goal-brief builder counts the full brief against the existing 500-character conversation editor. Clay and lemlist comparisons now use current first-party product descriptions instead of fixed prices or claims that their AI is only static templating. Sources: https://www.clay.com/use-cases/data-enrichment , https://www.clay.com/use-cases/outbound , https://www.clay.com/pricing , https://www.lemlist.com/product/multichannel-prospecting , https://www.lemlist.com/product/lemagent , https://www.lemlist.com/pricing . Reviewed November 20, 2026.
+
+Shared entity markup describes the actual browser product, removes the unsupported founding year, and connects the Organization and WebSite IDs. The obsolete public SearchAction is removed; Google retired the sitelinks search box in 2024 (https://developers.google.com/search/blog/2024/10/sitelinks-search-box). This removal is not represented as a ranking fix.
+
+The public verifier now parses HTML and XML using the already-installed xmldom parser, explicitly declared as a development dependency. SVG titles, including SVG without xmlns, are excluded from document-title counts. No new runtime dependency or installation was needed. Page-specific image types, canonical URLs, H1s, unique titles, JSON-LD, and sitemap membership are checked in addition to exact artwork bytes. Browser layout and interaction checks remain required.
+
+Final local checks: 111 passed, 0 failed, 3 optional live-model tests skipped. Production build and 28-card/392-original-source gate passed. All 28 locally served pages passed parsed metadata and sitemap checks. The goal builder passed empty, template, over-limit, read-only output, and actual copy/paste-back checks. Desktop, 390px and 320px layouts passed; the 320px signup label remains on one line. Light and dark themes were exercised through the existing theme control, with scoped status/link contrast tests at 4.5:1 or better. Theme restored, viewport reset, exact task tab closed, and temporary local server stopped. These checks do not establish new indexing or target-app animated-preview behaviour.

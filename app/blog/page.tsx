@@ -62,9 +62,9 @@ const POSTS: Post[] = [
     slug: "vs-lemlist",
     href: "/vs/lemlist",
     category: "comparison",
-    title: "SyncedIn vs Lemlist — flipping who the AI works for",
+    title: "SyncedIn vs lemlist: networking twins and outbound campaigns",
     excerpt:
-      "Lemlist makes you write a better cold email. SyncedIn skips the cold email entirely. Side-by-side breakdown of two opposite approaches to AI-driven outreach.",
+      "Compare an AI-assisted outbound campaign workflow with a human-reviewed networking-twin conversation, including their different channels and limits.",
     publishedAt: "2026-05-21",
     readTime: "4 min read"
   },
@@ -72,9 +72,9 @@ const POSTS: Post[] = [
     slug: "vs-clay",
     href: "/vs/clay",
     category: "comparison",
-    title: "SyncedIn vs Clay — enrichment vs negotiation",
+    title: "SyncedIn vs Clay: networking conversations and GTM workflows",
     excerpt:
-      "Clay enriches the data behind your outbound. SyncedIn gives the recipient an AI too. When to use each tool, and where the lines actually fall.",
+      "Clay's enrichment, research, and outbound workflows serve a different job from SyncedIn's editable introduction conversations. Choose by the work you need done.",
     publishedAt: "2026-05-21",
     readTime: "4 min read"
   },
@@ -311,6 +311,7 @@ export default function BlogIndexPage() {
             <li><Link href="/guides/linkedin-connection-request">Connection-request examples and a private note checker</Link></li>
             <li><Link href="/guides/networking-follow-up">Follow up after a conversation, an introduction, or silence</Link></li>
             <li><Link href="/guides/ai-networking">AI networking and the role of human review</Link></li>
+            <li><Link href="/guides/networking-goals">Choose a conversation goal and draft a private brief</Link></li>
           </ul>
           <Link href="/guides">Browse all guides</Link>
         </section>

@@ -9,7 +9,7 @@ export function withPublicSEO(path: string, original: Metadata): Metadata {
   const url = SITE_URL + path;
   const card = cards.find(card => card.path === path);
   if (!card) throw new Error("Missing public social card: " + path);
-  const image = { url: SITE_URL + path + "/opengraph-image.png", width: 1200, height: 630, alt: card.alt };
+  const image = { url: SITE_URL + path + "/opengraph-image.png", width: 1200, height: 630, type: "image/png", alt: card.alt };
   return {
     ...original, title,
     alternates: { ...original.alternates, canonical: url },

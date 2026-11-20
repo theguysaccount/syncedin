@@ -55,7 +55,16 @@ export function Footer() {
         {/* build:{BUILD_SHA} */}
         <span style={{ display: "none" }}>build:{BUILD_SHA}</span>
       </div>
-      <nav className="flex items-center gap-4">
+      <nav className="flex flex-wrap items-center gap-x-4 gap-y-3" aria-label="SyncedIn footer">
+        <Link href="/about" className="hover:text-white">
+          About
+        </Link>
+        <Link href="/guides" className="hover:text-white">
+          Guides
+        </Link>
+        <Link href="/blog" className="hover:text-white">
+          Blog
+        </Link>
         <Link href="/wins" className="hover:text-white">
           Wins
         </Link>

@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Wordmark } from "../Wordmark";
+import { ArrowRight, Plus } from "lucide-react";
+import { ThemeToggle } from "../ThemeToggle";
 
 /**
  * Shared shell for /vs/<competitor> SEO landing pages. Captures the
@@ -28,7 +29,9 @@ export function VsPageShell({
   theirPitch,
   rows,
   whyWeWin,
-  faq
+  faq,
+  reviewedAt,
+  sources
 }: {
   /** Display name of the competitor, e.g. "Lemlist" */
   competitor: string;
@@ -45,35 +48,36 @@ export function VsPageShell({
   rows: VsRow[];
   /** 2-4 paragraphs of "the real difference" explanation */
   whyWeWin: { heading: string; body: string }[];
-  /** 3-5 FAQ entries — boost SEO via FAQPage schema */
+  /** Visible questions and their matching structured data. */
   faq: { q: string; a: string }[];
+  reviewedAt: string;
+  sources: { label: string; url: string }[];
 }) {
   return (
     <main className="vs-shell">
-      <div aria-hidden="true" className="vs-bg" />
       <style>{`
         .vs-shell {
+          --accent: #305ce5;
           position: relative;
           max-width: 1200px;
           margin: 0 auto;
           padding: 24px clamp(18px, 4vw, 36px) 80px;
         }
-        .vs-bg {
-          position: absolute;
-          inset: 0;
-          z-index: 0;
-          pointer-events: none;
-          background:
-            radial-gradient(900px 500px at 12% 8%, rgba(31, 139, 255, 0.08), transparent 60%),
-            radial-gradient(900px 500px at 88% 4%, rgba(107, 45, 201, 0.06), transparent 60%);
-        }
         .vs-content { position: relative; z-index: 1; }
+        :root[data-theme="dark"] .vs-shell { --accent: #a8beff; }
+        .vs-shell a:focus-visible, .vs-shell [tabindex]:focus-visible { outline: 3px solid #4e74f4; outline-offset: 4px; }
         .vs-nav {
           display: flex;
           align-items: center;
           justify-content: space-between;
           margin-bottom: 32px;
+          flex-wrap: wrap;
+          gap: 20px;
         }
+        .vs-brand img { display: block; width: 180px; height: auto; }
+        .vs-brand-group { display: flex; align-items: center; gap: 18px; }
+        .vs-brand-group button { min-height: 44px; min-width: 44px; border-radius: 6px; padding: 0; color: var(--text-dim); }
+        .vs-nav > a:last-child { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; }
         .vs-eyebrow {
           display: inline-flex;
           align-items: center;
@@ -84,15 +88,15 @@ export function VsPageShell({
           border: 1px solid rgba(31, 139, 255, 0.30);
           font-size: 11px;
           font-weight: 800;
-          letter-spacing: 0.14em;
+          letter-spacing: 0;
           text-transform: uppercase;
-          color: #1f8bff;
+          color: var(--accent);
           margin-bottom: 16px;
         }
         .vs-h1 {
-          font-size: clamp(30px, 4.4vw, 48px);
+          font-size: 42px;
           line-height: 1.05;
-          letter-spacing: -0.02em;
+          letter-spacing: 0;
           font-weight: 800;
           margin: 0 0 16px;
           max-width: 880px;
@@ -105,7 +109,7 @@ export function VsPageShell({
           color: transparent;
         }
         .vs-sub {
-          font-size: clamp(15px, 1.4vw, 18px);
+          font-size: 18px;
           line-height: 1.55;
           color: var(--text-dim);
           max-width: 720px;
@@ -121,7 +125,11 @@ export function VsPageShell({
           padding: 14px 24px;
           font-size: 15px;
           font-weight: 800;
-          border-radius: 12px;
+          border-radius: 6px;
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          min-height: 44px;
           box-shadow:
             0 16px 48px -16px rgba(31, 139, 255, 0.45),
             0 0 0 1px rgba(31, 139, 255, 0.25) inset;
@@ -130,7 +138,7 @@ export function VsPageShell({
         .vs-compare {
           margin: 32px 0 56px;
           border: 1px solid var(--border);
-          border-radius: 18px;
+          border-radius: 8px;
           overflow: hidden;
           background: var(--panel-solid);
         }
@@ -142,13 +150,13 @@ export function VsPageShell({
           border-bottom: 1px solid var(--border);
           font-size: 13px;
           font-weight: 800;
-          letter-spacing: 0.04em;
+          letter-spacing: 0;
         }
         .vs-compare-head > div {
           padding: 16px 18px;
         }
         .vs-compare-head .syncedin-col {
-          color: #1f8bff;
+          color: var(--accent);
           border-left: 1px solid var(--border);
         }
         .vs-compare-head .them-col {
@@ -192,12 +200,12 @@ export function VsPageShell({
             display: block;
             font-size: 10px;
             font-weight: 800;
-            letter-spacing: 0.1em;
+            letter-spacing: 0;
             text-transform: uppercase;
             color: var(--text-dim);
             margin-bottom: 4px;
           }
-          .vs-compare-row .syncedin-cell::before { color: #1f8bff; }
+          .vs-compare-row .syncedin-cell::before { color: var(--accent); }
         }
         .vs-section {
           margin-top: 56px;
@@ -205,15 +213,15 @@ export function VsPageShell({
         .vs-section-label {
           font-size: 11px;
           font-weight: 800;
-          letter-spacing: 0.16em;
+          letter-spacing: 0;
           text-transform: uppercase;
-          color: #1f8bff;
+          color: var(--accent);
           margin-bottom: 12px;
         }
         .vs-section h2 {
-          font-size: clamp(22px, 2.6vw, 30px);
+          font-size: 28px;
           line-height: 1.2;
-          letter-spacing: -0.01em;
+          letter-spacing: 0;
           font-weight: 800;
           margin: 0 0 14px;
         }
@@ -232,13 +240,13 @@ export function VsPageShell({
           padding: 22px;
           background: var(--panel-solid);
           border: 1px solid var(--border);
-          border-radius: 16px;
+          border-radius: 8px;
         }
         .vs-pillar h3 {
           font-size: 17px;
           font-weight: 800;
           margin: 0 0 8px;
-          letter-spacing: -0.005em;
+          letter-spacing: 0;
         }
         .vs-pillar p {
           font-size: 14.5px;
@@ -260,7 +268,7 @@ export function VsPageShell({
           font-size: 16px;
           font-weight: 700;
           margin: 0 0 8px;
-          letter-spacing: -0.005em;
+          letter-spacing: 0;
         }
         .vs-faq-item p {
           font-size: 14.5px;
@@ -270,35 +278,33 @@ export function VsPageShell({
         }
         .vs-footer-cta {
           margin-top: 64px;
-          padding: 36px 24px;
-          border-radius: 22px;
-          background:
-            radial-gradient(600px 240px at 50% 0%, rgba(31, 139, 255, 0.08), transparent 70%),
-            var(--panel-solid);
-          border: 1px solid var(--border);
+          padding: 36px 0;
+          border-top: 1px solid var(--border);
+          border-bottom: 1px solid var(--border);
           text-align: center;
         }
+        .vs-sources { margin-top: 28px; font-size: 14px; line-height: 1.8; color: var(--text-dim); }
+        .vs-sources a { color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
+        .vs-source-links { display: flex; flex-wrap: wrap; gap: 8px 20px; margin: 12px 0; }
+        @media (max-width: 600px) { .vs-h1 { font-size: 32px; } .vs-sub { font-size: 17px; } .vs-section h2 { font-size: 24px; } .vs-brand img { width: 150px; } .vs-nav { gap: 16px; } }
       `}</style>
 
       <div className="vs-content">
-        <nav className="vs-nav">
-          <Wordmark />
+        <nav className="vs-nav" aria-label="SyncedIn comparison navigation">
+          <div className="vs-brand-group"><Link href="/" className="vs-brand" aria-label="SyncedIn home"><img src="/syncedin-wordmark-tight.png" alt="SyncedIn" width={180} height={44} className="wordmark-themed" /></Link><ThemeToggle /></div>
           <Link
             href="/login"
             className="retro-btn retro-btn-primary"
             style={{ fontSize: 13, padding: "8px 14px" }}
           >
-            + sign up
+            <Plus size={16} aria-hidden="true" /> Create your twin
           </Link>
         </nav>
 
         <header>
           <span className="vs-eyebrow">SyncedIn vs {competitor}</span>
           <h1 className="vs-h1">
-            Looking for a{" "}
-            <em>{competitor} alternative</em>?
-            <br />
-            SyncedIn flips the model.
+            SyncedIn vs {competitor}
           </h1>
           <p className="vs-sub">
             {competitor} is {positioning}. SyncedIn focuses on the context
@@ -311,42 +317,45 @@ export function VsPageShell({
               href="/login"
               className="retro-btn retro-btn-primary vs-cta-primary"
             >
-              <span aria-hidden="true">＋</span> Create my twin (free)
+              <Plus size={17} aria-hidden="true" /> Create my twin
             </Link>
             <Link
               href="/article"
               className="retro-btn vs-cta-primary"
               style={{ fontWeight: 700, fontSize: 14 }}
             >
-              Read the launch story →
+              Read the launch story <ArrowRight size={17} aria-hidden="true" />
             </Link>
           </div>
         </header>
 
         <section aria-label={`SyncedIn vs ${competitor} comparison`}>
           <div className="vs-section-label">side by side</div>
-          <h2 style={{ fontSize: "clamp(22px, 2.6vw, 30px)", margin: 0, fontWeight: 800, letterSpacing: "-0.01em" }}>
-            {ourPitch} <span style={{ color: "var(--text-dim)" }}>vs</span> {theirPitch}
+          <h2 style={{ fontSize: 26, margin: 0, fontWeight: 800, letterSpacing: 0 }}>
+            Compare the workflows
           </h2>
+          <p style={{ fontSize: 16, lineHeight: 1.7, color: "var(--text-dim)", maxWidth: 760 }}>{ourPitch}. {theirPitch}. Choose the work you need done.</p>
 
-          <div className="vs-compare">
-            <div className="vs-compare-head">
-              <div>What you get</div>
-              <div className="syncedin-col">SyncedIn</div>
-              <div className="them-col">{competitor}</div>
+          <div className="vs-compare" role="table" aria-label={`SyncedIn and ${competitor} workflows`}>
+            <div className="vs-compare-head" role="row">
+              <div role="columnheader">What you get</div>
+              <div className="syncedin-col" role="columnheader">SyncedIn</div>
+              <div className="them-col" role="columnheader">{competitor}</div>
             </div>
             {rows.map((r, i) => (
               <div
                 key={i}
+                role="row"
                 className={`vs-compare-row ${r.highlight ? "highlight" : ""}`}
               >
-                <div className="feature">{r.feature}</div>
-                <div className="syncedin-cell" data-label="SyncedIn">
+                <div className="feature" role="rowheader">{r.feature}</div>
+                <div className="syncedin-cell" data-label="SyncedIn" role="cell">
                   {r.syncedin}
                 </div>
                 <div
                   className="them-cell"
                   data-label={competitor}
+                  role="cell"
                 >
                   {r.them}
                 </div>
@@ -370,7 +379,7 @@ export function VsPageShell({
 
         <section className="vs-section">
           <div className="vs-section-label">common questions</div>
-          <h2>SyncedIn vs {competitor} — FAQ</h2>
+          <h2>SyncedIn vs {competitor}: common questions</h2>
           <div className="vs-faq">
             {faq.map((f, i) => (
               <div key={i} className="vs-faq-item">
@@ -379,19 +388,22 @@ export function VsPageShell({
               </div>
             ))}
           </div>
-          {competitorSlug === "linkedin-dms" && <p style={{ fontSize: 14, lineHeight: 1.8 }}>
-            Sources reviewed November 19, 2026: LinkedIn&apos;s <a href="https://www.linkedin.com/help/linkedin/answer/a554575">messaging help</a>, <a href="https://www.linkedin.com/help/linkedin/answer/a563153/personalizing-invitations-to-connect?lang=en">invitation help</a>, and <a href="https://www.linkedin.com/help/linkedin/answer/a1341543">automation policy</a>.
-            For practical examples, see our <Link href="/guides/linkedin-connection-request">connection-note guide</Link> and <Link href="/guides/networking-follow-up">follow-up guide</Link>.
-          </p>}
+          <section className="vs-sources" aria-label="Sources and disclosure">
+            <p>This is SyncedIn&apos;s product comparison, not an independent benchmark. Features and access can change. Sources reviewed <time dateTime={reviewedAt}>{new Date(`${reviewedAt}T00:00:00Z`).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" })}</time>:</p>
+            <div className="vs-source-links">{sources.map(source => <a href={source.url} key={source.url}>{source.label}</a>)}</div>
+            <p>For practical examples, see our <Link href="/guides/linkedin-connection-request">connection-note guide</Link>, <Link href="/guides/networking-goals">conversation-goal builder</Link>, and <Link href="/guides/networking-follow-up">follow-up guide</Link>.</p>
+          </section>
 
-          {/* FAQPage schema — gives Google a structured signal so the
-              questions can appear as rich-result snippets in search. */}
+          {/* This matches the visible questions; rich-result eligibility is separate. */}
           <script
             type="application/ld+json"
             dangerouslySetInnerHTML={{
               __html: JSON.stringify({
                 "@context": "https://schema.org",
                 "@type": "FAQPage",
+                "@id": `https://syncedin.org/vs/${competitorSlug}#faq`,
+                url: `https://syncedin.org/vs/${competitorSlug}`,
+                dateModified: reviewedAt,
                 mainEntity: faq.map((f) => ({
                   "@type": "Question",
                   name: f.q,
@@ -435,12 +447,12 @@ export function VsPageShell({
                 padding: "14px 28px",
                 fontSize: 15,
                 fontWeight: 800,
-                borderRadius: 14,
+                borderRadius: 6,
                 boxShadow:
                   "0 16px 48px -16px rgba(31, 139, 255, 0.45), 0 0 0 1px rgba(31, 139, 255, 0.25) inset"
               }}
             >
-              <span aria-hidden="true">＋</span>
+              <Plus size={17} aria-hidden="true" />
               Create my twin
             </Link>
           </div>

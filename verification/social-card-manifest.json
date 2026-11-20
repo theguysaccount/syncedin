@@ -17,22 +17,22 @@
     "path": "/vs/lemlist",
     "file": "app/vs/lemlist/opengraph-image.png",
     "twitterFile": "app/vs/lemlist/twitter-image.png",
-    "sha256": "dff25c74820a240333688e7c3aa81f153064eef963d0be2650d8c80ab6aa7e7d",
-    "alt": "SyncedIn — Looking for a Lemlist alternative ? SyncedIn flips the model."
+    "sha256": "31a8419b3e92707e3a3c0d83b00eec4bfcaf37bb05d35e151d0e40ace5beb0f1",
+    "alt": "SyncedIn and lemlist comparison: a relevant introduction, campaign operations, and human review."
   },
   {
     "path": "/vs/clay",
     "file": "app/vs/clay/opengraph-image.png",
     "twitterFile": "app/vs/clay/twitter-image.png",
-    "sha256": "15599105e4229b7b47d0d3024463bf183c9b23f6516ff004c79c40f0b9c1fdbf",
-    "alt": "SyncedIn — Looking for a Clay alternative ? SyncedIn flips the model."
+    "sha256": "9ab1563a30939e9d5d767b880b64243923c8920e09dcb21437b510d96a5cd16c",
+    "alt": "SyncedIn and Clay comparison: networking-twin conversations and data-driven GTM workflows."
   },
   {
     "path": "/vs/linkedin-dms",
     "file": "app/vs/linkedin-dms/opengraph-image.png",
     "twitterFile": "app/vs/linkedin-dms/twitter-image.png",
-    "sha256": "32deaf427c3b8362d0db2e002a08ebd6a53f7503741595a23a0cfed19ea38b33",
-    "alt": "SyncedIn — Looking for a LinkedIn DMs alternative ? SyncedIn flips the model."
+    "sha256": "6f55efc025b003e4b8fb99c83e8f30b4e420582337861ef851b13466990a120f",
+    "alt": "SyncedIn and LinkedIn DMs comparison: an honest opener, useful context, and the recipient's choice."
   },
   {
     "path": "/founders-vc",
@@ -180,5 +180,19 @@
     "twitterFile": "app/guides/ai-networking/twitter-image.png",
     "sha256": "9e4928136e1b44da52e2d62814adbed0b4e019c3eb6f57089a6ce35caf9b7de3",
     "alt": "SyncedIn AI-networking guide: your context, a twin-to-twin draft, and a proposal for human review."
+  },
+  {
+    "path": "/guides/networking-goals",
+    "file": "app/guides/networking-goals/opengraph-image.png",
+    "twitterFile": "app/guides/networking-goals/twitter-image.png",
+    "sha256": "769ecb95e53e7aa0af5860bfe720fe3a8cb4897e50b8987858c857afabda546a",
+    "alt": "SyncedIn networking-goal guide: a specific purpose, something useful to offer, and clear boundaries."
+  },
+  {
+    "path": "/about",
+    "file": "app/about/opengraph-image.png",
+    "twitterFile": "app/about/twitter-image.png",
+    "sha256": "1c4b9df74fb8e5a57ac5b596527d009c29e286b0bb8bfeae926c5accef14a963",
+    "alt": "About SyncedIn: context-led introductions, editable digital twins, and human judgment."
   }
 ]

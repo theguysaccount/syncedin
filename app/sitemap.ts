@@ -33,17 +33,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // === Top-level marketing ===
     { url: `${APP_URL}/`, changeFrequency: "daily", priority: 1.0 },
     { url: `${APP_URL}/article`, changeFrequency: "monthly", priority: 0.9 },
-    { url: `${APP_URL}/blog`, changeFrequency: "weekly", priority: 0.9 },
+    { url: `${APP_URL}/blog`, lastModified: "2026-11-20", changeFrequency: "weekly", priority: 0.9 },
     { url: `${APP_URL}/agents`, changeFrequency: "monthly", priority: 0.7 },
-    { url: `${APP_URL}/guides`, lastModified: "2026-11-19", changeFrequency: "monthly", priority: 0.7 },
+    { url: `${APP_URL}/about`, lastModified: "2026-11-20", changeFrequency: "monthly", priority: 0.6 },
+    { url: `${APP_URL}/guides`, lastModified: "2026-11-20", changeFrequency: "monthly", priority: 0.7 },
     { url: `${APP_URL}/guides/linkedin-connection-request`, lastModified: "2026-11-19", changeFrequency: "monthly", priority: 0.7 },
     { url: `${APP_URL}/guides/networking-follow-up`, lastModified: "2026-11-19", changeFrequency: "monthly", priority: 0.7 },
     { url: `${APP_URL}/guides/ai-networking`, lastModified: "2026-11-19", changeFrequency: "monthly", priority: 0.7 },
+    { url: `${APP_URL}/guides/networking-goals`, lastModified: "2026-11-20", changeFrequency: "monthly", priority: 0.7 },
 
     // === Comparison pages (high-intent SEO) ===
-    { url: `${APP_URL}/vs/lemlist`, changeFrequency: "monthly", priority: 0.8 },
-    { url: `${APP_URL}/vs/clay`, changeFrequency: "monthly", priority: 0.8 },
-    { url: `${APP_URL}/vs/linkedin-dms`, changeFrequency: "monthly", priority: 0.8 },
+    { url: `${APP_URL}/vs/lemlist`, lastModified: "2026-11-20", changeFrequency: "monthly", priority: 0.8 },
+    { url: `${APP_URL}/vs/clay`, lastModified: "2026-11-20", changeFrequency: "monthly", priority: 0.8 },
+    { url: `${APP_URL}/vs/linkedin-dms`, lastModified: "2026-11-19", changeFrequency: "monthly", priority: 0.8 },
 
     // === Vertical landing pages ===
     { url: `${APP_URL}/founders-vc`, changeFrequency: "monthly", priority: 0.7 },
@@ -64,7 +66,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${APP_URL}/for/linkme` },
     { url: `${APP_URL}/generate-free-portfolio` },
     { url: `${APP_URL}/ai-knows-me` },
-    { url: `${APP_URL}/alternatives/linkedin` },
+    { url: `${APP_URL}/alternatives/linkedin`, lastModified: "2026-11-19" },
     { url: `${APP_URL}/paper` },
 
     // === Trust / legal ===

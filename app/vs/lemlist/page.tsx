@@ -1,114 +1,46 @@
-import { withPublicSEO } from '@/lib/public-seo';
 import type { Metadata } from "next";
+import { withPublicSEO } from "@/lib/public-seo";
 import { VsPageShell } from "../VsPageShell";
 
-export const metadata: Metadata = withPublicSEO('/vs/lemlist', {
-  title: "SyncedIn vs Lemlist: an AI alternative for cold outreach in 2026",
-  description:
-    "Lemlist personalizes the sender's cold email. SyncedIn skips the cold email entirely — two AI twins negotiate, and you only see the deal worth taking. The honest comparison.",
-  openGraph: {
-    title: "SyncedIn vs Lemlist — the AI alternative for cold outreach",
-    description:
-      "Lemlist makes you write better cold emails, faster. SyncedIn skips cold email entirely. See the honest side-by-side comparison.",
-    url: "https://syncedin.org/vs/lemlist",
-    type: "website",
-    siteName: "SyncedIn"
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "SyncedIn vs Lemlist — the AI alternative for cold outreach",
-    description:
-      "Two AI twins negotiate before two humans meet. The Lemlist alternative for people who'd rather not write the cold email at all."
-  },
-  alternates: { canonical: "https://syncedin.org/vs/lemlist" }
+export const metadata: Metadata = withPublicSEO("/vs/lemlist", {
+  title: "SyncedIn vs lemlist: networking twins and outbound campaigns",
+  description: "Compare lemlist's AI-assisted outbound campaigns with SyncedIn's editable networking-twin conversations. Understand channels, review, and the work each product covers.",
+  openGraph: { title: "SyncedIn and lemlist: conversation or campaign?", type: "website" },
 });
 
 export default function VsLemlistPage() {
-  return (
-    <VsPageShell
-      competitor="Lemlist"
-      competitorSlug="lemlist"
-      positioning="the sender-side cold-email personalization tool — it helps you write better outbound messages, faster"
-      ourPitch="A networking agent for both sides"
-      theirPitch="A faster cold-email composer for the sender"
-      rows={[
-        {
-          feature: "Who the AI works for",
-          syncedin: "Both sender AND recipient. Both get a twin.",
-          them: "Just the sender. The recipient still has to read.",
-          highlight: true
-        },
-        {
-          feature: "What gets sent",
-          syncedin: "A simulated negotiation, ready to edit, no cold-email energy.",
-          them: "A personalized cold email. Better than generic, still cold."
-        },
-        {
-          feature: "Recipient experience",
-          syncedin: "Opens a live demo conversation. Edits anything, no signup.",
-          them: "Inbox-fatigued. Same cold-DM friction, slightly warmer copy."
-        },
-        {
-          feature: "Personalization source",
-          syncedin: "LinkedIn + X + public web + the recipient's own edits.",
-          them: "Mostly LinkedIn + custom variables you set up."
-        },
-        {
-          feature: "Time to value",
-          syncedin: "Two minutes to onboard, twin runs in parallel forever.",
-          them: "Hours to set up sequences, ongoing manual list-building."
-        },
-        {
-          feature: "Pricing",
-          syncedin: "Free forever for early users.",
-          them: "$59-$159/seat/month depending on plan."
-        },
-        {
-          feature: "Best for",
-          syncedin: "Founders, operators, and anyone with networking-as-a-bottleneck.",
-          them: "Sales teams running outbound at high volume."
-        }
-      ]}
-      whyWeWin={[
-        {
-          heading: "The recipient's time is the constraint, not the sender's",
-          body: "Lemlist and every other sender-side tool optimizes the wrong variable. Making cold emails 20% better doesn't change inbox saturation. SyncedIn gives the recipient an AI too — so the value-discovery part of networking happens between two agents in seconds, not between two humans across weeks."
-        },
-        {
-          heading: "Negotiation, not outreach",
-          body: "A Lemlist campaign sends N personalized messages and prays. A SyncedIn twin starts an actual back-and-forth: it identifies mission alignment, proposes a concrete final destination (an intro, a hire, a check, a partnership), and only pings the human when there's something worth confirming."
-        },
-        {
-          heading: "Edits feed the model — yours and the recipient's",
-          body: "Every time you (or the person you're reaching out to) edits a simulated reply, that edit becomes training signal for both twins. Lemlist's personalization is static — you template once and ship. SyncedIn's twins get more accurate at sounding like you the longer they're running."
-        },
-        {
-          heading: "Free, not $159/seat/month",
-          body: "Lemlist is positioned for sales teams with budget. SyncedIn is free forever for early users — because the asymmetric value of getting twins in front of people NOW outweighs near-term revenue. If you're a founder or operator paying out of pocket, this matters."
-        }
-      ]}
-      faq={[
-        {
-          q: "Is SyncedIn a Lemlist replacement for sales teams?",
-          a: "It can be, but the framing is different. Lemlist is built for high-volume outbound sales sequences. SyncedIn is built for high-leverage one-to-one networking. If you're sending 500 cold emails a day, Lemlist's sequencing is still better. If you're trying to land 5 critical intros a month, SyncedIn's twin-to-twin model wins."
-        },
-        {
-          q: "Can I import my Lemlist contact lists into SyncedIn?",
-          a: "Yes — SyncedIn's BulkReach toolkit accepts the same kinds of contact CSVs Lemlist exports (name, email, LinkedIn URL). Each contact becomes a personalized invite landing page rather than a cold email blast."
-        },
-        {
-          q: "Does SyncedIn send emails like Lemlist does?",
-          a: "Not by default. SyncedIn generates an invite landing page per recipient at syncedin.org/<their-name>. You share that URL however you'd like — DM, email, text, in-person QR. The recipient opens a simulated twin-to-twin conversation, not an inbox."
-        },
-        {
-          q: "How is the personalization different?",
-          a: "Lemlist personalizes via custom variables you define ({{firstName}}, {{company}}, etc.). SyncedIn scrapes the recipient's public footprint (LinkedIn, X, web) and Claude composes the entire opening message from scratch — different angle for every recipient, never a templated mail-merge."
-        },
-        {
-          q: "Why is SyncedIn free if Lemlist isn't?",
-          a: "We're in launch mode and want twins in front of people NOW. Early users are free forever. We'll monetize on the workflow surfaces (premium connectors, advanced agents, team workspaces) once distribution is locked in. Lemlist is a mature SaaS — different stage, different model."
-        }
-      ]}
-    />
-  );
+  return <VsPageShell
+    competitor="lemlist"
+    competitorSlug="lemlist"
+    positioning="an outbound platform with prospecting, AI research, personalized campaigns, and multichannel outreach"
+    ourPitch="A human-reviewed networking twin"
+    theirPitch="An AI-assisted outbound campaign workflow"
+    reviewedAt="2026-11-20"
+    sources={[
+      { label: "lemlist multichannel prospecting", url: "https://www.lemlist.com/product/multichannel-prospecting" },
+      { label: "lemAgent", url: "https://www.lemlist.com/product/lemagent" },
+      { label: "lemlist pricing", url: "https://www.lemlist.com/pricing" },
+    ]}
+    rows={[
+      { feature: "Primary job", syncedin: "Prepare and explore a relevant introduction through twin conversations.", them: "Research prospects and manage outbound campaigns across supported channels.", highlight: true },
+      { feature: "AI assistance", syncedin: "Draft exchanges from goals, background, preferences, and selected examples.", them: "Agents for research, enrichment, messaging, and campaign preparation." },
+      { feature: "What gets shared", syncedin: "A SyncedIn invitation page when a person chooses to share it.", them: "Messages and outreach steps in the campaign you configure." },
+      { feature: "Channels", syncedin: "Its own profiles and conversations. Sharing a link does not create a native campaign integration.", them: "Email and additional channels depending on the current plan, configuration, and add-ons." },
+      { feature: "Recipient control", syncedin: "Inspect and correct a simulated conversation, then choose whether to engage.", them: "Recipients respond or decline through the selected channel. Their experience depends on the sender's campaign." },
+      { feature: "Pricing decision", syncedin: "The current web signup has no paid checkout; no future pricing promise is made here.", them: "Check billing cycle, seats or sending volume, channel features, and any data or messaging add-ons." },
+    ]}
+    whyWeWin={[
+      { heading: "Choose a campaign tool for campaign operations", body: "If you need sequence scheduling, channel coordination, deliverability tools, and campaign management, evaluate lemlist against those needs. A SyncedIn invitation is not a replacement for that operational surface." },
+      { heading: "Use a twin to explore the reason to meet", body: "SyncedIn is useful when there is a plausible overlap but the conversation still needs shape. A twin exchange can draft that exploration. It does not guarantee the recipient's interest or make a proposed next step an accepted agreement." },
+      { heading: "AI personalization is not exclusive to SyncedIn", body: "lemlist now describes research and messaging agents as well as campaign assistance. SyncedIn's distinction is its editable twin conversation and review of the proposed outcome, not a claim that other products only perform static mail merge." },
+      { heading: "Measure a result that fits the job", body: "For an outbound platform, assess the configured workflow, delivery, data quality, and actual recipient responses. For SyncedIn, inspect whether the draft is accurate and whether the proposed introduction is useful. A larger message count alone does not establish relationship quality." },
+    ]}
+    faq={[
+      { q: "Is SyncedIn a complete lemlist replacement?", a: "No like-for-like replacement is claimed. lemlist supports outbound campaign operations. SyncedIn focuses on context-led introductions and twin conversations. Match the product to the work you actually need." },
+      { q: "Does SyncedIn automatically import or sync my lemlist campaigns?", a: "This comparison does not claim a native campaign sync, maintained export compatibility, or a direct integration. Review any contact information and permissions before using it in an invitation." },
+      { q: "Does lemlist only use static templates?", a: "No. Its current product pages describe AI research, enrichment, messaging, and campaign assistance. Features depend on the current offering and account configuration." },
+      { q: "Does a SyncedIn twin send LinkedIn messages for me?", a: "No. A draft or shareable invitation is not authorization to control your LinkedIn account. Review the final message, recipient preferences, and the rules of the channel you use." },
+      { q: "Can you compare prices directly?", a: "Check the current vendor plans and the capacity your task needs. Billing cycle, volume, users, channels, and add-ons can change the total. SyncedIn's current web signup has no paid checkout, but future pricing and equivalent campaign capacity are not promised." },
+    ]}
+  />;
 }

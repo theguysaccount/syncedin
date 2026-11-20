@@ -3,6 +3,8 @@ export const GUIDE_REVIEW_DATE = "2026-11-19";
 export const NETWORKING_GUIDES = [
   {
     slug: "linkedin-connection-request",
+    publishedAt: GUIDE_REVIEW_DATE,
+    reviewedAt: GUIDE_REVIEW_DATE,
     title: "LinkedIn connection request notes",
     description: "Write a specific connection request with practical examples, a clear reason to connect, and a private 200 or 300-character note checker.",
     topic: "Start a conversation",
@@ -11,6 +13,8 @@ export const NETWORKING_GUIDES = [
   },
   {
     slug: "networking-follow-up",
+    publishedAt: GUIDE_REVIEW_DATE,
+    reviewedAt: GUIDE_REVIEW_DATE,
     title: "Networking follow-up messages",
     description: "Follow up after a conference, an introduction, or an unanswered message with useful context, one small next step, and a respectful stopping point.",
     topic: "Continue a conversation",
@@ -19,11 +23,23 @@ export const NETWORKING_GUIDES = [
   },
   {
     slug: "ai-networking",
+    publishedAt: GUIDE_REVIEW_DATE,
+    reviewedAt: GUIDE_REVIEW_DATE,
     title: "AI networking, with you in control",
     description: "Understand digital-twin networking, how it differs from automated outreach, what to review, and where human judgment still matters.",
     topic: "Understand the approach",
     readTime: "6 min read",
     imageAlt: "SyncedIn AI-networking guide: your context, a twin-to-twin draft, and a proposal for human review.",
+  },
+  {
+    slug: "networking-goals",
+    publishedAt: "2026-11-20",
+    reviewedAt: "2026-11-20",
+    title: "Networking goals",
+    description: "Turn a broad networking goal into a specific conversation brief: your purpose, what you can offer, one possible next step, and clear boundaries.",
+    topic: "Choose the purpose",
+    readTime: "6 min read",
+    imageAlt: "SyncedIn networking-goal guide: a specific purpose, something useful to offer, and a next step both people choose.",
   },
 ] as const;
 

@@ -15,6 +15,12 @@ export default function VsLinkedInDmsPage() {
     positioning="a way to contact people through LinkedIn's professional network, subject to connection status and recipient settings"
     ourPitch="A shareable, editable twin conversation"
     theirPitch="A direct message in an existing professional network"
+    reviewedAt="2026-11-19"
+    sources={[
+      { label: "LinkedIn messaging help", url: "https://www.linkedin.com/help/linkedin/answer/a554575" },
+      { label: "LinkedIn invitation help", url: "https://www.linkedin.com/help/linkedin/answer/a563153/personalizing-invitations-to-connect?lang=en" },
+      { label: "LinkedIn automation policy", url: "https://www.linkedin.com/help/linkedin/answer/a1341543" },
+    ]}
     rows={[
       { feature: "Where it lives", syncedin: "A SyncedIn invitation page or conversation.", them: "LinkedIn's own messaging interface.", highlight: true },
       { feature: "What the recipient sees", syncedin: "A simulated conversation they can inspect and correct; not a record of their actual words.", them: "The message you chose to send and the existing thread." },

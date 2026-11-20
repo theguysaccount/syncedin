@@ -1,14 +1,21 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import crypto from "node:crypto";
+import { inspectPublicPage, inspectSitemap, verifyPublicPage } from "./public-page.mjs";
 
 const base = new URL(process.argv[2] || "https://syncedin.org");
 assert.equal(base.protocol, "https:", "Public release verification requires HTTPS.");
 const cards = JSON.parse(fs.readFileSync("verification/social-card-manifest.json", "utf8"));
+const titles = new Set();
 for (const card of cards) {
   const page = await fetch(new URL(card.path, base), { signal: AbortSignal.timeout(20000) });
   assert.equal(page.status, 200, card.path);
+  assert(page.headers.get("content-type")?.includes("text/html"), card.path + " did not return HTML");
+  assert(!/\bnoindex\b|\bnone\b/i.test(page.headers.get("x-robots-tag") || ""), card.path + " is blocked by response headers");
   const html = await page.text();
+  const document = verifyPublicPage(inspectPublicPage(html), card.path);
+  assert(!titles.has(document.title[0]), card.path + " duplicate public title");
+  titles.add(document.title[0]);
   assert(html.includes('property="og:image"'), card.path + " Open Graph metadata missing");
   assert(html.includes('name="twitter:image"'), card.path + " Twitter metadata missing");
   for (const name of ["opengraph-image.png", "twitter-image.png"]) {
@@ -19,6 +26,23 @@ for (const card of cards) {
     const bytes = Buffer.from(await response.arrayBuffer());
     assert.equal(crypto.createHash("sha256").update(bytes).digest("hex"), card.sha256);
   }
+}
+const sitemap = await fetch(new URL("/sitemap.xml", base), { signal: AbortSignal.timeout(20000) });
+assert.equal(sitemap.status, 200);
+assert(sitemap.headers.get("content-type")?.includes("xml"));
+const sitemapXML = await sitemap.text();
+assert(Buffer.byteLength(sitemapXML) <= 50_000_000, "Sitemap exceeds the uncompressed file limit");
+const sitemapRows = inspectSitemap(sitemapXML);
+assert(sitemapRows.length <= 50_000, "Sitemap exceeds the URL limit");
+const sitemapURLs = new Set(sitemapRows.map(row => row.url));
+assert.equal(sitemapURLs.size, sitemapRows.length, "Duplicate canonical sitemap URL");
+for (const card of cards) assert(sitemapURLs.has("https://syncedin.org" + card.path), card.path + " missing from canonical sitemap");
+for (const row of sitemapRows) {
+  const url = new URL(row.url);
+  assert.equal(url.origin, "https://syncedin.org");
+  assert(!url.search && !url.hash, "Sitemap must contain canonical URLs without query or fragment");
+  assert(!/^\/(?:login|dashboard|onboarding|settings|messages|conversations|admin|agent|poll)(?:\/|$)/.test(url.pathname), "Private sitemap route: " + url.pathname);
+  if (row.lastModified) assert(!Number.isNaN(Date.parse(row.lastModified)) && Date.parse(row.lastModified) <= Date.now(), "Invalid or future sitemap date");
 }
 const login = await fetch(new URL("/login", base), { signal: AbortSignal.timeout(20000) });
 assert.equal(login.status, 200);
@@ -55,4 +79,4 @@ const mcp=await fetch(new URL('/api/mcp',base),{method:'POST',headers:{'Content-
 assert.equal(mcp.status,200);
 const wire=await mcp.text(),tools=JSON.parse(wire.startsWith('data:')?wire.trim().slice(5):wire.match(/^data: (.+)$/m)?.[1]||wire);
 assert.deepEqual(tools.result.tools.map(t=>t.name).sort(),['draft_introduction','find_matches','get_my_profile','prepare_signup','signup_status']);
-console.log(`Public release verified at ${base.origin}: ${cards.length} page-specific cards, both social formats, private-route protection, agent resources, and actual MCP tool discovery.`);
+console.log(`Public release verified at ${base.origin}: ${cards.length} unique titles, H1s, canonical pages and share-card pairs; canonical sitemap; private-route protection, agent resources, and actual MCP tool discovery.`);

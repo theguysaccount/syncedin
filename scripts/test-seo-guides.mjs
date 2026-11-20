@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
+import crypto from "node:crypto";
 import vm from "node:vm";
 import ts from "typescript";
 import React from "react";
@@ -24,6 +25,9 @@ const goals = load("lib/networking-goals.ts");
 const productFaq = load("lib/product-faq.ts");
 const cards = JSON.parse(fs.readFileSync("verification/social-card-manifest.json", "utf8"));
 const seo = load("lib/public-seo.ts", { "@/verification/social-card-manifest.json": { default: cards } });
+const indexNow = load("lib/indexnow.ts", { "@/verification/social-card-manifest.json": { default: cards } });
+const productReference = load("lib/product-reference.ts");
+const nextServer = { NextResponse: class extends Response { static json(body, options) { return Response.json(body, options); } } };
 const css = new Proxy({}, { get: (_, name) => String(name) });
 const nextLink = { __esModule: true, default: ({ href, children, ...props }) => React.createElement("a", { href, ...props }, children) };
 const wordmark = load("app/Wordmark.tsx", { "react/jsx-runtime": jsx, "next/link": nextLink });
@@ -299,6 +303,117 @@ test("shared entity markup remains factual and does not advertise a retired publ
   assert.equal(organization.foundingDate, undefined, "Do not publish an unsupported founding year");
   assert(html.includes('data-clarity-mask="True"'));
   assert(!JSON.stringify(schemas).includes("before either human spends a minute"));
+});
+
+test("existing plain-text references share reviewed product facts without invented funding, pricing or access claims", async () => {
+  const expected = JSON.parse(fs.readFileSync("verification/product-reference-manifest.json", "utf8"));
+  for (const [path, constant] of [["llms.txt", "PRODUCT_REFERENCE_SHORT"], ["llms-full.txt", "PRODUCT_REFERENCE_FULL"]]) {
+    const route = load(`app/${path}/route.ts`, { "next/server": nextServer, "@/lib/product-reference": productReference });
+    const response = route.GET();
+    assert.equal(response.status, 200);
+    assert(response.headers.get("content-type").includes("text/plain"));
+    const text = await response.text();
+    assert.equal(text, productReference[constant]);
+    const reference = expected.find(item => item.path === "/" + path);
+    assert.equal(crypto.createHash("sha256").update(text).digest("hex"), reference.sha256);
+    assert.equal(Buffer.byteLength(text), reference.bytes);
+    for (const claim of ["$20M", "Founded: 2025", "30-60 seconds", "100% replicable", "unlimited outbound", "Stripe Connect", "Next.js 14", "adopted by every major"]) assert(!text.includes(claim), claim);
+    assert(text.includes("do not retrain the underlying model"));
+    assert(text.includes("simulated recipient-side"));
+    assert(text.includes("Saving a phone number is separate"));
+    for (const path of ["/about", "/faq", "/guides/warm-introduction", "/privacy", "/join.md"]) assert(text.includes("https://syncedin.org" + path));
+  }
+  assert(productReference.PRODUCT_REFERENCE_FULL.includes("24-hour lifetime"));
+  const fallback = fs.readFileSync("public/llms.txt", "utf8");
+  assert.equal(fallback, productReference.PRODUCT_REFERENCE_SHORT, "Static fallback and app route must never disagree");
+  assert(fallback.includes("not a search-engine ranking requirement"));
+  assert(!/training signal|free forever|every cold outreach|Careers:/.test(fallback));
+});
+
+test("IndexNow accepts only a bounded deduplicated batch of exact reviewed public canonical URLs", () => {
+  const origin = "https://syncedin.org";
+  assert.deepEqual(indexNow.canonicalIndexNowUrls([origin, origin + "/", origin + "/guides", origin + "/guides"]), [origin + "/", origin + "/guides"]);
+  for (const card of cards) assert.deepEqual(indexNow.canonicalIndexNowUrls([origin + card.path]), [origin + card.path]);
+  for (const input of [null, {}, [], "not-an-array", Array(101).fill(origin + "/guides"), [42]]) assert.equal(indexNow.canonicalIndexNowUrls(input), null);
+  for (const path of ["/login", "/dashboard", "/careers", "/poll/public-123", "/u/someone", "/api/indexnow", "/conversations/private", "/unknown", "/guides/", "/guides?email=someone@example.com", "/guides#part", "/guides/../faq", "/%67uides"]) assert.equal(indexNow.canonicalIndexNowUrls([origin + path]), null, path);
+  for (const url of ["http://syncedin.org/guides", "https://www.syncedin.org/guides", "https://syncedin.org.evil.example/guides", "https://name:password@syncedin.org/guides", "https://syncedin.org:443/guides", "https://syncedin.org\\@evil.example/guides", " https://syncedin.org/guides", "https://syncedin.org/\nguides"]) assert.equal(indexNow.canonicalIndexNowUrls([url]), null, url);
+  assert.equal(indexNow.canonicalIndexNowUrls([origin + "/guides", origin + "/login"]), null, "Reject the entire mixed batch rather than silently submit part");
+  const payload = indexNow.indexNowPayload([origin + "/guides"]);
+  assert.equal(payload.host, "syncedin.org");
+  assert.equal(payload.keyLocation, `${origin}/${payload.key}.txt`);
+  assert.deepEqual(payload.urlList, [origin + "/guides"]);
+});
+
+function indexNowRoute(getUser) {
+  return load("app/api/indexnow/route.ts", {
+    "next/server": nextServer,
+    "@/lib/indexnow": indexNow,
+    "@/lib/supabase/server": { createClient: async () => ({ auth: { getUser } }) },
+  });
+}
+const notificationRequest = (body, origin = "https://syncedin.org") => new Request("https://syncedin.org/api/indexnow", { method: "POST", headers: { "content-type": "application/json", origin }, body: typeof body === "string" ? body : JSON.stringify(body) });
+const verifiedOwner = { email: "jacksonjezio@gmail.com", email_confirmed_at: "2026-01-01T00:00:00Z" };
+
+test("IndexNow GET never queries data or submits URLs, and POST requires the verified existing owner", async () => {
+  let authCalls = 0;
+  let user = null;
+  const route = indexNowRoute(async () => { authCalls++; return { data: { user } }; });
+  const response = route.GET(new Request("https://syncedin.org/api/indexnow?url=https://syncedin.org/guides"));
+  assert.equal(response.status, 405);
+  assert.equal(response.headers.get("allow"), "POST");
+  assert.equal(authCalls, 0);
+  assert.equal((await route.POST(notificationRequest({ urls: [] }))).status, 401);
+  user = { ...verifiedOwner, email: "not-the-owner@example.invalid" };
+  assert.equal((await route.POST(notificationRequest({ urls: [] }))).status, 403);
+  user = { email: verifiedOwner.email };
+  assert.equal((await route.POST(notificationRequest({ urls: [] }))).status, 403);
+  user = verifiedOwner;
+  assert.equal((await route.POST(notificationRequest({ urls: [] }, "https://other.example"))).status, 403);
+  for (const body of ["not-json", "null", "[]", "{}", { urls: ["https://syncedin.org/login"] }]) assert.equal((await route.POST(notificationRequest(body))).status, 400);
+  assert.equal((await route.POST(notificationRequest(" ".repeat(32001)))).status, 413);
+  const source = fs.readFileSync("app/api/indexnow/route.ts", "utf8");
+  assert(!/createServiceClient|\.from\(|buildAllUrls|Promise\.all/.test(source), "Notification must not enumerate customer profiles/polls or broadcast repeatedly");
+});
+
+test("IndexNow makes one bounded notification and distinguishes received from pending key validation", async () => {
+  const route = indexNowRoute(async () => ({ data: { user: verifiedOwner } }));
+  const previous = globalThis.fetch;
+  const calls = [];
+  try {
+    for (const status of [200, 202]) {
+      globalThis.fetch = async (url, options) => { calls.push({ url, options }); return new Response("", { status }); };
+      const response = await route.POST(notificationRequest({ urls: ["https://syncedin.org/guides", "https://syncedin.org/guides"] }));
+      assert.equal(response.status, 200);
+      assert.equal(response.headers.get("cache-control"), "no-store");
+      assert.equal(response.headers.get("x-robots-tag"), "noindex, nofollow");
+      assert.deepEqual(await response.json(), { notificationStatus: status === 202 ? "key_validation_pending" : "received", notifiedURLs: 1, indexing: "not_verified" });
+      const call = calls.at(-1);
+      assert.equal(call.url, indexNow.INDEXNOW_ENDPOINT);
+      assert.equal(call.options.redirect, "error");
+      assert(call.options.signal instanceof AbortSignal);
+      assert.deepEqual(JSON.parse(call.options.body).urlList, ["https://syncedin.org/guides"]);
+    }
+    assert.equal(calls.length, 2, "Exactly one upstream request per approved batch");
+    globalThis.fetch = async () => new Response("private provider diagnostics", { status: 429 });
+    const rejected = await route.POST(notificationRequest({ urls: ["https://syncedin.org/guides"] }));
+    assert.equal(rejected.status, 502);
+    assert.deepEqual(await rejected.json(), { error: "notification_not_confirmed", upstreamStatus: 429 });
+    let attempts = 0;
+    globalThis.fetch = async () => { attempts++; throw new Error("private failure details"); };
+    const uncertain = await route.POST(notificationRequest({ urls: ["https://syncedin.org/guides"] }));
+    assert.equal(uncertain.status, 502);
+    assert.deepEqual(await uncertain.json(), { error: "notification_not_confirmed" });
+    assert.equal(attempts, 1, "Never retry an uncertain submission automatically");
+  } finally {
+    globalThis.fetch = previous;
+  }
+});
+
+test("IndexNow authentication failures remain closed without exposing service details", async () => {
+  const route = indexNowRoute(async () => { throw new Error("private authentication diagnostics"); });
+  const response = await route.POST(notificationRequest({ urls: ["https://syncedin.org/guides"] }));
+  assert.equal(response.status, 503);
+  assert.deepEqual(await response.json(), { error: "authentication_unavailable" });
 });
 
 test("new guide routes have unique dimensioned artwork and explicit canonical sitemap membership", () => {

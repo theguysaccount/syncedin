@@ -55,6 +55,26 @@ assert.equal(privacy.status, 200);
 const privacyHtml = await privacy.text();
 assert(privacyHtml.includes("Claw Messenger"));
 assert(privacyHtml.includes("we do not promise zero retention"));
+// Verify this release's reference before touching the legacy notification
+// path: older deployments used a mutating GET there.
+for (const expected of JSON.parse(fs.readFileSync("verification/product-reference-manifest.json", "utf8"))) {
+  const path = expected.path;
+  const reference = await fetch(new URL(path, base), { signal: AbortSignal.timeout(20000) });
+  assert.equal(reference.status, 200);
+  assert(reference.headers.get("content-type")?.includes("text/plain"));
+  const text = await reference.text();
+  assert.equal(crypto.createHash("sha256").update(text).digest("hex"), expected.sha256, path + " published reference drifted");
+  assert.equal(Buffer.byteLength(text), expected.bytes);
+  assert(text.includes("This reference describes the current web workflow"), path + " still serves the old reference");
+  assert(text.includes("do not retrain the underlying model"));
+  assert(!/\$20M|Founded:\s*2025|unlimited outbound|100% replicable/.test(text), path + " unsupported product claims");
+}
+const notificationRead = await fetch(new URL("/api/indexnow?url=https%3A%2F%2Fsyncedin.org%2Fguides", base), { signal: AbortSignal.timeout(20000) });
+assert.equal(notificationRead.status, 405, "Public reads must not submit IndexNow notifications");
+assert.equal(notificationRead.headers.get("allow"), "POST");
+assert(notificationRead.headers.get("cache-control")?.includes("no-store"));
+const notificationWrite = await fetch(new URL("/api/indexnow", base), { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ urls: [] }), signal: AbortSignal.timeout(20000) });
+assert.equal(notificationWrite.status, 401, "Anonymous users must not submit IndexNow notifications");
 const safety = await fetch(new URL("/admin/safety", base), { signal: AbortSignal.timeout(20000) });
 const safetyHtml = await safety.text();
 assert(safety.status === 404 || (safety.status === 200 && safetyHtml.includes("auth-screen")), "Anonymous users cannot enter the founder queue.");
@@ -79,4 +99,4 @@ const mcp=await fetch(new URL('/api/mcp',base),{method:'POST',headers:{'Content-
 assert.equal(mcp.status,200);
 const wire=await mcp.text(),tools=JSON.parse(wire.startsWith('data:')?wire.trim().slice(5):wire.match(/^data: (.+)$/m)?.[1]||wire);
 assert.deepEqual(tools.result.tools.map(t=>t.name).sort(),['draft_introduction','find_matches','get_my_profile','prepare_signup','signup_status']);
-console.log(`Public release verified at ${base.origin}: ${cards.length} unique titles, H1s, canonical pages and share-card pairs; canonical sitemap; private-route protection, agent resources, and actual MCP tool discovery.`);
+console.log(`Public release verified at ${base.origin}: ${cards.length} unique titles, H1s, canonical pages and share-card pairs; canonical sitemap; reviewed references; non-mutating and owner-only IndexNow; private-route protection, agent resources, and actual MCP tool discovery.`);

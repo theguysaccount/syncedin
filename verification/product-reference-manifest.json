@@ -1,0 +1,12 @@
+[
+  {
+    "path": "/llms.txt",
+    "sha256": "997add5174f4aecdaaf7b9798d4b203403a1a0c0c3d85969d2644a328abc18a0",
+    "bytes": 3609
+  },
+  {
+    "path": "/llms-full.txt",
+    "sha256": "757e828a7a0a32f3d5147215748612dade51f39263aa4b3a08a68a4578935cac",
+    "bytes": 6739
+  }
+]

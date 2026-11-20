@@ -18,9 +18,9 @@ export function withPublicSEO(path: string, original: Metadata): Metadata {
   };
 }
 
-/** Keep the approved homepage animation for both homepage entry variants. */
-export function withHomeVariantSEO(path: string, original: Metadata): Metadata {
-  const url = SITE_URL + path;
+/** The chat entry is a homepage experiment, not a second canonical homepage. */
+export function withHomeVariantSEO(original: Metadata): Metadata {
+  const url = SITE_URL + "/";
   const title = typeof original.title === "string" ? original.title + " · SyncedIn" : "SyncedIn";
   const image = { url: SITE_URL + "/social/syncedin-preview.gif", width: 600, height: 338, alt: "Your twin reaching the entire network at once", type: "image/gif" };
   return { ...original, alternates: { ...original.alternates, canonical: url },

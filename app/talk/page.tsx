@@ -1,5 +1,5 @@
 import { withHomeVariantSEO } from '@/lib/public-seo';
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import { Wordmark } from "../Wordmark";
 import { TalkChat } from "./TalkChat";
@@ -10,9 +10,8 @@ import { createServiceClient } from "@/lib/supabase/server";
  * /talk — chat-landing variant. The "talking to the master model of
  * the platform" interface Jack greenlit for the A/B test against /.
  *
- * Public, no auth. Middleware routes 50% of new visitors here via
- * cookie split. Microsoft Clarity captures the conversion delta vs
- * the handle-picker hero at /.
+ * Public homepage experiment. Keep its canonical tied to the original
+ * entry, and measure comparable outcomes before choosing a winner.
  *
  * Architecture:
  *  - Server: renders the shell + intro
@@ -20,10 +19,11 @@ import { createServiceClient } from "@/lib/supabase/server";
  *  - API: Claude Haiku w/ tool access (search_users, scrape_handle,
  *    match_preview, start_signup)
  */
-export const metadata: Metadata = withHomeVariantSEO('/talk', {
-  title: "Chat with SyncedIn — find who you should talk to",
+export const viewport: Viewport = { width: "device-width", initialScale: 1, maximumScale: 5, userScalable: true };
+export const metadata: Metadata = withHomeVariantSEO({
+  title: "Chat with SyncedIn: explore a relevant introduction",
   description:
-    "Talk to the SyncedIn master AI. See who's on the platform, get matched live, sign up only when you're ready."
+    "Ask about SyncedIn and explore profiles through the chat entry. Review AI-generated suggestions and choose whether to continue into signup."
 });
 
 export default async function TalkLandingPage() {

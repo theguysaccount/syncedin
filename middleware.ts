@@ -79,30 +79,30 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // === A/B split: handle-picker hero (/) vs chat-landing (/talk) ===
-  // Jack: 'split test two different landing pages — one interface
-  // could be talking to the master model of the platform.' New unauthed
-  // visitors get a sticky cookie that assigns them to A (current /) or
-  // B (/talk). Variant B redirects from / → /talk on first paint. The
-  // assignment is sticky (30 days) so repeat visits don't thrash.
-  // Microsoft Clarity (already installed) gives us the conversion
-  // delta within 24-48h.
-  if (!user && path === "/") {
+  // Both homepage experiences stay available. Set the preference on
+  // the response actually returned, preserving refreshed auth cookies.
+  if (!user && path === "/" && (request.method === "GET" || request.method === "HEAD")) {
     const AB_COOKIE = "syncedin_landing_ab";
     let variant = request.cookies.get(AB_COOKIE)?.value;
-    if (variant !== "a" && variant !== "b") {
+    const needsAssignment = variant !== "a" && variant !== "b";
+    if (needsAssignment) {
       variant = Math.random() < 0.5 ? "a" : "b";
-      response.cookies.set(AB_COOKIE, variant, {
+    }
+    if (variant === "b") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/talk";
+      const redirect = NextResponse.redirect(url, 302);
+      response.cookies.getAll().forEach(cookie => redirect.cookies.set(cookie));
+      response = redirect;
+    }
+    if (needsAssignment) {
+      response.cookies.set(AB_COOKIE, variant!, {
         path: "/",
         sameSite: "lax",
         maxAge: 60 * 60 * 24 * 30
       });
     }
-    if (variant === "b") {
-      const url = request.nextUrl.clone();
-      url.pathname = "/talk";
-      return NextResponse.redirect(url);
-    }
+    response.headers.set("Cache-Control", "private, no-store");
   }
 
   // === Last-active stamp ===

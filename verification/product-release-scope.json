@@ -1,6 +1,6 @@
 {
-  "release": "2026-11-20 five-hour SEO sprint, homepage experiment signals",
-  "reason": "Preserve both public homepage experiences and account behavior while fixing response-cookie stickiness, temporary redirects and canonical sitemap signals; regression-test framework cookies, method handling and public media.",
+  "release": "2026-11-20 five-hour SEO sprint, privacy-conscious measurement",
+  "reason": "Reduce existing funnel collection to reviewed categories, exclude QA and opt-out traffic, mask public chat transcripts, and preserve product controls without new trackers.",
   "files": {
     "app/api/bulk-create-invites/route.ts": "436eef7bd129bb9b4198e7e824c2d015e45ca803cb542c44e595aa479f7a42b3",
     "app/[slug]/opengraph-image.tsx": "d15af9c1c07ef8a3ffe3a919852a3bf8e1a174f9bf6631b07580a104cf379acd",
@@ -170,7 +170,7 @@
     "app/api/summarize-conversation/route.ts": "125badd973783b1191fd4c19a5865251353940e0ae5dd48ea584a508ae1e2b95",
     "app/api/sync-override/route.ts": "aa523a6f3f709ff667430629b0d0c64b1b775a4284e9a2c8d9e07f0a6659a4f9",
     "app/api/sync-score-prompt/route.ts": "8c979d62ca6fe622c55657a6fa1016a6a8dc7a6a0030b0ef1cee4f522a36d99c",
-    "app/api/track/route.ts": "14de359b7392fe152bf9db312d2e68eba102be63a48f349a1690fbbceb8b22d3",
+    "app/api/track/route.ts": "9a4d7c3e05c85852bd52b04a93d32d8cdb4de70232b2310ee94ca3bbe838639f",
     "app/api/twin-broadcast-message/route.ts": "4baaf06e78eaff601b0c6e7dfa3de65807e11f9d8b68540c8fd8c122cea8b698",
     "app/api/twin-files/route.ts": "e69e7e01049146db80104b2d40d23cc57ac52dfa661e9faccec0e9cfb672daaa",
     "app/api/twin-suggest-connections/route.ts": "a4e66d21c416b640d63343766d60180d98d092b7ac274d491f2e857e94a4f15c",
@@ -214,7 +214,7 @@
     "app/vs/VsPageShell.tsx": "2cb38e8800ed96da5437596ff2ac5a66e5ce02a5f18ac7601d3eee88dfd96967",
     "app/vs/linkedin-dms/page.tsx": "5ddbb63b0b79edb23847fbe579d86be643849826484c0f707b0860d65ab8bfff",
     "lib/networking-guides.ts": "146ec163f22547b13d7da96ff0e0e2bfe1f3a07fbec30f81aa31a6e00587956c",
-    "scripts/test-seo-guides.mjs": "b1f1d0cae94c0dbb1b8808f599a7754c2418c2358790c1ebe50a5c6b0affb7e0",
+    "scripts/test-seo-guides.mjs": "e6f465840aa9926bec823e1901834ea930fa02e7b86f29ee36116256e45e8b88",
     "scripts/generate-guide-social-cards.mjs": "305abcb1e550a63fa25363600a2bd2e46c6db2558e6431e230b60b09b668fd59",
     "app/guides/ConnectionNoteEditor.tsx": "f0c5f915cbd237422f33369fa41d06e41c640bc62a48ac5cd03187f2c4d36ebd",
     "app/guides/GuideLayout.tsx": "eb019f4ad287569ca282911f95d60eec4e692342130c6f09e19091f1637a8f74",
@@ -254,7 +254,7 @@
     "app/vs/linkedin-dms/opengraph-image.png": "6f55efc025b003e4b8fb99c83e8f30b4e420582337861ef851b13466990a120f",
     "app/vs/linkedin-dms/twitter-image.alt.txt": "e1fd7b700751391b0f7c30d2ee9c0f944a80f3ea19066b01800fc5168c9e0999",
     "app/vs/linkedin-dms/twitter-image.png": "6f55efc025b003e4b8fb99c83e8f30b4e420582337861ef851b13466990a120f",
-    "docs/SEO-SPRINT.md": "92269aa06487fdc6d06f9dd5825b59982e7cd1a7fcc59f53e52449e7e68853d3",
+    "docs/SEO-SPRINT.md": "3e5db0c4fd60669c6b86055df26ec6f610498e98f67dc806ee252227b6e3abcb",
     "lib/public-seo.ts": "cb648a5dd6d29da1cf4583a62e570ff9374df1129eb204df886d07ad53bee458",
     "app/about/opengraph-image.alt.txt": "74a818c320a2732a3eb6df9a88884a846cf57beeeb2006786c63eb406c235dc6",
     "app/about/opengraph-image.png": "1c4b9df74fb8e5a57ac5b596527d009c29e286b0bb8bfeae926c5accef14a963",
@@ -337,7 +337,10 @@
     "app/page.tsx": "4aebe568f444b6fda13d9f9b4b6804167e94aad2c9ebb695c4668e593d8710e2",
     "app/LandingHandleHero.tsx": "01d257e578b48c9127ef77a03163711f941a1b43fab366a0d71a62fd9ffc9894",
     "middleware.ts": "2018d03540541bfc2c66b339144fd596741c649030c98f93bc36c74a390684f9",
-    "app/talk/page.tsx": "43c8e5933d5128cb649fb4ef540d82fd44e89bdb91fcffc34008d15737698eac"
+    "app/talk/page.tsx": "43c8e5933d5128cb649fb4ef540d82fd44e89bdb91fcffc34008d15737698eac",
+    "lib/funnel-events.ts": "162f2d6a9a666aa60edcb85da84151e6c67d7017be17b27cdb5a70e2b9165ab9",
+    "lib/track.ts": "ffa8543eae55422a55adbdd0f393a00448f4a6884193f9c5f39b603f90740ab1",
+    "app/talk/TalkChat.tsx": "d0156c9de178b83b008ab3f465c51b5e4581f95f7c54e57609440add3655e0c0"
   },
   "components": {
     "app/admin/reports/page.tsx": "fa3ff87dcdce75f3fed381f4f5f80835a89ce21e676ae126f59b046440dbd0b1",
@@ -536,6 +539,10 @@
     "app/page.tsx",
     "app/LandingHandleHero.tsx",
     "middleware.ts",
-    "app/talk/page.tsx"
+    "app/talk/page.tsx",
+    "lib/funnel-events.ts",
+    "lib/track.ts",
+    "app/api/track/route.ts",
+    "app/talk/TalkChat.tsx"
   ]
 }

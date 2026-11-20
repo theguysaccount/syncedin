@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
+import { funnelCollectionAllowed, sanitizeFunnelEvent } from "@/lib/funnel-events";
 
 /**
  * Funnel event sink. Fire-and-forget beacons from the front doors land
@@ -10,40 +11,37 @@ import { createClient, createServiceClient } from "@/lib/supabase/server";
  */
 export const dynamic = "force-dynamic";
 
-const ALLOWED = new Set([
-  "view",
-  "prompt_copied",
-  "decode_started",
-  "decode_done",
-  "decode_failed",
-  "claim_clicked",
-  "share_clicked",
-  "generate_started",
-  "generate_done",
-  "people_chip_clicked",
-  "ghost_prefill_used",
-  "win_published"
-]);
+const MAX_BYTES = 8192;
+
+async function readPayload(req: Request): Promise<unknown> {
+  if (Number(req.headers.get("content-length")) > MAX_BYTES || !req.body) return null;
+  const reader = req.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let bytes = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      bytes += value.byteLength;
+      if (bytes > MAX_BYTES) {
+        await reader.cancel();
+        return null;
+      }
+      chunks.push(value);
+    }
+    return JSON.parse(Buffer.concat(chunks).toString("utf8"));
+  } finally {
+    reader.releaseLock();
+  }
+}
 
 export async function POST(req: Request) {
   try {
-    const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
-    const event = String(body.event ?? "").slice(0, 64);
-    if (!ALLOWED.has(event)) return new NextResponse(null, { status: 204 });
-
-    const path = String(body.path ?? "").slice(0, 200) || null;
-    const anon = String(body.anon ?? "").slice(0, 64) || null;
-
-    let meta: unknown = null;
-    if (body.meta && typeof body.meta === "object") {
-      // Cap stored meta at 2KB; if truncation breaks the JSON, drop it.
-      const s = JSON.stringify(body.meta).slice(0, 2000);
-      try {
-        meta = JSON.parse(s);
-      } catch {
-        meta = null;
-      }
-    }
+    if (!funnelCollectionAllowed(req.url, { doNotTrack: req.headers.get("dnt"), globalPrivacyControl: req.headers.get("sec-gpc") === "1" })) return new NextResponse(null, { status: 204 });
+    const origin = req.headers.get("origin");
+    if ((origin && origin !== "https://syncedin.org") || req.headers.get("sec-fetch-site") === "cross-site") return new NextResponse(null, { status: 204 });
+    const safe = sanitizeFunnelEvent(await readPayload(req));
+    if (!safe) return new NextResponse(null, { status: 204 });
 
     let userId: string | null = null;
     try {
@@ -57,11 +55,13 @@ export async function POST(req: Request) {
     }
 
     const service = createServiceClient();
+    if (userId) {
+      const { data, error } = await service.from("profiles").select("is_test_persona").eq("id", userId).maybeSingle();
+      if (error || !data || data.is_test_persona === true) return new NextResponse(null, { status: 204 });
+    }
+    if (!userId && ["ghost_prefill_used", "win_published"].includes(safe.event)) return new NextResponse(null, { status: 204 });
     await service.from("funnel_events").insert({
-      event,
-      path,
-      meta,
-      anon_id: anon,
+      ...safe,
       user_id: userId
     });
   } catch {

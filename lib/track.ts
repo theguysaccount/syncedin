@@ -1,32 +1,38 @@
+import { funnelCollectionAllowed, sanitizeFunnelEvent, validFunnelId } from "@/lib/funnel-events";
+
 /**
  * Fire-and-forget funnel beacon. Never throws, never blocks UI. Uses
  * sendBeacon when available so events survive page navigations (claim
  * clicks that leave the page). The anonymous id is a random
  * localStorage token so a funnel can be stitched across steps without
- * an account. It is not a fingerprint and carries no personal data.
- *
- * Server side: /api/track silently no-ops until the 0003 migration
- * runs, so calling this is always safe.
+ * an account. It is pseudonymous analytics, not anonymous proof.
+ * Only reviewed categories and bounded counts leave this helper.
  */
 export function track(event: string, meta?: Record<string, unknown>) {
   try {
     if (typeof window === "undefined") return;
+    if (!funnelCollectionAllowed(window.location.href, {
+      doNotTrack: navigator.doNotTrack,
+      globalPrivacyControl: (navigator as Navigator & { globalPrivacyControl?: boolean }).globalPrivacyControl,
+      automated: navigator.webdriver
+    })) return;
+    const safe = sanitizeFunnelEvent({ event, path: window.location.pathname, meta });
+    if (!safe) return;
     let anon = "";
     try {
       anon = localStorage.getItem("syncedin-anon-id") || "";
-      if (!anon) {
-        anon =
-          Math.random().toString(36).slice(2) + Date.now().toString(36);
+      if (!validFunnelId(anon)) {
+        anon = crypto.randomUUID();
         localStorage.setItem("syncedin-anon-id", anon);
       }
     } catch {
       /* storage blocked: events still send, just unstitched */
     }
     const payload = JSON.stringify({
-      event,
-      path: window.location.pathname,
-      anon,
-      meta
+      event: safe.event,
+      path: safe.path,
+      anon: validFunnelId(anon) ? anon : "",
+      meta: safe.meta
     });
     if (navigator.sendBeacon) {
       navigator.sendBeacon(

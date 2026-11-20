@@ -31,6 +31,7 @@ const productReference = load("lib/product-reference.ts");
 const profileCopy = load("lib/profile-preview-copy.ts");
 const profileResult = load("lib/profile-preview-result.ts");
 const launchArticle = load("lib/launch-article.ts");
+const funnelEvents = load("lib/funnel-events.ts");
 const nextServer = { NextResponse: class extends Response { static json(body, options) { return Response.json(body, options); } } };
 const nextRuntime = createRequire(import.meta.url)("next/server");
 const css = new Proxy({}, { get: (_, name) => String(name) });
@@ -87,6 +88,87 @@ function functionBody(file, name) {
   assert(result, name + " function missing");
   return result;
 }
+
+function trackRouteFixture({ user = null, profile = { is_test_persona: false }, profileError = null, insertError = false } = {}) {
+  const observed = { auth: 0, profiles: 0, inserts: [] };
+  const service = { from: table => {
+    if (table === "funnel_events") return { insert: async row => { observed.inserts.push(row); if (insertError) throw new Error("private details"); } };
+    assert.equal(table, "profiles"); observed.profiles++;
+    const query = { select: field => { assert.equal(field, "is_test_persona"); return query; }, eq: (field, id) => { assert.equal(field, "id"); assert.equal(id, user.id); return query; }, maybeSingle: async () => ({ data: profile, error: profileError }) };
+    return query;
+  } };
+  const route = load("app/api/track/route.ts", {
+    "next/server": nextServer, "@/lib/funnel-events": funnelEvents,
+    "@/lib/supabase/server": { createClient: async () => ({ auth: { getUser: async () => { observed.auth++; return { data: { user } }; } } }), createServiceClient: () => service }
+  });
+  return { route, observed };
+}
+
+test("funnel events keep only bounded categories and remove names, context and personalized paths", () => {
+  const result = funnelEvents.sanitizeFunnelEvent({ event: "claim_clicked", path: "/fictional-jane", anon: "qa@example.invalid", meta: { door: "invite-lockin", needs: 2, name: "Fictional Jane", summary: "private draft", email: "qa@example.invalid", chars: -1, people: Infinity } });
+  assert.deepEqual(result, { event: "claim_clicked", path: "/[invite]", anon_id: null, meta: { door: "invite-lockin", needs: 2 } });
+  assert.deepEqual(funnelEvents.sanitizeFunnelEvent({ event: "ghost_prefill_used", path: "/ghosts", meta: { name: "Fictional Jane" } }), { event: "ghost_prefill_used", path: "/ghosts", anon_id: null, meta: null });
+  assert.deepEqual(funnelEvents.sanitizeFunnelEvent({ event: "win_published", path: "/messages", meta: { anonymize: true, text: "private outcome" } }).meta, { anonymize: true });
+  for (const input of [null, [], { event: "unknown", path: "/" }, { event: "view", path: "/messages" }, { event: "view", path: "/jane" }, { event: "view", path: "/?email=private" }]) assert.equal(funnelEvents.sanitizeFunnelEvent(input), null);
+  for (const path of ["/", "/talk", "/ai-knows-me", "/generate-free-portfolio", "/wins"]) assert(funnelEvents.sanitizeFunnelEvent({ event: "view", path }));
+  assert(funnelEvents.validFunnelId("123e4567-e89b-12d3-a456-426614174000"));
+  assert(funnelEvents.validFunnelId("abcde12345fghij67890"));
+  assert(!funnelEvents.validFunnelId("email@example.invalid"));
+});
+
+test("funnel collection excludes local, preview, QA, automation and privacy opt-outs before creating identifiers", async () => {
+  for (const [url, privacy] of [["http://localhost:3016/", {}], ["https://preview.vercel.app/", {}], ["https://syncedin.org/?qa=1", {}], ["https://syncedin.org/?preview=1", {}], ["https://syncedin.org/", { doNotTrack: "1" }], ["https://syncedin.org/", { globalPrivacyControl: true }], ["https://syncedin.org/", { automated: true }]]) assert.equal(funnelEvents.funnelCollectionAllowed(url, privacy), false);
+  assert(funnelEvents.funnelCollectionAllowed("https://syncedin.org/?utm_source=editorial"));
+  const descriptors = Object.fromEntries(["window", "navigator", "localStorage", "crypto"].map(key => [key, Object.getOwnPropertyDescriptor(globalThis, key)]));
+  const sent = []; let storageReads = 0; let storageWrites = 0; let stored = "abcde12345fghij67890";
+  try {
+    const location = { href: "http://localhost:3016/", pathname: "/" };
+    const navigator = { doNotTrack: null, webdriver: false, sendBeacon: (_url, blob) => { sent.push(blob); return true; } };
+    Object.defineProperty(globalThis, "window", { value: { location }, configurable: true });
+    Object.defineProperty(globalThis, "navigator", { value: navigator, configurable: true });
+    Object.defineProperty(globalThis, "localStorage", { value: { getItem: () => { storageReads++; return stored; }, setItem: () => { storageWrites++; } }, configurable: true });
+    const client = load("lib/track.ts", { "@/lib/funnel-events": funnelEvents });
+    client.track("view"); assert.equal(storageReads, 0); assert.equal(sent.length, 0);
+    location.href = "https://syncedin.org/"; navigator.doNotTrack = "1"; client.track("view"); assert.equal(storageReads, 0);
+    navigator.doNotTrack = null; navigator.globalPrivacyControl = true; client.track("view"); assert.equal(storageReads, 0);
+    navigator.globalPrivacyControl = false; location.pathname = "/private-profile"; client.track("view"); assert.equal(storageReads, 0);
+    location.pathname = "/"; client.track("view", { door: "landing", email: "qa@example.invalid", name: "Fictional Jane" });
+    assert.equal(sent.length, 1); assert.equal(storageWrites, 0);
+    assert.deepEqual(JSON.parse(await sent[0].text()), { event: "view", path: "/", anon: "abcde12345fghij67890", meta: { door: "landing" } });
+    stored = "private@example.invalid";
+    Object.defineProperty(globalThis, "crypto", { value: { randomUUID: () => { throw new Error("Unavailable"); } }, configurable: true });
+    client.track("view");
+    assert.equal(JSON.parse(await sent[1].text()).anon, "", "A failed UUID generator must not transmit invalid stored text");
+  } finally {
+    for (const [key, descriptor] of Object.entries(descriptors)) { if (descriptor) Object.defineProperty(globalThis, key, descriptor); else delete globalThis[key]; }
+  }
+});
+
+test("funnel sink sanitizes cached-client input, ignores QA accounts and preserves nonblocking responses", async () => {
+  const payload = { event: "claim_clicked", path: "/fictional-jane", anon: "123e4567-e89b-12d3-a456-426614174000", meta: { door: "invite-lockin", name: "Fictional Jane", needs: 1 } };
+  const request = () => new Request("https://syncedin.org/api/track", { method: "POST", headers: { origin: "https://syncedin.org" }, body: JSON.stringify(payload) });
+  const normal = trackRouteFixture();
+  assert.equal((await normal.route.POST(request())).status, 204);
+  assert.deepEqual(normal.observed.inserts, [{ event: "claim_clicked", path: "/[invite]", anon_id: payload.anon, meta: { door: "invite-lockin", needs: 1 }, user_id: null }]);
+  for (const options of [{ profile: { is_test_persona: true } }, { profile: null }, { profileError: { message: "private database detail" } }]) {
+    const fixture = trackRouteFixture({ user: { id: "qa-id" }, ...options });
+    const response = await fixture.route.POST(request()); assert.equal(response.status, 204); assert.equal(await response.text(), ""); assert.equal(fixture.observed.inserts.length, 0);
+  }
+  const member = trackRouteFixture({ user: { id: "member-id" } });
+  assert.equal((await member.route.POST(request())).status, 204); assert.equal(member.observed.inserts[0].user_id, "member-id");
+  const failed = trackRouteFixture({ insertError: true }); assert.equal((await failed.route.POST(request())).status, 204);
+});
+
+test("funnel sink ignores cross-origin, opt-out, nonproduction and oversized streamed requests without account lookup", async () => {
+  const fixture = trackRouteFixture();
+  const body = JSON.stringify({ event: "view", path: "/" });
+  for (const [url, headers, text] of [["https://syncedin.org/api/track", { origin: "https://other.invalid" }, body], ["https://syncedin.org/api/track", { "sec-fetch-site": "cross-site" }, body], ["https://syncedin.org/api/track", { dnt: "1" }, body], ["https://syncedin.org/api/track", { "sec-gpc": "1" }, body], ["http://localhost:3016/api/track", {}, body], ["https://preview.vercel.app/api/track", {}, body], ["https://syncedin.org/api/track", {}, "not json"], ["https://syncedin.org/api/track", { "content-length": "9000" }, body]]) assert.equal((await fixture.route.POST(new Request(url, { method: "POST", headers, body: text }))).status, 204);
+  let cancelled = false;
+  const stream = new ReadableStream({ start(controller) { controller.enqueue(new TextEncoder().encode("x".repeat(9000))); }, cancel() { cancelled = true; } });
+  assert.equal((await fixture.route.POST(new Request("https://syncedin.org/api/track", { method: "POST", body: stream, duplex: "half" }))).status, 204);
+  assert(cancelled); assert.equal(fixture.observed.auth, 0); assert.equal(fixture.observed.inserts.length, 0);
+  assert(fs.readFileSync("app/talk/TalkChat.tsx", "utf8").includes('data-clarity-mask="True"'));
+});
 
 function homepageFixture({ user = null, rows = [], queryFailure = false } = {}) {
   const calls = [];

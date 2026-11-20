@@ -190,6 +190,7 @@ export function TalkChat({
 
   return (
     <div
+      data-clarity-mask="True"
       style={{
         flex: 1,
         display: "grid",

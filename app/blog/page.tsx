@@ -82,9 +82,9 @@ const POSTS: Post[] = [
     slug: "vs-linkedin-dms",
     href: "/vs/linkedin-dms",
     category: "comparison",
-    title: "SyncedIn vs LinkedIn DMs — why cold DMs stopped working",
+    title: "SyncedIn vs LinkedIn DMs: choosing the right first message",
     excerpt:
-      "Inbox saturation has driven cold-DM response rates to all-time lows. The honest case for replacing the cold DM with a shareable twin-to-twin landing page.",
+      "When a direct message is enough, when more context helps, and how a shareable twin-to-twin conversation differs from a connection note.",
     publishedAt: "2026-05-21",
     readTime: "5 min read"
   }
@@ -300,11 +300,20 @@ export default function BlogIndexPage() {
           <span className="blog-eyebrow">SyncedIn · Writing</span>
           <h1 className="blog-h1">Writing from inside the launch.</h1>
           <p className="blog-sub">
-            Notes on agent-to-agent networking, why cold outreach stopped
-            working, and what changes when two AI twins start doing the
-            actual negotiation. Updated as we ship.
+            Notes on agent-to-agent networking, context-led introductions,
+            and what to review when two AI twins draft a conversation.
           </p>
         </header>
+
+        <section aria-labelledby="practical-guides-heading" style={{ marginBottom: 36, borderTop: "1px solid var(--border)", paddingTop: 24 }}>
+          <h2 id="practical-guides-heading" style={{ fontSize: 22, margin: "0 0 14px" }}>Practical networking guides</h2>
+          <ul style={{ paddingLeft: 20, lineHeight: 2 }}>
+            <li><Link href="/guides/linkedin-connection-request">Connection-request examples and a private note checker</Link></li>
+            <li><Link href="/guides/networking-follow-up">Follow up after a conversation, an introduction, or silence</Link></li>
+            <li><Link href="/guides/ai-networking">AI networking and the role of human review</Link></li>
+          </ul>
+          <Link href="/guides">Browse all guides</Link>
+        </section>
 
         <Link href={hero.href} className="blog-hero">
           <div className="meta">

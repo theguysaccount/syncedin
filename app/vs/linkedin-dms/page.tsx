@@ -1,114 +1,40 @@
-import { withPublicSEO } from '@/lib/public-seo';
 import type { Metadata } from "next";
+import { withPublicSEO } from "@/lib/public-seo";
 import { VsPageShell } from "../VsPageShell";
 
-export const metadata: Metadata = withPublicSEO('/vs/linkedin-dms', {
-  title: "SyncedIn vs LinkedIn DMs: why your cold DMs stopped working",
-  description:
-    "LinkedIn DMs used to convert. In 2026 they're at all-time-low response rates. SyncedIn replaces the cold-DM loop with two AI twins that actually negotiate. Side-by-side comparison.",
-  openGraph: {
-    title: "SyncedIn vs LinkedIn DMs — the AI alternative for networking",
-    description:
-      "Your cold LinkedIn DM is one of 400 in their inbox. SyncedIn sends a twin instead. See why response rates 10x.",
-    url: "https://syncedin.org/vs/linkedin-dms",
-    type: "website",
-    siteName: "SyncedIn"
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "SyncedIn vs LinkedIn DMs — the AI alternative for networking",
-    description:
-      "Cold LinkedIn DMs don't work anymore. SyncedIn replaces the entire loop with two AI twins. Honest comparison."
-  },
-  alternates: { canonical: "https://syncedin.org/vs/linkedin-dms" }
+export const metadata: Metadata = withPublicSEO("/vs/linkedin-dms", {
+  title: "SyncedIn vs LinkedIn DMs: choosing the right first message",
+  description: "Compare a LinkedIn message with a shareable SyncedIn twin conversation. Understand connection notes, InMail, recipient control, and when a simple message is enough.",
+  openGraph: { title: "SyncedIn and LinkedIn DMs: message or shared context?", type: "website" },
 });
 
 export default function VsLinkedInDmsPage() {
-  return (
-    <VsPageShell
-      competitor="LinkedIn DMs"
-      competitorSlug="linkedin-dms"
-      positioning="the default cold-outreach channel for professional networking — but inbox saturation has driven response rates to all-time lows"
-      ourPitch="A twin-to-twin negotiation that lives on a shareable URL"
-      theirPitch="A 300-character message that lands in an ignored inbox"
-      rows={[
-        {
-          feature: "Where it lives",
-          syncedin: "Personalized landing page at syncedin.org/<their-name>",
-          them: "Buried in their LinkedIn inbox alongside 400 others.",
-          highlight: true
-        },
-        {
-          feature: "What the recipient sees",
-          syncedin: "A full simulated twin-to-twin conversation, ready to edit.",
-          them: "A cold DM. They've seen 50 just like it today."
-        },
-        {
-          feature: "Personalization depth",
-          syncedin: "Whole conversation built from public footprint + Claude.",
-          them: "Limited to ~300 characters. You're rationing context."
-        },
-        {
-          feature: "Response rate (anecdotal early data)",
-          syncedin: "Recipients open + edit the demo before deciding.",
-          them: "Industry average: 3-5%. Cold-template DMs: <1%."
-        },
-        {
-          feature: "What happens after they engage",
-          syncedin: "Their twin spins up. Two twins negotiate the actual deal.",
-          them: "You're now in a manual back-and-forth in an inbox."
-        },
-        {
-          feature: "Cost",
-          syncedin: "Free forever for early users.",
-          them: "LinkedIn Premium $40-$80/month for InMails. Free for connections."
-        },
-        {
-          feature: "Reach",
-          syncedin: "Anyone with a public profile — no connection required.",
-          them: "Connections-only unless you pay for InMails."
-        }
-      ]}
-      whyWeWin={[
-        {
-          heading: "Cold DMs are fighting inbox math you can't win",
-          body: "The average LinkedIn user receives 30-50 inbound messages a week. Even a beautifully-crafted personalized DM is competing against 400 others over the same month. Response rates have collapsed industry-wide. SyncedIn doesn't ask the recipient to triage a message — it gives them a page to explore, a conversation to read, edits to make, on their schedule."
-        },
-        {
-          heading: "Your twin works in parallel; you can't",
-          body: "Sending 20 personalized LinkedIn DMs is a half-day of work, and the response rate is brutal. SyncedIn lets your twin run conversations with dozens of people simultaneously — and only pings you when there's a concrete proposal worth confirming. Same outcome, 1/20th the human time."
-        },
-        {
-          heading: "Recipients prefer it (and tell us so)",
-          body: "Anecdotally, the most common feedback from people who land on a SyncedIn invite for the first time: \"this is the first cold outreach I've actually wanted to engage with.\" You're handing them something to interact with on their own terms, not asking them to write a reply in real-time."
-        },
-        {
-          heading: "Shareable beyond LinkedIn",
-          body: "A SyncedIn invite URL works on iMessage, X DMs, email, in-person QR codes, and yes, LinkedIn. You're not locked into LinkedIn's channel. The unit is a personalized landing page, not a 300-character message in someone else's app."
-        }
-      ]}
-      faq={[
-        {
-          q: "Does SyncedIn integrate with LinkedIn directly?",
-          a: "SyncedIn reads public LinkedIn data to personalize each invite (BulkReach accepts LinkedIn URLs and your connections export). We don't send LinkedIn DMs on your behalf — instead we give you a shareable invite URL that you (or your twin) can drop into any channel, including LinkedIn DMs themselves."
-        },
-        {
-          q: "Why is this better than a well-written cold DM?",
-          a: "A well-written cold DM is 200-400 characters and asks the recipient to do the cognitive work of evaluating + responding in real-time. A SyncedIn invite is a full landing page with a simulated conversation, scrape-driven context, and a chance to edit anything. The bar to engage is much lower."
-        },
-        {
-          q: "Will my recipients think this is weird?",
-          a: "Anecdotal data so far: no — they think it's interesting. The simulated conversation is upfront about being a sketch, and the recipient gets to control how it changes. Most ask 'wait, can I have one of these?' within a few minutes."
-        },
-        {
-          q: "Can I still use LinkedIn DMs alongside SyncedIn?",
-          a: "Yes. A common pattern: send a one-line LinkedIn DM that just says 'I sent my twin to talk to yours, syncedin.org/<their-name>' — and let the invite URL do the heavy lifting. Best of both."
-        },
-        {
-          q: "Is SyncedIn affiliated with LinkedIn?",
-          a: "No. SyncedIn is an independent platform built by Persist Ventures. We're not affiliated with, endorsed by, or partnered with LinkedIn Corporation."
-        }
-      ]}
-    />
-  );
+  return <VsPageShell
+    competitor="LinkedIn DMs"
+    competitorSlug="linkedin-dms"
+    positioning="a way to contact people through LinkedIn's professional network, subject to connection status and recipient settings"
+    ourPitch="A shareable, editable twin conversation"
+    theirPitch="A direct message in an existing professional network"
+    rows={[
+      { feature: "Where it lives", syncedin: "A SyncedIn invitation page or conversation.", them: "LinkedIn's own messaging interface.", highlight: true },
+      { feature: "What the recipient sees", syncedin: "A simulated conversation they can inspect and correct; not a record of their actual words.", them: "The message you chose to send and the existing thread." },
+      { feature: "How much context", syncedin: "A draft can explore goals and professional background you choose to provide.", them: "Ordinary messages, connection notes, and InMail are different formats. Do not apply a note's limit to every DM." },
+      { feature: "Who acts", syncedin: "The people review proposed next steps. An AI draft does not confirm their consent or availability.", them: "You decide what to write and send through your LinkedIn account." },
+      { feature: "Access and cost", syncedin: "The current web flow has no paid checkout; future prices or paid features are not promised here.", them: "First-degree messaging is free. Other access depends on recipient settings and products such as InMail." },
+      { feature: "Expected results", syncedin: "No guaranteed response rate, time saving, or introduction.", them: "Results depend on the relationship, message, relevance, and the recipient's choice." },
+    ]}
+    whyWeWin={[
+      { heading: "Use a direct message for a direct request", body: "If you already know the person or can explain your purpose in a few clear sentences, a normal message may be the best option. A twin conversation adds value only when exploring the context helps both people decide what to do next." },
+      { heading: "Use a twin when the overlap needs exploration", body: "A possible collaboration can involve goals, preferences, and constraints that do not fit naturally into an opener. A SyncedIn conversation can help draft that exploration. Review every inferred claim, especially when the other person's twin was sketched from public information." },
+      { heading: "A connection note is a separate format", body: "A personalized invitation accompanies a connection request; it is not an ordinary DM. LinkedIn's current invitation help describes a 200-character note for basic members and plan-dependent allowances. Check the composer in your own account instead of assuming a universal 300-character limit." },
+      { heading: "A link still needs an honest introduction", body: "You can share a relevant SyncedIn invitation through an appropriate channel, including a LinkedIn message. Explain why it is useful to that person. An unexplained link is not a substitute for context, and sending one does not guarantee that someone will open it or reply." },
+    ]}
+    faq={[
+      { q: "Does SyncedIn send LinkedIn messages for me?", a: "No. SyncedIn drafts context and conversations on its own platform. You review the wording and decide whether, where, and how to contact someone. It does not provide permission to automate LinkedIn or bypass its limits." },
+      { q: "Is every LinkedIn message limited to 300 characters?", a: "No. Connection notes, regular messages, and InMail are different. LinkedIn's help currently describes a 200-character invitation note for basic members; actual allowances can depend on the account. Use the limit shown in your composer." },
+      { q: "Is SyncedIn proven to get more replies?", a: "This comparison does not present a controlled head-to-head response-rate study. A draft conversation, a page visit, a reply, and a useful real-world outcome are separate things to measure." },
+      { q: "Can I use both approaches?", a: "Yes. Write a short, relevant message and share a SyncedIn invitation when it adds useful context. The other person can decide whether to engage. For a simple request, the message alone may be enough." },
+      { q: "Where can I check the LinkedIn rules?", a: "See LinkedIn Help's Personalize invitations to connect, Send messages on LinkedIn, and Automated activity on LinkedIn. The current account interface and recipient settings determine access. SyncedIn is independent of LinkedIn." },
+    ]}
+  />;
 }

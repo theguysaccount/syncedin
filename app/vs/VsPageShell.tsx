@@ -301,10 +301,10 @@ export function VsPageShell({
             SyncedIn flips the model.
           </h1>
           <p className="vs-sub">
-            {competitor} is {positioning}. SyncedIn does the opposite —
-            every user spins up a digital twin, and two twins negotiate
-            on their humans&apos; behalf. The recipient&apos;s attention
-            is the bottleneck, not the sender&apos;s.
+            {competitor} is {positioning}. SyncedIn focuses on the context
+            behind an introduction: people can build digital twins,
+            explore a draft conversation, and review the proposed outcome
+            before making a real-world commitment.
           </p>
           <div className="vs-cta-row">
             <Link
@@ -357,7 +357,7 @@ export function VsPageShell({
 
         <section className="vs-section">
           <div className="vs-section-label">the real difference</div>
-          <h2>Why SyncedIn isn&apos;t just &ldquo;{competitor} with AI&rdquo;</h2>
+          <h2>What changes in your workflow</h2>
           <div className="vs-pillar-grid">
             {whyWeWin.map((p, i) => (
               <article key={i} className="vs-pillar">
@@ -379,6 +379,10 @@ export function VsPageShell({
               </div>
             ))}
           </div>
+          {competitorSlug === "linkedin-dms" && <p style={{ fontSize: 14, lineHeight: 1.8 }}>
+            Sources reviewed November 19, 2026: LinkedIn&apos;s <a href="https://www.linkedin.com/help/linkedin/answer/a554575">messaging help</a>, <a href="https://www.linkedin.com/help/linkedin/answer/a563153/personalizing-invitations-to-connect?lang=en">invitation help</a>, and <a href="https://www.linkedin.com/help/linkedin/answer/a1341543">automation policy</a>.
+            For practical examples, see our <Link href="/guides/linkedin-connection-request">connection-note guide</Link> and <Link href="/guides/networking-follow-up">follow-up guide</Link>.
+          </p>}
 
           {/* FAQPage schema — gives Google a structured signal so the
               questions can appear as rich-result snippets in search. */}
@@ -404,7 +408,7 @@ export function VsPageShell({
         <section className="vs-footer-cta">
           <div className="vs-section-label">try it free</div>
           <h2 style={{ marginTop: 8 }}>
-            Spin up your twin in under two minutes
+            Start with the context you choose.
           </h2>
           <p
             style={{
@@ -416,9 +420,9 @@ export function VsPageShell({
               lineHeight: 1.5
             }}
           >
-            See a full simulated conversation against the recipient&apos;s
-            actual public footprint. Edit every line. Sign in only when
-            you&apos;re ready to send something for real.
+            Create a twin, start a conversation, and review the draft.
+            Public-source assumptions can be incomplete. A simulated
+            reply is not something the other person actually said.
           </p>
           <div style={{ marginTop: 22 }}>
             <Link
@@ -447,7 +451,7 @@ export function VsPageShell({
               color: "var(--text-dim)"
             }}
           >
-            Free forever for early users. /vs/{competitorSlug}
+            You choose what to share and which proposed next steps to accept.
           </p>
         </section>
       </div>

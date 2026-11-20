@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "prebuild": "node --test scripts/test-outreach.mjs scripts/test-release-safety.mjs scripts/test-agent-onboarding.mjs",
+    "prebuild": "node --test scripts/test-outreach.mjs scripts/test-release-safety.mjs scripts/test-agent-onboarding.mjs scripts/test-seo-guides.mjs",
     "start": "next start",
     "lint": "next lint",
     "test:outreach": "node --test scripts/test-outreach.mjs",
@@ -20,7 +20,8 @@
     "cap:open:ios": "npx cap open ios",
     "cap:open:android": "npx cap open android",
     "postbuild": "node verification/check-seo-release.mjs",
-    "check:seo": "node verification/check-seo-release.mjs"
+    "check:seo": "node verification/check-seo-release.mjs",
+    "test:seo": "node --test scripts/test-seo-guides.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.30.1",

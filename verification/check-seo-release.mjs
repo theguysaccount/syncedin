@@ -5,7 +5,8 @@ import ts from 'typescript';
 const read = file => fs.readFileSync(file, 'utf8');
 const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
 const cards = JSON.parse(read('verification/social-card-manifest.json'));
-assert.equal(cards.length, 22);
+assert(cards.length >= 22, 'Preserve the original public card inventory');
+assert.equal(new Set(cards.map(card => card.path)).size, cards.length, 'Duplicate social-card route');
 const unique = new Set();
 function hasPublicSEO(file, path) {
   const sf = ts.createSourceFile(file, read(file), ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
@@ -17,6 +18,18 @@ function hasPublicSEO(file, path) {
   visit(sf);
   return found;
 }
+const discovered = new Set();
+for (const entry of fs.readdirSync('app', { recursive: true })) {
+  if (!String(entry).endsWith('/page.tsx')) continue;
+  const file = 'app/' + entry;
+  const sf = ts.createSourceFile(file, read(file), ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+  function visit(node) {
+    if (ts.isCallExpression(node) && node.expression.getText(sf) === 'withPublicSEO' && ts.isStringLiteral(node.arguments[0])) discovered.add(node.arguments[0].text);
+    ts.forEachChild(node, visit);
+  }
+  visit(sf);
+}
+assert.deepEqual([...discovered].sort(), cards.map(card => card.path).sort(), 'Public SEO routes and page-specific cards must match');
 for (const card of cards) {
   const bytes = fs.readFileSync(card.file);
   assert.equal(bytes.subarray(0, 8).toString('hex'), '89504e470d0a1a0a');
@@ -30,6 +43,10 @@ for (const card of cards) {
 }
 const original = JSON.parse(read('verification/original-source-manifest.json'));
 const product = JSON.parse(read('verification/product-release-scope.json'));
+for (const file of product.additionalVerifiedFiles || []) {
+  assert(product.files[file], file + ' requires an explicit reviewed hash');
+  assert.equal(hash(fs.readFileSync(file)), product.files[file], file + ' changed after its reviewed release hash');
+}
 for (const row of original.files) {
   if (row.file === 'vercel.json') {
     // The provider transforms its runtime build configuration. Uploaded source

@@ -35,6 +35,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${APP_URL}/article`, changeFrequency: "monthly", priority: 0.9 },
     { url: `${APP_URL}/blog`, changeFrequency: "weekly", priority: 0.9 },
     { url: `${APP_URL}/agents`, changeFrequency: "monthly", priority: 0.7 },
+    { url: `${APP_URL}/guides`, lastModified: "2026-11-19", changeFrequency: "monthly", priority: 0.7 },
+    { url: `${APP_URL}/guides/linkedin-connection-request`, lastModified: "2026-11-19", changeFrequency: "monthly", priority: 0.7 },
+    { url: `${APP_URL}/guides/networking-follow-up`, lastModified: "2026-11-19", changeFrequency: "monthly", priority: 0.7 },
+    { url: `${APP_URL}/guides/ai-networking`, lastModified: "2026-11-19", changeFrequency: "monthly", priority: 0.7 },
 
     // === Comparison pages (high-intent SEO) ===
     { url: `${APP_URL}/vs/lemlist`, changeFrequency: "monthly", priority: 0.8 },

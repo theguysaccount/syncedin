@@ -1,0 +1,96 @@
+.page { background: var(--panel-solid); color: var(--text); min-height: 100vh; letter-spacing: 0; }
+.page *, .page *::before, .page *::after { box-sizing: border-box; }
+.navigation { max-width: 1160px; margin: 0 auto; padding: 24px 32px; display: flex; align-items: center; justify-content: space-between; gap: 24px; border-bottom: 1px solid var(--border); }
+.navigationLinks { display: flex; align-items: center; gap: 28px; font-size: 14px; }
+.navigationLinks a, .primaryLink, .backLink { display: inline-flex; align-items: center; gap: 8px; text-decoration: none; }
+.navigationLinks a { color: var(--text); }
+.brand { display: inline-flex; flex-shrink: 0; align-items: center; }
+.brand img { display: block; width: 180px; height: auto; }
+.primaryLink, .navigationLinks .primaryLink { background: #305ce5; color: #fff; padding: 12px 16px; border-radius: 6px; font-size: 14px; font-weight: 600; min-height: 44px; justify-content: center; }
+.primaryLink:hover { background: #244bbf; }
+.page a:focus-visible, .page button:focus-visible, .page textarea:focus-visible { outline: 3px solid #4e74f4; outline-offset: 4px; }
+.article { max-width: 900px; margin: 0 auto; padding: 36px 32px 96px; }
+.backLink { color: var(--text-dim); font-size: 14px; min-height: 36px; }
+.header { margin: 32px 0; max-width: 790px; }
+.header h1, .hubHeader h1 { font-size: 42px; line-height: 1.14; font-weight: 750; letter-spacing: 0; margin: 16px 0; overflow-wrap: anywhere; }
+.meta { display: flex; flex-wrap: wrap; gap: 12px 24px; font-size: 13px; color: var(--text-dim); }
+.meta > :first-child { color: #305ce5; font-weight: 600; }
+.introduction { font-size: 19px; line-height: 1.65; color: var(--text-dim); margin: 0; }
+.byline { margin: 22px 0 0; color: var(--text-dim); font-size: 12px; line-height: 1.7; }
+.byline span { padding: 0 8px; }
+.body { max-width: 760px; font-size: 16px; line-height: 1.85; }
+.body h2 { font-size: 26px; line-height: 1.3; margin: 44px 0 16px; letter-spacing: 0; scroll-margin-top: 24px; }
+.body h3 { font-size: 19px; line-height: 1.4; margin: 28px 0 12px; letter-spacing: 0; }
+.body p { margin: 0 0 18px; }
+.body a { color: #305ce5; text-decoration: underline; text-underline-offset: 3px; }
+.body li { padding-left: 5px; margin: 10px 0; }
+.body ul, .body ol { padding-left: 22px; }
+.leadAnswer { border-left: 3px solid #138566; padding: 4px 0 4px 20px; margin: 28px 0; }
+.leadAnswer p { margin: 0; }
+.example { border-left: 2px solid var(--border-bright); margin: 20px 0 24px; padding: 4px 0 4px 22px; font-size: 17px; color: var(--text); }
+.example p { margin: 0; }
+.editor { border: 1px solid var(--border-bright); border-radius: 8px; padding: 24px; margin: 30px 0; background: var(--panel-solid); }
+.editorToolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin-bottom: 20px; }
+.editorToolbar label { font-size: 16px; font-weight: 650; }
+.segmented { display: flex; border: 1px solid var(--border); border-radius: 6px; padding: 3px; gap: 3px; }
+.segmented button { background: transparent; color: var(--text-dim); padding: 6px 10px; font: inherit; font-size: 13px; cursor: pointer; border: 0; border-radius: 4px; min-height: 44px; }
+.segmented button[aria-pressed="true"] { background: #e9efff; color: #244bbf; font-weight: 650; }
+.editor textarea { width: 100%; min-height: 158px; resize: vertical; border: 1px solid var(--border-bright); border-radius: 5px; padding: 14px; color: var(--text); background: var(--panel-solid); font: inherit; font-size: 16px; line-height: 1.7; }
+.editorFooter { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin-top: 14px; }
+.counter { font-size: 13px; color: #117657; font-variant-numeric: tabular-nums; }
+.counter[data-over="true"] { color: #b03645; }
+.copyButton { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; border: 1px solid var(--border-bright); border-radius: 5px; padding: 9px 14px; background: var(--panel-solid); color: var(--text); font: inherit; font-size: 14px; cursor: pointer; }
+.copyButton:disabled { opacity: .45; cursor: not-allowed; }
+.templates { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+.templates button { border: 0; border-bottom: 1px solid var(--border-bright); padding: 6px 0; margin-right: 12px; background: transparent; color: var(--text-dim); font: inherit; font-size: 13px; min-height: 44px; cursor: pointer; }
+.templates button[aria-pressed="true"] { color: #305ce5; border-color: #305ce5; }
+.editorHint { font-size: 12px; color: var(--text-dim); margin: 14px 0 0 !important; }
+.editorStatus { min-height: 24px; margin: 12px 0 0 !important; font-size: 13px; }
+.nextStep { margin: 52px 0 0; padding: 30px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); display: flex; gap: 30px; align-items: center; justify-content: space-between; }
+.nextStep > div { max-width: 570px; }
+.nextStep h2 { font-size: 25px; line-height: 1.3; margin: 8px 0 14px; letter-spacing: 0; }
+.nextStep p { font-size: 15px; line-height: 1.7; color: var(--text-dim); margin: 0; }
+.label { font-size: 12px !important; color: #138566 !important; font-weight: 650; }
+.nextStep > a { flex-shrink: 0; }
+.related { margin-top: 38px; }
+.related h2 { font-size: 20px; margin: 0 0 18px; }
+.relatedLinks { display: grid; gap: 0; }
+.relatedLinks a { display: flex; align-items: center; justify-content: space-between; gap: 20px; color: var(--text); text-decoration: none; border-bottom: 1px solid var(--border); padding: 17px 0; font-size: 15px; }
+.relatedLinks a:hover { color: #305ce5; }
+.hub { max-width: 1160px; padding: 48px 32px 96px; margin: 0 auto; }
+.hubHeader { max-width: 740px; margin-bottom: 38px; }
+.hubHeader h1 { margin-top: 0; }
+.guideList { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px; }
+.guideList article { border-top: 2px solid var(--border-bright); padding: 24px 0; min-width: 0; }
+.guideList a { display: block; color: var(--text); text-decoration: none; }
+.guideList img { width: 100%; height: auto; aspect-ratio: 1200 / 630; object-fit: contain; margin: 0 0 20px; border: 1px solid var(--border); border-radius: 5px; }
+.guideList h2 { font-size: 22px; line-height: 1.3; letter-spacing: 0; margin: 12px 0; }
+.guideList p { color: var(--text-dim); font-size: 15px; line-height: 1.75; margin: 0; }
+.guideList .readGuide { display: inline-flex; gap: 8px; align-items: center; color: #305ce5; margin-top: 20px; font-weight: 600; font-size: 14px; }
+.tableWrap { width: 100%; overflow-x: auto; margin: 24px 0; }
+.tableWrap table { border-collapse: collapse; width: 100%; font-size: 14px; line-height: 1.7; }
+.tableWrap th { font-weight: 650; text-align: left; background: var(--panel-2); }
+.tableWrap td, .tableWrap th { padding: 14px 16px; border-bottom: 1px solid var(--border); vertical-align: top; min-width: 160px; }
+.sourceList { font-size: 13px; line-height: 1.8; }
+.sourceList h2 { font-size: 20px; }
+.sourceList a { overflow-wrap: anywhere; }
+@media (max-width: 900px) { .guideList { grid-template-columns: minmax(0, 1fr); gap: 16px; } .guideList article { display: grid; grid-template-columns: 220px minmax(0, 1fr); column-gap: 24px; } .guideList article a { display: contents; } .guideList img { grid-row: 1 / 6; margin: 0; } .guideList .meta { margin-top: 0; } .guideList h2 { font-size: 24px; } }
+@media (max-width: 600px) {
+  .navigation { padding: 18px 20px; gap: 16px; flex-wrap: wrap; }
+  .navigationLinks { gap: 16px; font-size: 13px; width: 100%; justify-content: space-between; }
+  .navigationLinks .primaryLink { padding: 10px 12px; font-size: 13px; }
+  .article { padding: 24px 20px 68px; }
+  .header { margin: 24px 0; }
+  .header h1, .hubHeader h1 { font-size: 32px; line-height: 1.18; }
+  .introduction { font-size: 17px; }
+  .body h2 { font-size: 23px; }
+  .body { font-size: 16px; line-height: 1.8; }
+  .editor { padding: 18px; }
+  .editorToolbar { align-items: flex-start; }
+  .nextStep { flex-direction: column; align-items: flex-start; gap: 22px; }
+  .hub { padding: 32px 20px 68px; }
+  .guideList article { display: block; padding: 24px 0; }
+  .guideList article a { display: block; }
+  .guideList img { margin-bottom: 20px; }
+  .guideList h2 { font-size: 24px; }
+}

@@ -3,15 +3,15 @@
     "path": "/article",
     "file": "app/article/opengraph-image.png",
     "twitterFile": "app/article/twitter-image.png",
-    "sha256": "cf66b46c0d9f71a0766d284e7b7e0d5533351541777db3e5f3992b35b0f750f9",
-    "alt": "SyncedIn — SyncedIn wants two AI agents to negotiate before two humans meet"
+    "sha256": "3f1f5e5b4f30a8d2a7a0466018e61bb303414e7ee8bd108281ee91c4733db86a",
+    "alt": "SyncedIn product perspective: selected professional context, an editable conversation draft, and a human decision."
   },
   {
     "path": "/blog",
     "file": "app/blog/opengraph-image.png",
     "twitterFile": "app/blog/twitter-image.png",
-    "sha256": "00022d16afdaeb03c23be87fec1b78af86dc492336e58d90a9d4ae429019411a",
-    "alt": "SyncedIn — Writing from inside the launch."
+    "sha256": "54613fceb90efeb9fb8a33c01096c417ed60656e77316d94db289de47ab8866f",
+    "alt": "SyncedIn journal: product thinking, practical workflow comparisons, and useful next steps."
   },
   {
     "path": "/vs/lemlist",

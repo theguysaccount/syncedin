@@ -69,6 +69,18 @@ for (const expected of JSON.parse(fs.readFileSync("verification/product-referenc
   assert(text.includes("do not retrain the underlying model"));
   assert(!/\$20M|Founded:\s*2025|unlimited outbound|100% replicable/.test(text), path + " unsupported product claims");
 }
+const articleExport = JSON.parse(fs.readFileSync("verification/article-export-manifest.json", "utf8"));
+const articleDownload = await fetch(new URL(articleExport.path, base), { signal: AbortSignal.timeout(20000) });
+assert.equal(articleDownload.status, 200);
+assert(articleDownload.headers.get("content-type")?.includes("text/markdown"));
+assert.equal(articleDownload.headers.get("link"), '<https://syncedin.org/article>; rel="canonical"');
+assert(articleDownload.headers.get("x-robots-tag")?.includes("noindex"));
+const articleText = await articleDownload.text();
+assert.equal(crypto.createHash("sha256").update(articleText).digest("hex"), articleExport.sha256, "Article export must match the reviewed HTML source");
+assert.equal(Buffer.byteLength(articleText), articleExport.bytes);
+const legacyArticle = await fetch(new URL("/articles/syncedin-launch.md", base), { redirect: "manual", signal: AbortSignal.timeout(20000) });
+assert.equal(legacyArticle.status, 308);
+assert.equal(new URL(legacyArticle.headers.get("location"), base).pathname, "/article");
 const notificationRead = await fetch(new URL("/api/indexnow?url=https%3A%2F%2Fsyncedin.org%2Fguides", base), { signal: AbortSignal.timeout(20000) });
 assert.equal(notificationRead.status, 405, "Public reads must not submit IndexNow notifications");
 assert.equal(notificationRead.headers.get("allow"), "POST");
@@ -99,4 +111,4 @@ const mcp=await fetch(new URL('/api/mcp',base),{method:'POST',headers:{'Content-
 assert.equal(mcp.status,200);
 const wire=await mcp.text(),tools=JSON.parse(wire.startsWith('data:')?wire.trim().slice(5):wire.match(/^data: (.+)$/m)?.[1]||wire);
 assert.deepEqual(tools.result.tools.map(t=>t.name).sort(),['draft_introduction','find_matches','get_my_profile','prepare_signup','signup_status']);
-console.log(`Public release verified at ${base.origin}: ${cards.length} unique titles, H1s, canonical pages and share-card pairs; canonical sitemap; reviewed references; non-mutating and owner-only IndexNow; private-route protection, agent resources, and actual MCP tool discovery.`);
+console.log(`Public release verified at ${base.origin}: ${cards.length} unique titles, H1s, canonical pages and share-card pairs; canonical sitemap; reviewed references and article export; non-mutating and owner-only IndexNow; private-route protection, agent resources, and actual MCP tool discovery.`);

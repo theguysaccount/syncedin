@@ -1,418 +1,59 @@
-import { withPublicSEO } from '@/lib/public-seo';
+import type { Metadata, Viewport } from "next";
 import Link from "next/link";
-import type { Metadata } from "next";
-import { Wordmark } from "../Wordmark";
+import { ArrowRight, BookOpen } from "lucide-react";
+import { withPublicSEO } from "@/lib/public-seo";
+import { LAUNCH_ARTICLE } from "@/lib/launch-article";
+import { GuideNavigation } from "../guides/GuideLayout";
+import styles from "../guides/guides.module.css";
 
-/**
- * /blog — the public index of long-form posts from SyncedIn. Replaces
- * the temporary /blog → /article redirect that lived in next.config.js
- * while only one post existed.
- *
- * The post list is hand-curated here (one source of truth, one file to
- * edit) rather than read from a CMS. Each entry links to a real route
- * under /app — so adding a new post = adding an entry here + a new
- * route folder. Keeps the surface tight, no database round-trip, and
- * fully static-renderable for SEO.
- */
-export const metadata: Metadata = withPublicSEO('/blog', {
-  title: "Blog — SyncedIn",
-  description:
-    "Writing from SyncedIn on agent-to-agent networking, digital twins, AI-mediated outreach, and the future of cold intros.",
-  openGraph: {
-    title: "Blog — SyncedIn",
-    description:
-      "Writing from SyncedIn on agent-to-agent networking, digital twins, AI-mediated outreach, and the future of cold intros.",
-    url: "https://syncedin.org/blog",
-    type: "website",
-    siteName: "SyncedIn"
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Blog — SyncedIn",
-    description:
-      "Writing from SyncedIn on agent-to-agent networking, digital twins, and the future of cold intros."
-  },
-  alternates: { canonical: "https://syncedin.org/blog" }
+export const viewport: Viewport = { width: "device-width", initialScale: 1, maximumScale: 5, userScalable: true };
+export const metadata: Metadata = withPublicSEO("/blog", {
+  title: "SyncedIn journal: product thinking and practical comparisons",
+  description: "Writing from the SyncedIn team about context-led introductions, editable networking twins, and choosing the right outreach workflow.",
 });
 
-type Post = {
-  slug: string;
-  href: string;
-  category: "launch" | "category" | "comparison";
-  title: string;
-  excerpt: string;
-  publishedAt: string; // ISO date
-  readTime: string;
-  external?: boolean;
-};
+const JOURNAL_ENTRIES = [
+  { href: "/article", title: LAUNCH_ARTICLE.title, excerpt: LAUNCH_ARTICLE.description, category: "Product thinking", reviewedAt: LAUNCH_ARTICLE.reviewedAt, imageAlt: "SyncedIn's approach: selected context, an editable conversation, and human choice." },
+  { href: "/vs/lemlist", title: "SyncedIn vs lemlist: networking twins and outbound campaigns", excerpt: "Compare an AI-assisted outbound campaign workflow with a human-reviewed networking-twin conversation, including their different channels and limits.", category: "Comparison", reviewedAt: "2026-11-20", imageAlt: "SyncedIn and lemlist comparison: a relevant introduction, campaign operations, and human review." },
+  { href: "/vs/clay", title: "SyncedIn vs Clay: networking conversations and GTM workflows", excerpt: "Clay's enrichment, research, and outbound workflows serve a different job from editable introduction conversations. Choose by the work you need done.", category: "Comparison", reviewedAt: "2026-11-20", imageAlt: "SyncedIn and Clay comparison: networking-twin conversations and data-driven GTM workflows." },
+  { href: "/vs/linkedin-dms", title: "SyncedIn vs LinkedIn DMs: choosing the right first message", excerpt: "When a direct message is enough, when more context helps, and how a shareable twin-to-twin conversation differs from a connection note.", category: "Comparison", reviewedAt: "2026-11-19", imageAlt: "SyncedIn and LinkedIn DMs comparison: an honest opener, useful context, and the recipient's choice." },
+] as const;
 
-const POSTS: Post[] = [
-  {
-    slug: "syncedin-launch",
-    href: "/article",
-    category: "launch",
-    title:
-      "SyncedIn wants two AI agents to negotiate before two humans meet",
-    excerpt:
-      "The new networking layer where your digital twin does the cold outreach for you — and you only see the deals worth taking. The launch piece.",
-    publishedAt: "2026-05-15",
-    readTime: "6 min read"
-  },
-  {
-    slug: "vs-lemlist",
-    href: "/vs/lemlist",
-    category: "comparison",
-    title: "SyncedIn vs lemlist: networking twins and outbound campaigns",
-    excerpt:
-      "Compare an AI-assisted outbound campaign workflow with a human-reviewed networking-twin conversation, including their different channels and limits.",
-    publishedAt: "2026-05-21",
-    readTime: "4 min read"
-  },
-  {
-    slug: "vs-clay",
-    href: "/vs/clay",
-    category: "comparison",
-    title: "SyncedIn vs Clay: networking conversations and GTM workflows",
-    excerpt:
-      "Clay's enrichment, research, and outbound workflows serve a different job from SyncedIn's editable introduction conversations. Choose by the work you need done.",
-    publishedAt: "2026-05-21",
-    readTime: "4 min read"
-  },
-  {
-    slug: "vs-linkedin-dms",
-    href: "/vs/linkedin-dms",
-    category: "comparison",
-    title: "SyncedIn vs LinkedIn DMs: choosing the right first message",
-    excerpt:
-      "When a direct message is enough, when more context helps, and how a shareable twin-to-twin conversation differs from a connection note.",
-    publishedAt: "2026-05-21",
-    readTime: "5 min read"
-  }
-];
-
-const CATEGORY_META: Record<Post["category"], { label: string; color: string }> = {
-  launch: { label: "Launch", color: "#1f8bff" },
-  category: { label: "Category", color: "#6b2dc9" },
-  comparison: { label: "Comparison", color: "#3b6dff" }
-};
-
-function formatDate(iso: string): string {
-  const d = new Date(iso + "T00:00:00Z");
-  return d.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    timeZone: "UTC"
-  });
+function formatDate(iso: string) {
+  return new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" });
 }
 
 export default function BlogIndexPage() {
-  const sorted = [...POSTS].sort((a, b) =>
-    a.publishedAt < b.publishedAt ? 1 : -1
-  );
-  const [hero, ...rest] = sorted;
-
-  return (
-    <main className="blog-shell">
-      <div aria-hidden="true" className="blog-bg" />
-      <style>{`
-        .blog-shell {
-          position: relative;
-          max-width: 1100px;
-          margin: 0 auto;
-          padding: 24px clamp(18px, 4vw, 36px) 80px;
-        }
-        .blog-bg {
-          position: absolute;
-          inset: 0;
-          z-index: 0;
-          pointer-events: none;
-          background:
-            radial-gradient(800px 400px at 50% 0%, rgba(31, 139, 255, 0.08), transparent 70%);
-        }
-        .blog-content { position: relative; z-index: 1; }
-        .blog-nav {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          margin-bottom: 36px;
-        }
-        .blog-eyebrow {
-          display: inline-block;
-          font-size: 11px;
-          font-weight: 800;
-          letter-spacing: 0.16em;
-          text-transform: uppercase;
-          color: #1f8bff;
-          margin-bottom: 12px;
-        }
-        .blog-h1 {
-          font-size: clamp(30px, 4.4vw, 44px);
-          line-height: 1.05;
-          letter-spacing: -0.02em;
-          font-weight: 800;
-          margin: 0 0 14px;
-        }
-        .blog-sub {
-          font-size: clamp(15px, 1.4vw, 17px);
-          line-height: 1.55;
-          color: var(--text-dim);
-          margin: 0 0 40px;
-          max-width: 680px;
-        }
-        .blog-hero {
-          display: block;
-          margin: 0 0 48px;
-          padding: 28px;
-          border-radius: 22px;
-          background:
-            linear-gradient(135deg, rgba(31, 139, 255, 0.08), rgba(107, 45, 201, 0.04)),
-            var(--panel-solid);
-          border: 1px solid var(--border);
-          transition: transform 0.15s ease, box-shadow 0.15s ease;
-          text-decoration: none;
-          color: var(--text);
-        }
-        .blog-hero:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 24px 60px -24px rgba(31, 139, 255, 0.25);
-        }
-        .blog-hero .meta {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          font-size: 11px;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
-          color: var(--text-dim);
-          margin-bottom: 14px;
-        }
-        .blog-cat {
-          display: inline-block;
-          padding: 3px 10px;
-          border-radius: 999px;
-          font-size: 10px;
-          font-weight: 800;
-          letter-spacing: 0.12em;
-          color: #fff;
-        }
-        .blog-hero h2 {
-          font-size: clamp(22px, 2.8vw, 30px);
-          line-height: 1.2;
-          letter-spacing: -0.01em;
-          font-weight: 800;
-          margin: 0 0 12px;
-        }
-        .blog-hero p {
-          font-size: 15px;
-          line-height: 1.6;
-          color: var(--text-dim);
-          margin: 0;
-          max-width: 680px;
-        }
-        .blog-hero .arrow {
-          margin-top: 18px;
-          color: #1f8bff;
-          font-size: 13px;
-          font-weight: 700;
-          letter-spacing: 0.04em;
-        }
-        .blog-grid {
-          display: grid;
-          grid-template-columns: minmax(0, 1fr);
-          gap: 18px;
-        }
-        @media (min-width: 760px) {
-          .blog-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-          }
-        }
-        .blog-card {
-          display: flex;
-          flex-direction: column;
-          padding: 22px;
-          border-radius: 18px;
-          background: var(--panel-solid);
-          border: 1px solid var(--border);
-          text-decoration: none;
-          color: var(--text);
-          transition: transform 0.15s ease, box-shadow 0.15s ease;
-        }
-        .blog-card:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 18px 48px -20px rgba(15, 23, 42, 0.16);
-        }
-        .blog-card .meta {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          font-size: 11px;
-          letter-spacing: 0.06em;
-          text-transform: uppercase;
-          color: var(--text-dim);
-          margin-bottom: 12px;
-        }
-        .blog-card h3 {
-          font-size: 18px;
-          line-height: 1.3;
-          font-weight: 800;
-          letter-spacing: -0.005em;
-          margin: 0 0 10px;
-        }
-        .blog-card p {
-          font-size: 14px;
-          line-height: 1.6;
-          color: var(--text-dim);
-          margin: 0 0 14px;
-          flex-grow: 1;
-        }
-        .blog-card .read {
-          color: #1f8bff;
-          font-size: 12.5px;
-          font-weight: 700;
-          letter-spacing: 0.04em;
-        }
-        .blog-cta-strip {
-          margin-top: 56px;
-          padding: 28px;
-          border-radius: 18px;
-          background:
-            radial-gradient(500px 200px at 50% 0%, rgba(31, 139, 255, 0.08), transparent 70%),
-            var(--panel-solid);
-          border: 1px solid var(--border);
-          text-align: center;
-        }
-      `}</style>
-
-      <div className="blog-content">
-        <nav className="blog-nav">
-          <Wordmark />
-          <Link
-            href="/login"
-            className="retro-btn retro-btn-primary"
-            style={{ fontSize: 13, padding: "8px 14px" }}
-          >
-            + sign up
+  return <div className={styles.page}>
+    <GuideNavigation />
+    <main className={styles.hub} id="main-content">
+      <header className={styles.hubHeader}>
+        <div className={styles.meta}><span>From the SyncedIn team</span></div>
+        <h1>SyncedIn journal</h1>
+        <p className={styles.introduction}>The thinking behind the product, and practical comparisons for choosing how to start a useful conversation.</p>
+        <p className={styles.byline}>Our own product perspectives, not independent reviews.</p>
+        <Link href="/guides" className={styles.backLink}><BookOpen size={17} aria-hidden="true" /> Looking for connection notes or follow-up examples? Read the guides.</Link>
+      </header>
+      <section className={styles.guideList} aria-label="Journal articles and comparisons">
+        {JOURNAL_ENTRIES.map((post, index) => <article key={post.href}>
+          <Link href={post.href}>
+            <img src={`${post.href}/opengraph-image.png`} alt={post.imageAlt} width={1200} height={630} loading={index < 2 ? "eager" : "lazy"} />
+            <div className={styles.meta}><span>{post.category}</span><span>Reviewed <time dateTime={post.reviewedAt}>{formatDate(post.reviewedAt)}</time></span></div>
+            <h2>{post.title}</h2>
+            <p>{post.excerpt}</p>
+            <span className={styles.readGuide}>Read the article <ArrowRight size={17} aria-hidden="true" /></span>
           </Link>
-        </nav>
-
-        <header>
-          <span className="blog-eyebrow">SyncedIn · Writing</span>
-          <h1 className="blog-h1">Writing from inside the launch.</h1>
-          <p className="blog-sub">
-            Notes on agent-to-agent networking, context-led introductions,
-            and what to review when two AI twins draft a conversation.
-          </p>
-        </header>
-
-        <section aria-labelledby="practical-guides-heading" style={{ marginBottom: 36, borderTop: "1px solid var(--border)", paddingTop: 24 }}>
-          <h2 id="practical-guides-heading" style={{ fontSize: 22, margin: "0 0 14px" }}>Practical networking guides</h2>
-          <ul style={{ paddingLeft: 20, lineHeight: 2 }}>
-            <li><Link href="/guides/linkedin-connection-request">Connection-request examples and a private note checker</Link></li>
-            <li><Link href="/guides/networking-follow-up">Follow up after a conversation, an introduction, or silence</Link></li>
-            <li><Link href="/guides/ai-networking">AI networking and the role of human review</Link></li>
-            <li><Link href="/guides/networking-goals">Choose a conversation goal and draft a private brief</Link></li>
-          </ul>
-          <Link href="/guides">Browse all guides</Link>
-        </section>
-
-        <Link href={hero.href} className="blog-hero">
-          <div className="meta">
-            <span
-              className="blog-cat"
-              style={{ background: CATEGORY_META[hero.category].color }}
-            >
-              {CATEGORY_META[hero.category].label}
-            </span>
-            <span>{formatDate(hero.publishedAt)}</span>
-            <span aria-hidden="true">·</span>
-            <span>{hero.readTime}</span>
-          </div>
-          <h2>{hero.title}</h2>
-          <p>{hero.excerpt}</p>
-          <div className="arrow">Read the piece →</div>
-        </Link>
-
-        {rest.length > 0 && (
-          <section aria-label="More writing">
-            <div className="blog-grid">
-              {rest.map((p) => (
-                <Link key={p.slug} href={p.href} className="blog-card">
-                  <div className="meta">
-                    <span
-                      className="blog-cat"
-                      style={{ background: CATEGORY_META[p.category].color }}
-                    >
-                      {CATEGORY_META[p.category].label}
-                    </span>
-                    <span>{formatDate(p.publishedAt)}</span>
-                  </div>
-                  <h3>{p.title}</h3>
-                  <p>{p.excerpt}</p>
-                  <div className="read">
-                    {p.readTime} · read →
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </section>
-        )}
-
-        <section className="blog-cta-strip">
-          <span
-            style={{
-              fontSize: 11,
-              fontWeight: 800,
-              letterSpacing: "0.16em",
-              textTransform: "uppercase",
-              color: "#1f8bff"
-            }}
-          >
-            Try the thing
-          </span>
-          <h3
-            style={{
-              fontSize: "clamp(20px, 2.4vw, 26px)",
-              margin: "10px 0",
-              fontWeight: 800,
-              letterSpacing: "-0.01em"
-            }}
-          >
-            Spin up your twin in under two minutes
-          </h3>
-          <p
-            style={{
-              fontSize: 14,
-              color: "var(--text-dim)",
-              lineHeight: 1.5,
-              maxWidth: 460,
-              margin: "0 auto 18px"
-            }}
-          >
-            Reading about it only goes so far. The product is built so
-            anyone can try the full simulated conversation in under two
-            minutes — free forever for early users.
-          </p>
-          <Link
-            href="/login"
-            className="retro-btn retro-btn-primary"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 10,
-              padding: "12px 24px",
-              fontSize: 14.5,
-              fontWeight: 800,
-              borderRadius: 12,
-              boxShadow:
-                "0 12px 36px -16px rgba(31, 139, 255, 0.45), 0 0 0 1px rgba(31, 139, 255, 0.25) inset"
-            }}
-          >
-            <span aria-hidden="true">＋</span>
-            Create my twin
-          </Link>
-        </section>
-      </div>
+        </article>)}
+      </section>
+      <aside className={styles.nextStep} aria-labelledby="journal-next-step">
+        <div><p className={styles.label}>A conversation with context</p><h2 id="journal-next-step">Explore the product for yourself.</h2><p>Choose what your twin should know, review its drafts, and decide what makes a worthwhile next step.</p></div>
+        <Link href="/login" className={styles.primaryLink}>Create my twin <ArrowRight size={18} aria-hidden="true" /></Link>
+      </aside>
     </main>
-  );
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+      "@context": "https://schema.org", "@type": "CollectionPage", "@id": "https://syncedin.org/blog#journal",
+      name: "SyncedIn journal", url: "https://syncedin.org/blog", publisher: { "@id": "https://syncedin.org/#organization" },
+      mainEntity: { "@type": "ItemList", itemListElement: JOURNAL_ENTRIES.map((post, index) => ({ "@type": "ListItem", position: index + 1, name: post.title, url: `https://syncedin.org${post.href}` })) },
+    }).replace(/</g, "\\u003c") }} />
+  </div>;
 }

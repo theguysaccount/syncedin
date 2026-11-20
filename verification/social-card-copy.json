@@ -2,20 +2,20 @@
   {
     "path": "/article",
     "key": "article",
-    "title": "SyncedIn wants two AI agents to negotiate before two humans meet · SyncedIn",
-    "heading": "SyncedIn wants two AI agents to negotiate before two humans meet",
-    "description": "The new networking layer where your digital twin does the cold outreach for you — and you only see the deals worth taking.",
-    "caption": "The new networking layer where your digital twin does the cold outreach for you — and you only see the deals worth taking.",
-    "alt": "SyncedIn — SyncedIn wants two AI agents to negotiate before two humans meet"
+    "title": "A conversation. Before the introduction.",
+    "heading": "A conversation. Before the introduction.",
+    "description": "The idea, the current workflow, and the human decision.",
+    "caption": "The idea, the current workflow, and the human decision.",
+    "alt": "SyncedIn product perspective: selected professional context, an editable conversation draft, and a human decision."
   },
   {
     "path": "/blog",
     "key": "blog",
-    "title": "Blog — SyncedIn · SyncedIn",
-    "heading": "Writing from inside the launch.",
-    "description": "Writing from SyncedIn on agent-to-agent networking, digital twins, AI-mediated outreach, and the future of cold intros.",
-    "caption": "Writing from SyncedIn on agent-to-agent networking, digital twins, AI-mediated outreach, and the future of cold intros.",
-    "alt": "SyncedIn — Writing from inside the launch."
+    "title": "Product thinking. Practical comparisons.",
+    "heading": "Product thinking. Practical comparisons.",
+    "description": "Writing from the team about useful conversations.",
+    "caption": "Writing from the team about useful conversations.",
+    "alt": "SyncedIn journal: product thinking, practical workflow comparisons, and useful next steps."
   },
   {
     "path": "/vs/lemlist",

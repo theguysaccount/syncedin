@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import crypto from "node:crypto";
 import vm from "node:vm";
+import { createRequire } from "node:module";
 import ts from "typescript";
 import React from "react";
 import jsx from "react/jsx-runtime";
@@ -29,6 +30,7 @@ const indexNow = load("lib/indexnow.ts", { "@/verification/social-card-manifest.
 const productReference = load("lib/product-reference.ts");
 const profileCopy = load("lib/profile-preview-copy.ts");
 const profileResult = load("lib/profile-preview-result.ts");
+const launchArticle = load("lib/launch-article.ts");
 const nextServer = { NextResponse: class extends Response { static json(body, options) { return Response.json(body, options); } } };
 const css = new Proxy({}, { get: (_, name) => String(name) });
 const nextLink = { __esModule: true, default: ({ href, children, ...props }) => React.createElement("a", { href, ...props }, children) };
@@ -195,6 +197,78 @@ test("About names the existing project team and offers real help with matching e
   assert.equal(schema.about["@id"], "https://syncedin.org/#organization");
   assert.equal(schema.image, "https://syncedin.org/about/opengraph-image.png");
   assert.equal(page.viewport.userScalable, true);
+});
+
+test("the product article and plain-text export share facts, visible authorship and review dates", () => {
+  const article = launchArticle.LAUNCH_ARTICLE;
+  const page = load("app/article/page.tsx", { ...dependencies, "lucide-react": icons, "@/lib/launch-article": launchArticle, "../guides/GuideLayout": layout, "../guides/guides.module.css": { __esModule: true, default: css } });
+  const html = renderToStaticMarkup(React.createElement(page.default));
+  const parsed = inspectPublicPage(`<html><body>${html}</body></html>`);
+  assert.deepEqual(parsed.headings, [article.title]);
+  assert(html.includes(article.disclosure));
+  const graph = parsed.schemas.find(item => item["@graph"])["@graph"];
+  const schema = graph.find(item => item["@type"] === "Article");
+  assert.equal(schema.headline, article.title);
+  assert.equal(schema.dateModified, article.reviewedAt);
+  assert.equal(schema.author.name, "SyncedIn");
+  assert.equal(schema.author.url, "https://syncedin.org/about");
+  assert.equal(schema.publisher["@id"], "https://syncedin.org/#organization");
+  assert(!Object.hasOwn(schema, "datePublished"), "Do not invent an exact original publication date");
+  assert.equal(page.metadata.alternates.canonical, "https://syncedin.org/article");
+  assert.equal(page.viewport.userScalable, true);
+  const markdown = launchArticle.launchArticleMarkdown();
+  assert.equal(fs.readFileSync("public/articles/syncedin-launch.md", "utf8"), markdown);
+  for (const section of article.sections) {
+    assert(html.includes(section.heading));
+    assert(markdown.includes(`## ${section.heading}`));
+    for (const paragraph of [...section.paragraphs, ...section.steps]) assert(markdown.includes(paragraph));
+  }
+  for (const href of ["/", "/blog", "/login", "/article.md", "https://calendly.com/JackJay"]) assert(parsed.links.some(link => link.href === href), href);
+  assert.equal(parsed.links.filter(link => link.href === "/login").length, 2, "Preserve both signup actions");
+  for (const claim of ["free forever", "pre-vetted", "only AI networking platform", "he wrote recently", "final review windows", "13 parallel ventures"]) assert(!markdown.includes(claim), claim);
+  assert(markdown.includes("fictional example") && markdown.includes("not evidence that the underlying model has been retrained"));
+  const exported = JSON.parse(fs.readFileSync("verification/article-export-manifest.json", "utf8"));
+  assert.equal(exported.sha256, crypto.createHash("sha256").update(markdown).digest("hex"));
+  assert.equal(exported.bytes, Buffer.byteLength(markdown));
+});
+
+test("the optional article download is a canonical-linked text representation and the old redirect stays intact", async () => {
+  const route = load("app/article.md/route.ts", { "@/lib/launch-article": launchArticle });
+  const response = route.GET();
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get("content-type"), "text/markdown; charset=utf-8");
+  assert.equal(response.headers.get("link"), '<https://syncedin.org/article>; rel="canonical"');
+  assert.equal(response.headers.get("x-robots-tag"), "noindex, follow");
+  assert.equal(await response.text(), launchArticle.launchArticleMarkdown());
+  const config = createRequire(import.meta.url)("../next.config.js");
+  const redirects = await config.redirects();
+  assert(redirects.some(row => row.source === "/articles/syncedin-launch.md" && row.destination === "/article" && row.permanent === true));
+  assert(!fs.readFileSync("app/sitemap.ts", "utf8").includes("/article.md"), "Do not promote a duplicate text representation as another canonical HTML page");
+});
+
+test("the journal retains all article and signup actions, matching visible items and intentional image sizes", () => {
+  const page = load("app/blog/page.tsx", { ...dependencies, "lucide-react": icons, "@/lib/launch-article": launchArticle, "../guides/GuideLayout": layout, "../guides/guides.module.css": { __esModule: true, default: css } });
+  const html = renderToStaticMarkup(React.createElement(page.default));
+  const parsed = inspectPublicPage(`<html><body>${html}</body></html>`);
+  assert.deepEqual(parsed.headings, ["SyncedIn journal"]);
+  assert.equal(parsed.links.filter(link => link.href === "/login").length, 2);
+  assert(parsed.links.some(link => link.href === "/guides"));
+  const schema = parsed.schemas.find(item => item["@type"] === "CollectionPage");
+  assert.equal(schema.mainEntity.itemListElement.length, 4);
+  for (const [index, href] of ["/article", "/vs/lemlist", "/vs/clay", "/vs/linkedin-dms"].entries()) {
+    const item = schema.mainEntity.itemListElement[index];
+    assert(parsed.links.some(link => link.href === href && link.text.includes(item.name)));
+    assert(html.includes(`src="${href}/opengraph-image.png"`));
+    assert.equal(item.url, "https://syncedin.org" + href);
+  }
+  assert.equal(schema.mainEntity.itemListElement[0].name, launchArticle.LAUNCH_ARTICLE.title);
+  assert.equal((html.match(/width="1200" height="630"/g) || []).length, 4);
+  assert.equal((html.match(/loading="eager"/g) || []).length, 2);
+  assert.equal((html.match(/loading="lazy"/g) || []).length, 2);
+  assert(!/under two minutes|free forever/.test(html));
+  assert.equal(page.viewport.userScalable, true);
+  const styles = postcss.parse(fs.readFileSync("app/guides/guides.module.css", "utf8"));
+  styles.walkRules(rule => { if (rule.selector.includes(".guideList") && rule.selector.includes("a")) rule.walkDecls("display", declaration => assert.notEqual(declaration.value, "contents", "Keep a real focusable box around each whole article link")); });
 });
 
 test("profile-preview prompts ask for shareable facts rather than private history or inferred psychology", () => {

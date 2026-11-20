@@ -109,7 +109,10 @@
 .toolSection :global(.retro-label) { letter-spacing: 0; text-transform: none; font: inherit; font-size: 13px; font-weight: 600; }
 .toolSection :global(.retro-btn) { letter-spacing: 0; text-transform: none; }
 .funnelInfo { margin-top: 42px; padding-top: 6px; border-top: 1px solid var(--border); }
-@media (max-width: 900px) { .guideList { grid-template-columns: minmax(0, 1fr); gap: 16px; } .guideList article { display: grid; grid-template-columns: 220px minmax(0, 1fr); column-gap: 24px; } .guideList article a { display: contents; } .guideList img { grid-row: 1 / 6; margin: 0; } .guideList .meta { margin-top: 0; } .guideList h2 { font-size: 24px; } }
+.disclosure { color: var(--text-dim); font-size: 14px; border-left: 3px solid var(--accent); padding-left: 16px; }
+.articleImage { margin: 28px 0; }
+.articleImage img { display: block; width: 100%; height: auto; aspect-ratio: 1200 / 630; border: 1px solid var(--border); border-radius: 6px; }
+@media (max-width: 900px) { .guideList { grid-template-columns: minmax(0, 1fr); gap: 16px; } .guideList article a { display: grid; grid-template-columns: 220px minmax(0, 1fr); column-gap: 24px; } .guideList img { grid-row: 1 / 6; margin: 0; } .guideList .meta { margin-top: 0; } .guideList h2 { font-size: 24px; } }
 @media (max-width: 600px) {
   .navigation { padding: 18px 20px; gap: 16px; flex-wrap: wrap; }
   .navigationLinks { gap: 10px; font-size: 13px; width: 100%; justify-content: space-between; }

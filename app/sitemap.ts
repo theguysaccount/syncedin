@@ -32,7 +32,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes: MetadataRoute.Sitemap = [
     // === Top-level marketing ===
     { url: `${APP_URL}/`, changeFrequency: "daily", priority: 1.0 },
-    { url: `${APP_URL}/article`, changeFrequency: "monthly", priority: 0.9 },
+    { url: `${APP_URL}/article`, lastModified: "2026-11-20", changeFrequency: "monthly", priority: 0.9 },
     { url: `${APP_URL}/blog`, lastModified: "2026-11-20", changeFrequency: "weekly", priority: 0.9 },
     { url: `${APP_URL}/agents`, changeFrequency: "monthly", priority: 0.7 },
     { url: `${APP_URL}/about`, lastModified: "2026-11-20", changeFrequency: "monthly", priority: 0.6 },

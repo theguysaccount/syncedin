@@ -250,5 +250,14 @@
     "description": "The purpose, people, and review behind SyncedIn.",
     "caption": "The purpose, people, and review behind SyncedIn.",
     "alt": "About SyncedIn: context-led introductions, editable digital twins, and human judgment."
+  },
+  {
+    "path": "/guides/warm-introduction",
+    "key": "guides--warm-introduction",
+    "title": "A useful introduction. With both people on board.",
+    "heading": "A useful introduction. With both people on board.",
+    "description": "Permission checks, a forwardable summary, and clear context.",
+    "caption": "Permission checks, a forwardable summary, and clear context.",
+    "alt": "SyncedIn warm-introduction guide: a relevant reason, permission from both people, and a clear introduction."
   }
 ]

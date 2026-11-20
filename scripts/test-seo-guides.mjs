@@ -172,6 +172,39 @@ test("the product FAQ exposes the same reviewed answers in native disclosures an
   assert.equal(page.viewport.userScalable, true);
 });
 
+test("the warm-introduction guide separates permission, a shareable summary and the actual introduction", () => {
+  const page = load("app/guides/warm-introduction/page.tsx", dependencies);
+  const html = renderToStaticMarkup(React.createElement(page.default));
+  for (const section of ["Request to the connector", "Forwardable summary, written by the requester", "Permission check from the connector", "The shared introduction"]) assert(html.includes(section), section);
+  for (const phrase of ["The names and work below are fictional", "Silence means permission", "not yet a yes to a meeting", "wait for the actual introduction permission"]) assert(html.toLowerCase().includes(phrase.toLowerCase()), phrase);
+  assert(html.includes('href="/founders-vc"') && html.includes('href="/founders-cofounder"'));
+  assert(html.includes("the-double-optin-introduction"));
+  assert(html.includes("how-to-email-early-stage-investors"));
+  assert(!/guaranteed reply|10x|response rate of/.test(html));
+  assert.equal((html.match(/<blockquote/g) || []).length, 4);
+});
+
+test("the guide hub links every completed guide and reserves image dimensions without eager-loading the whole list", () => {
+  const page = load("app/guides/page.tsx", { ...dependencies, "lucide-react": icons, "./GuideLayout": layout, "./guides.module.css": { __esModule: true, default: css } });
+  const html = renderToStaticMarkup(React.createElement(page.default));
+  for (const guide of guides.NETWORKING_GUIDES) assert(html.includes(`href="/guides/${guide.slug}"`));
+  assert.equal((html.match(/loading="eager"/g) || []).length, 2);
+  assert.equal((html.match(/loading="lazy"/g) || []).length, guides.NETWORKING_GUIDES.length - 2);
+  assert.equal((html.match(/width="1200" height="630"/g) || []).length, guides.NETWORKING_GUIDES.length);
+});
+
+test("the public footer exposes FAQ and keeps all original links without leaking onto private chat surfaces", () => {
+  let pathname = "/guides";
+  const footer = load("app/Footer.tsx", { "react/jsx-runtime": jsx, "next/link": nextLink, "next/navigation": { usePathname: () => pathname }, "@/lib/version": { BUILD_SHA: "test-build" } });
+  const html = renderToStaticMarkup(React.createElement(footer.Footer));
+  for (const href of ["/about", "/guides", "/blog", "/faq", "/wins", "/hypernetwork", "/feedback", "/privacy", "/terms", "/support", "mailto:jacksonjezio@gmail.com"]) assert(html.includes(`href="${href}"`));
+  assert(!html.includes("hover:text-white"), "Light-theme links must not become white on hover");
+  for (const path of ["/login", "/onboarding", "/settings/notifications", "/dashboard", "/messages", "/conversations/test", "/admin/status", "/talk", "/twin", "/chat/example"]) {
+    pathname = path;
+    assert.equal(renderToStaticMarkup(React.createElement(footer.Footer)), "", path);
+  }
+});
+
 test("founder pages retain their actions and pass the intended onboarding destination through sign-in", () => {
   const shell = load("app/(verticals)/VerticalLandingShell.tsx", { "react/jsx-runtime": jsx, "next/link": nextLink, "lucide-react": icons, "../guides/GuideLayout": layout, "../guides/guides.module.css": { __esModule: true, default: css } });
   for (const slug of ["founders-cofounder", "founders-vc"]) {

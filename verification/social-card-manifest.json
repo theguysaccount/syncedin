@@ -194,5 +194,12 @@
     "twitterFile": "app/about/twitter-image.png",
     "sha256": "1c4b9df74fb8e5a57ac5b596527d009c29e286b0bb8bfeae926c5accef14a963",
     "alt": "About SyncedIn: context-led introductions, editable digital twins, and human judgment."
+  },
+  {
+    "path": "/guides/warm-introduction",
+    "file": "app/guides/warm-introduction/opengraph-image.png",
+    "twitterFile": "app/guides/warm-introduction/twitter-image.png",
+    "sha256": "c2024513b8591513f956b574993e3cdd092be0aada69f016c68b2871d562d36e",
+    "alt": "SyncedIn warm-introduction guide: a relevant reason, permission from both people, and a clear introduction."
   }
 ]

@@ -33,6 +33,8 @@ const specs = [
     alt: "SyncedIn cofounder conversations: a shared problem, complementary work, and a real conversation." },
   { route: "/founders-vc", category: "Founder introductions", title: "An investor introduction.\nWith a clearer purpose.", subtitle: "Relevant context and a twin draft for human review.", labels: ["A specific reason", "Accurate context", "Their choice"],
     alt: "SyncedIn founder and investor introductions: a specific reason, accurate context, and the recipient's choice." },
+  { route: "/guides/warm-introduction", title: "A useful introduction.\nWith both people on board.", subtitle: "Permission checks, a forwardable summary, and clear context.", labels: ["A relevant reason", "Both people opt in", "An introduction"],
+    alt: "SyncedIn warm-introduction guide: a relevant reason, permission from both people, and a clear introduction." },
 ];
 const requested = new Set(process.argv.slice(2));
 for (const route of requested) if (!specs.some(spec => spec.route === route)) throw new Error(`Unknown social-card route: ${route}`);

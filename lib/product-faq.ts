@@ -64,7 +64,7 @@ export const PRODUCT_FAQS = [
   {
     id: "audience", q: "Can founders, freelancers, and creators use SyncedIn?",
     a: "You can use a twin to explore a professional introduction when you have a clear purpose and appropriate context. A possible cofounder, collaborator, client, or investor conversation still needs the actual people's judgment. Start with the specific exchange you want to explore.",
-    links: [{ href: "/founders-cofounder", label: "Cofounder conversations" }, { href: "/guides/networking-goals", label: "Choose your conversation goal" }],
+    links: [{ href: "/founders-cofounder", label: "Cofounder conversations" }, { href: "/founders-vc", label: "Investor introductions" }, { href: "/guides/networking-goals", label: "Choose your conversation goal" }],
   },
   {
     id: "creator-links", q: "Can I use SyncedIn with a creator link page?",

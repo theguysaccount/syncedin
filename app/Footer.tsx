@@ -56,36 +56,39 @@ export function Footer() {
         <span style={{ display: "none" }}>build:{BUILD_SHA}</span>
       </div>
       <nav className="flex flex-wrap items-center gap-x-4 gap-y-3" aria-label="SyncedIn footer">
-        <Link href="/about" className="hover:text-white">
+        <Link href="/about" className="hover:underline focus-visible:underline">
           About
         </Link>
-        <Link href="/guides" className="hover:text-white">
+        <Link href="/guides" className="hover:underline focus-visible:underline">
           Guides
         </Link>
-        <Link href="/blog" className="hover:text-white">
+        <Link href="/blog" className="hover:underline focus-visible:underline">
           Blog
         </Link>
-        <Link href="/wins" className="hover:text-white">
+        <Link href="/faq" className="hover:underline focus-visible:underline">
+          FAQ
+        </Link>
+        <Link href="/wins" className="hover:underline focus-visible:underline">
           Wins
         </Link>
-        <Link href="/hypernetwork" className="hover:text-white">
+        <Link href="/hypernetwork" className="hover:underline focus-visible:underline">
           Hypernetwork
         </Link>
-        <Link href="/feedback" className="hover:text-white">
+        <Link href="/feedback" className="hover:underline focus-visible:underline">
           Feedback
         </Link>
-        <Link href="/privacy" className="hover:text-white">
+        <Link href="/privacy" className="hover:underline focus-visible:underline">
           Privacy
         </Link>
-        <Link href="/terms" className="hover:text-white">
+        <Link href="/terms" className="hover:underline focus-visible:underline">
           Terms
         </Link>
-        <Link href="/support" className="hover:text-white">
+        <Link href="/support" className="hover:underline focus-visible:underline">
           Support
         </Link>
         <a
           href="mailto:jacksonjezio@gmail.com"
-          className="hover:text-white"
+          className="hover:underline focus-visible:underline"
         >
           Contact
         </a>

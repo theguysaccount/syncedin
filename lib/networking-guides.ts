@@ -41,6 +41,16 @@ export const NETWORKING_GUIDES = [
     readTime: "6 min read",
     imageAlt: "SyncedIn networking-goal guide: a specific purpose, something useful to offer, and a next step both people choose.",
   },
+  {
+    slug: "warm-introduction",
+    publishedAt: "2026-11-20",
+    reviewedAt: "2026-11-20",
+    title: "Warm introduction emails",
+    description: "Ask for an introduction without putting either person on the spot. Use separate permission checks, a forwardable summary, and a clear introduction after both people agree.",
+    topic: "Make an introduction",
+    readTime: "6 min read",
+    imageAlt: "SyncedIn warm-introduction guide: a relevant reason, permission from both people, and a clear introduction.",
+  },
 ] as const;
 
 export type NetworkingGuide = (typeof NETWORKING_GUIDES)[number];

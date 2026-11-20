@@ -24,6 +24,7 @@ Work window: November 19, 2026 at 11:16 p.m. through November 20 at 4:16 a.m. Ea
 | Who builds this, and where can I get help? | No substantive About page | Build `/about` with the existing project identity, source and support links. Do not invent funding or a founding year. |
 | How do accounts, data, feedback, and texting work? | `/faq` | Correct unsupported claims and give visible answers matching the actual privacy and product behavior. |
 | How can founders explore a cofounder or investor introduction? | `/founders-cofounder`, `/founders-vc` | Improve the existing destinations with distinct questions, appropriate boundaries and preserved onboarding actions. Do not add overlapping variants. |
+| How do I ask a mutual contact for an introduction? | Follow-up resource starts after an introduction | Build `/guides/warm-introduction` for the distinct before-the-introduction workflow, with original examples, separate permission checks, a shareable summary and a direct-contact alternative. |
 
 These are product-fit hypotheses supported by observed questions and product capabilities, not measured keyword volumes. Do not create a new URL for each wording variant.
 
@@ -45,7 +46,7 @@ Run regression tests, type check, build and original-source release gate. Only r
 
 ## Status
 
-Research and source isolation are complete. Batches one and two are deployed and publicly verified, as detailed below. Batch three is undergoing its release checks. No new page is claimed indexed. The original tight wordmark, product controls and unpublished local product branch are preserved.
+Research and source isolation are complete. Batches one through three are deployed and publicly verified, as detailed below. Batch four is undergoing its release checks. No new page is claimed indexed. The original tight wordmark, product controls and unpublished local product branch are preserved.
 
 Publishing permission: Jack explicitly approved tested SEO-only batches during this sprint. Preserve the unrelated local product commits. Animated OG media remains pending creative playback review; do not describe it as completed.
 
@@ -81,3 +82,15 @@ Primary background sources reviewed November 20, 2026: https://www.ycombinator.c
 All three refreshed pages have new, visually inspected, page-specific 1200 x 630 still artwork. OG motion remains pending actual creative playback review. There is no new URL-count claim for these existing pages.
 
 Local release checks passed: 113 tests passed, zero failed, three optional model tests skipped; standalone type check and production build passed; all 28 public routes passed canonical metadata, unique-title, exact-image and sitemap checks. FAQ rows open and close with Enter and Space and show a visible focus outline. The FAQ and founder pages were inspected at desktop, 390px and 320px, including both themes, with no document overflow. Both founder primary actions remain and the cofounder action reached the actual anonymous sign-in form with its onboarding destination preserved. No account was submitted. The task tab was closed, theme and viewport restored, and local server stopped.
+
+Commit `9994ab5b7eec7d01671a99bbe65c1d942052efe6` is on the sprint branch and origin main. Staged deployment `dpl_GBhd56FzSyH8D6txgo7SZoPKemyc` matched all 625 uploaded source files, passed the complete staging checks, and was promoted. The actual public 28-route, image, sitemap, private-route and agent checks passed. A published FAQ disclosure and the investor-page signup action were verified in the browser. Task tabs closed; no account or message submitted.
+
+### Batch Four: Warm Introductions and Useful Internal Links
+
+The new guide addresses the work before a mutual contact makes an introduction. Four fictional examples distinguish a request, an approved shareable summary, a private permission check, and the actual shared introduction. A clear no or lack of permission stops the introduction. The guide also explains why a suitable direct message can be preferable to pursuing a weak mutual connection. No universal response-rate claim, mandatory introduction policy, or automated sending is implied.
+
+Primary sources reviewed November 20, 2026: Fred Wilson's https://avc.com/2009/11/the-double-optin-introduction/ and Michael Seibel's https://www.ycombinator.com/blog/how-to-email-early-stage-investors . The examples are original editorial work, not copied customer conversations. The page uses the existing guide Article/Breadcrumb presentation, has a unique visually inspected share-card pair and canonical sitemap entry, and links contextually to both founder pages.
+
+FAQ is now reachable from the wrapping public footer; its authenticated/chat hide rules and all old destinations are preserved. The audience answer and warm-introduction guide link the investor page where relevant. Founder pages link the new guide. Footer hover styling now retains its readable text color instead of turning white in the light theme. The hub reserves its image dimensions and lazy-loads images after the initial pair; article text and links always render without interaction. OG motion remains pending creative playback review.
+
+Local checks passed: 116 tests, zero failures, three optional model skips; standalone type check, build and 29-card/392-source release gate; all 29 local route metadata, image and sitemap checks. The new guide passed desktop, 390px, 320px and dark-theme inspection without document overflow. Its table accepts keyboard focus and horizontal movement inside the table region. Actual FAQ footer navigation, guide-hub navigation and the contextual investor link reached their intended pages. The existing themes and viewport were restored, task tab closed, and local server stopped. A failed offscreen browser-tool link click was resolved through the visible accessibility control; no application console errors were observed.

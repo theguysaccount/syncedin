@@ -7,8 +7,8 @@ import { GuideNavigation } from "./GuideLayout";
 import styles from "./guides.module.css";
 
 export const metadata: Metadata = withPublicSEO("/guides", {
-  title: "Networking guides: connection notes, follow-ups, and AI twins",
-  description: "Practical SyncedIn guides for starting a relevant conversation, following up thoughtfully, and using an AI networking twin with human review.",
+  title: "Networking guides: notes, introductions, goals, and AI twins",
+  description: "Practical SyncedIn guides for connection notes, warm introductions, conversation goals, thoughtful follow-ups, and human-reviewed AI networking.",
   openGraph: { type: "website" },
 });
 
@@ -18,8 +18,8 @@ export default function GuidesPage() {
     <main className={styles.hub} id="main-content">
       <header className={styles.hubHeader}><h1>Networking guides</h1><p className={styles.introduction}>Better conversations start with better context. Practical guides from SyncedIn for writing an honest opener, making a useful next step, and keeping your judgment in the loop.</p></header>
       <div className={styles.guideList}>
-        {NETWORKING_GUIDES.map(guide => <article key={guide.slug}><Link href={`/guides/${guide.slug}`}>
-          <img src={`/guides/${guide.slug}/opengraph-image.png`} alt={guide.imageAlt} width={1200} height={630} />
+        {NETWORKING_GUIDES.map((guide, index) => <article key={guide.slug}><Link href={`/guides/${guide.slug}`}>
+          <img src={`/guides/${guide.slug}/opengraph-image.png`} alt={guide.imageAlt} width={1200} height={630} loading={index < 2 ? "eager" : "lazy"} decoding="async" />
           <div className={styles.meta}><span>{guide.topic}</span><span>{guide.readTime}</span></div>
           <h2>{guide.title}</h2><p>{guide.description}</p><span className={styles.readGuide}>Read guide <ArrowRight size={17} aria-hidden="true" /></span>
         </Link></article>)}

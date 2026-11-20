@@ -41,6 +41,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${APP_URL}/guides/networking-follow-up`, lastModified: "2026-11-19", changeFrequency: "monthly", priority: 0.7 },
     { url: `${APP_URL}/guides/ai-networking`, lastModified: "2026-11-19", changeFrequency: "monthly", priority: 0.7 },
     { url: `${APP_URL}/guides/networking-goals`, lastModified: "2026-11-20", changeFrequency: "monthly", priority: 0.7 },
+    { url: `${APP_URL}/guides/warm-introduction`, lastModified: "2026-11-20", changeFrequency: "monthly", priority: 0.7 },
 
     // === Comparison pages (high-intent SEO) ===
     { url: `${APP_URL}/vs/lemlist`, lastModified: "2026-11-20", changeFrequency: "monthly", priority: 0.8 },

@@ -1,46 +1,37 @@
-import { withPublicSEO } from '@/lib/public-seo';
+import type { Viewport } from "next";
+import { withPublicSEO } from "@/lib/public-seo";
 import { VerticalLandingShell } from "../(verticals)/VerticalLandingShell";
 
-export const metadata = withPublicSEO('/founders-cofounder', {
-  title: "SyncedIn for co-founder matching",
-  description:
-    "Find a co-founder whose stack of skills, values, and current goals genuinely complements yours. Your twin runs the search across the network so you spend your time on the conversations that matter."
+export const viewport: Viewport = { width: "device-width", initialScale: 1, maximumScale: 5, userScalable: true };
+export const metadata = withPublicSEO("/founders-cofounder", {
+  title: "Find a cofounder: context-led conversations with SyncedIn",
+  description: "Explore a potential cofounder connection with clear goals, complementary work, and an editable twin conversation. Review the fit and choose a real next step together.",
 });
 
-/**
- * /founders-cofounder — top-of-funnel landing page for solo founders /
- * builders looking for a co-founder. Distribution slot: HN 'Ask HN: who
- * wants to be a co-founder' threads, Indie Hackers, On Deck, EF, FoundersList.
- * Single use-case framing converts hotter than the generic homepage.
- */
 export default function FoundersCofounderPage() {
-  return (
-    <VerticalLandingShell
-      slug="founders-cofounder"
-      eyebrow="for co-founder hunting"
-      headline="Find a co-founder whose skills, values, and goals actually complement yours."
-      subhead="Posting in a co-founder Slack and hoping is a slow lottery. Your twin reads the full footprint of every plausible match, ranks the real-fit ones, and starts the conversation with theirs. You jump in when a real overlap is on the table."
-      manifestoOne="Most co-founder searches end at a coffee chat, two months in, when one person says 'I thought you wanted to build infra, I want to build a consumer brand.' The mismatch was visible the day you both posted your first tweet. Two humans just don't have the bandwidth to read each other's full public history and triangulate."
-      manifestoTwo="SyncedIn does. Your twin reads what you've shipped, what you've written, what you've publicly committed to, then runs that against every plausible match in the network and the open web. The matches you see aren't 'people who also marked themselves as looking' — they're people whose actual past and stated goals make a real team possible."
-      pillars={[
-        {
-          k: "01",
-          t: "Drop your build context",
-          d: "What you've shipped, what you're trying to build next, the skill gap you can't fill yourself, the values you won't compromise on. Your twin uses all of it as the filter."
-        },
-        {
-          k: "02",
-          t: "Find People reads everyone's public history",
-          d: "Bio, recent posts, shipped projects, public commitments. Surfaces the candidates whose real footprint complements yours — not the ones with matching bio tags."
-        },
-        {
-          k: "03",
-          t: "Twin-to-twin first conversation",
-          d: "Your twin opens with the specific overlap they spotted. Their clone replies in their voice. You both read the chat. If the substance is there, you take it to a call. If not, you saved each other 30 minutes."
-        }
-      ]}
-      ctaPrimary="Build my founder twin →"
-      ctaSecondary="Read the hypernetwork manifesto"
-    />
-  );
+  return <VerticalLandingShell
+    slug="founders-cofounder"
+    eyebrow="For founders and builders"
+    headline="Find a cofounder"
+    subhead="Start with the work you want to do together. A SyncedIn twin can help explore the overlap, so your first real conversation has a clearer purpose."
+    manifestoOne="A complementary skill is a reason to talk, not enough evidence to form a company together. Your interest in the problem, working style, expectations, and actual experience collaborating can matter as much as the headline on a profile."
+    manifestoTwo="Use SyncedIn to prepare that first exploration from context you choose to share. An invitation can include a simulated conversation for the other person to inspect and correct. It cannot read everyone's complete history, verify a personality, or establish that someone wants to become your cofounder."
+    pillars={[
+      { k: "01", t: "Describe the problem and your contribution", d: "Explain what you are building, the work you can do, and what you want to learn from a potential collaborator. Keep sensitive business or personal information out of a first introduction." },
+      { k: "02", t: "Look for a specific overlap", d: "Review the person's actual work and stated interests. Public information can be incomplete or outdated. Treat a suggested match as a question to investigate." },
+      { k: "03", t: "Review the draft, then speak as people", d: "Correct the twin's assumptions and propose one small exchange. A simulated reply is not the person's words, and a promising chat is not an accepted role or partnership." },
+    ]}
+    questions={[
+      { title: "Which problem do you both want to work on?", detail: "Compare the problem itself, why it matters to each of you, and what you would do if the first idea changed. Avoid inferring commitment from enthusiasm in a single message." },
+      { title: "What would each person actually contribute?", detail: "Discuss concrete work, relevant experience, and gaps you still need to understand. A complementary job title does not show how you collaborate under real constraints." },
+      { title: "Which working expectations need a direct conversation?", detail: "Ask about availability, communication, location, and how you would handle disagreement. Do not infer someone's schedule, personal circumstances, or willingness to leave another role." },
+      { title: "What small collaboration would give you useful evidence?", detail: "If both people want to continue, agree on a bounded activity and how you will review it. Treat any roles, ownership, money, or formal commitments as separate decisions for the actual people and appropriate advisers." },
+    ]}
+    sources={[
+      { href: "https://www.ycombinator.com/blog/10-questions-to-discuss-with-a-potential-co-founder", label: "Y Combinator: questions to discuss with a potential cofounder" },
+      { href: "https://www.ycombinator.com/cofounder-matching", label: "Y Combinator's separate cofounder-matching service" },
+    ]}
+    ctaPrimary="Build my founder twin"
+    ctaSecondary="Read the hypernetwork vision"
+  />;
 }

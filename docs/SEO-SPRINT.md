@@ -20,6 +20,10 @@ Work window: November 19, 2026 at 11:16 p.m. through November 20 at 4:16 a.m. Ea
 | How do I follow up after meeting someone? | No focused existing resource | Candidate `/guides/networking-follow-up`: context-specific examples, a bounded ask and a respectful stop rule. Not another product comparison. |
 | What does AI-twin networking mean? | Launch article, technical paper, agents setup | Candidate `/guides/ai-networking`: explain a human-reviewed workflow, limitations, contextual feedback and when a simple message is better. |
 | Where are the practical guides? | `/blog` lists only launch/comparison material | Build `/guides` only when distinct completed resources exist, and add relevant crawlable links from existing public pages. |
+| How do I give one conversation a clear purpose? | Existing product goal editor, no public explanation | Build `/guides/networking-goals` with a private brief builder matching the existing 500-character product limit. |
+| Who builds this, and where can I get help? | No substantive About page | Build `/about` with the existing project identity, source and support links. Do not invent funding or a founding year. |
+| How do accounts, data, feedback, and texting work? | `/faq` | Correct unsupported claims and give visible answers matching the actual privacy and product behavior. |
+| How can founders explore a cofounder or investor introduction? | `/founders-cofounder`, `/founders-vc` | Improve the existing destinations with distinct questions, appropriate boundaries and preserved onboarding actions. Do not add overlapping variants. |
 
 These are product-fit hypotheses supported by observed questions and product capabilities, not measured keyword volumes. Do not create a new URL for each wording variant.
 
@@ -41,7 +45,7 @@ Run regression tests, type check, build and original-source release gate. Only r
 
 ## Status
 
-Research and source isolation are complete. Batch one is deployed and publicly verified, as detailed below. Batch two has passed its local build, regression, responsive, theme and metadata checks and is ready for staging. No new page is claimed indexed. The original tight wordmark, product controls and unpublished local product branch are preserved.
+Research and source isolation are complete. Batches one and two are deployed and publicly verified, as detailed below. Batch three is undergoing its release checks. No new page is claimed indexed. The original tight wordmark, product controls and unpublished local product branch are preserved.
 
 Publishing permission: Jack explicitly approved tested SEO-only batches during this sprint. Preserve the unrelated local product commits. Animated OG media remains pending creative playback review; do not describe it as completed.
 
@@ -52,7 +56,7 @@ Publishing permission: Jack explicitly approved tested SEO-only batches during t
 - Anonymous production checks passed all 26 page-specific card pairs, private routes, agent resources, and actual MCP tool discovery. A live browser verified the guide hub, note editing and copying, and the signup destination. No account was created or message sent. Task tabs were closed.
 - Current `/vs/clay` has its own canonical. Three historical login-query examples return noindex. A real missing slug returns 404; `/guides/` permanently redirects to `/guides`. These are response checks, not Search Console validation or new index inclusion.
 
-### Batch Two: Local Verification
+### Batch Two: Deployed and Verified
 
 About and a networking-goal guide address distinct gaps: product identity and a specific conversation purpose. The private goal-brief builder counts the full brief against the existing 500-character conversation editor. Clay and lemlist comparisons now use current first-party product descriptions instead of fixed prices or claims that their AI is only static templating. Sources: https://www.clay.com/use-cases/data-enrichment , https://www.clay.com/use-cases/outbound , https://www.clay.com/pricing , https://www.lemlist.com/product/multichannel-prospecting , https://www.lemlist.com/product/lemagent , https://www.lemlist.com/pricing . Reviewed November 20, 2026.
 
@@ -61,3 +65,19 @@ Shared entity markup describes the actual browser product, removes the unsupport
 The public verifier now parses HTML and XML using the already-installed xmldom parser, explicitly declared as a development dependency. SVG titles, including SVG without xmlns, are excluded from document-title counts. No new runtime dependency or installation was needed. Page-specific image types, canonical URLs, H1s, unique titles, JSON-LD, and sitemap membership are checked in addition to exact artwork bytes. Browser layout and interaction checks remain required.
 
 Final local checks: 111 passed, 0 failed, 3 optional live-model tests skipped. Production build and 28-card/392-original-source gate passed. All 28 locally served pages passed parsed metadata and sitemap checks. The goal builder passed empty, template, over-limit, read-only output, and actual copy/paste-back checks. Desktop, 390px and 320px layouts passed; the 320px signup label remains on one line. Light and dark themes were exercised through the existing theme control, with scoped status/link contrast tests at 4.5:1 or better. Theme restored, viewport reset, exact task tab closed, and temporary local server stopped. These checks do not establish new indexing or target-app animated-preview behaviour.
+
+Commit `d65b22abc01082256f397f6797da663a030624e8` is on the sprint branch and origin main. Staged deployment `dpl_DA14AMNpC8dxeJWkfH7KhCAcK7aK` matched all 624 uploaded source files before promotion. All 28 routes and existing privacy/agent checks passed anonymously after promotion. A Git deployment of the same SHA became production. The real OS clipboard was verified separately from the browser tool's virtual clipboard; the 276-character event brief copied exactly.
+
+The existing verified www domain now permanently redirects to the same apex with status 308, preserving its path and query. No DNS change was made. This is a current response correction, not proof that Google has reprocessed historical URLs.
+
+### Batch Three: FAQ and Founder Trust Corrections
+
+The existing FAQ contained unsupported funding, founding-year, price, app-availability, data-handling, timing, and automatic-negotiation claims. Its 16 reviewed answers now distinguish provided context from raw chat histories, contextual prompt feedback from model retraining, and a saved phone number from messaging consent. Native disclosure controls, signup links and support access remain. Visible answers and FAQ JSON-LD share the same data source. No rich-result eligibility or ranking benefit is promised.
+
+The cofounder and investor pages now describe separate useful conversations without complete-history scans, invented fundraising outcomes, or guaranteed acceptance. Their existing primary actions preserve the same onboarding destination through sign-in; secondary hypernetwork and home links remain. New questions encourage checking real work and asking the actual people. Product, authentication and notification code is unchanged.
+
+Primary background sources reviewed November 20, 2026: https://www.ycombinator.com/blog/10-questions-to-discuss-with-a-potential-co-founder , https://www.ycombinator.com/cofounder-matching , https://avc.com/2009/11/the-double-optin-introduction/ , and LinkedIn's messaging help above. These sources do not endorse SyncedIn. Context processing and retention wording follows the existing privacy policy and Anthropic's current commercial API guidance: https://privacy.claude.com/en/articles/7996866-how-long-do-you-store-my-organization-s-data .
+
+All three refreshed pages have new, visually inspected, page-specific 1200 x 630 still artwork. OG motion remains pending actual creative playback review. There is no new URL-count claim for these existing pages.
+
+Local release checks passed: 113 tests passed, zero failed, three optional model tests skipped; standalone type check and production build passed; all 28 public routes passed canonical metadata, unique-title, exact-image and sitemap checks. FAQ rows open and close with Enter and Space and show a visible focus outline. The FAQ and founder pages were inspected at desktop, 390px and 320px, including both themes, with no document overflow. Both founder primary actions remain and the cofounder action reached the actual anonymous sign-in form with its onboarding destination preserved. No account was submitted. The task tab was closed, theme and viewport restored, and local server stopped.

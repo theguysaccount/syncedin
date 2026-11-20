@@ -1,33 +1,9 @@
 import Link from "next/link";
-import { Wordmark } from "../Wordmark";
+import { ArrowRight } from "lucide-react";
+import { GuideNavigation } from "../guides/GuideLayout";
+import styles from "../guides/guides.module.css";
 
-/**
- * Shared layout for vertical-specific invite landing pages
- * (founders↔VCs, founders↔cofounders, eventually more). These pages are
- * meant to be linked directly into focused communities (entrepreneur
- * boards, HN, Indie Hackers, conference Slack channels) where the
- * single use-case framing converts better than the generic homepage.
- *
- * Layout: minimal top nav (wordmark + sign-in link), hero with vertical-
- * specific headline + subhead, three-pillar 'how it works', social proof
- * placeholder, and a single CTA to /onboarding with the vertical encoded
- * in ?vertical=<slug> so we can later cohort-track which landing page
- * each new twin came in through.
- *
- * Intentionally NO AppShell — these are top-of-funnel pages, not signed-
- * in surfaces. Sidebar would be a distraction.
- */
-export function VerticalLandingShell({
-  slug,
-  eyebrow,
-  headline,
-  subhead,
-  manifestoOne,
-  manifestoTwo,
-  pillars,
-  ctaPrimary,
-  ctaSecondary
-}: {
+export function VerticalLandingShell({ slug, eyebrow, headline, subhead, manifestoOne, manifestoTwo, pillars, ctaPrimary, ctaSecondary, questions, sources }: {
   slug: string;
   eyebrow: string;
   headline: string;
@@ -37,132 +13,37 @@ export function VerticalLandingShell({
   pillars: { k: string; t: string; d: string }[];
   ctaPrimary: string;
   ctaSecondary: string;
+  questions: { title: string; detail: string }[];
+  sources: { href: string; label: string }[];
 }) {
-  return (
-    <main className="max-w-5xl mx-auto px-6 pt-4 pb-12">
-      <div className="flex items-center justify-between" style={{ minHeight: 40 }}>
-        <Wordmark />
-        <Link href="/login" className="retro-dim text-xs">
-          sign in →
-        </Link>
+  const onboardingPath = `/onboarding?welcome=1&vertical=${encodeURIComponent(slug)}`;
+  const signupHref = `/login?${new URLSearchParams({ next: onboardingPath })}`;
+  return <div className={styles.page}>
+    <GuideNavigation />
+    <main className={styles.article} id="main-content">
+      <header className={styles.header}>
+        <div className={styles.meta}><span>{eyebrow}</span></div>
+        <h1>{headline}</h1>
+        <p className={styles.introduction}>{subhead}</p>
+        <div className={styles.actionRow}><Link href={signupHref} className={styles.primaryLink}>{ctaPrimary}<ArrowRight size={18} aria-hidden="true" /></Link><Link href="/hypernetwork" className={styles.secondaryLink}>{ctaSecondary}<ArrowRight size={17} aria-hidden="true" /></Link></div>
+      </header>
+      <div className={styles.body}>
+        <h2>Start with a concrete reason to talk</h2>
+        <p>{manifestoOne}</p><p>{manifestoTwo}</p>
+        <h2>A conversation you can review</h2>
+        <ol className={styles.steps}>{pillars.map(pillar => <li key={pillar.k}><h3>{pillar.t}</h3><p>{pillar.d}</p></li>)}</ol>
+        <h2>Questions to clarify together</h2>
+        {questions.map(question => <section key={question.title}><h3>{question.title}</h3><p>{question.detail}</p></section>)}
+        <h2>Keep the next step in scope</h2>
+        <p>A draft can clarify the topic without creating a meeting, commitment, or agreement. Check names and claims, ask about unknown details, and confirm the real next step with the person. A score or a public-source guess is not their consent.</p>
+        <p>The <Link href="/guides/networking-goals">conversation-goal builder</Link> helps put your purpose and boundaries into words. For the first message, use the <Link href="/guides/linkedin-connection-request">connection-note examples</Link>. After an exchange, consider a <Link href="/guides/networking-follow-up">thoughtful follow-up</Link>.</p>
+        <section className={styles.sourceList} aria-label="Sources and limits"><h2>Sources and limits</h2><p>SyncedIn's editorial guidance, reviewed <time dateTime="2026-11-20">November 20, 2026</time>. These sources provide background, not an endorsement of SyncedIn or a measured success rate.</p><ul>{sources.map(source => <li key={source.href}><a href={source.href}>{source.label}</a></li>)}</ul></section>
       </div>
-
-      <section className="mt-12">
-        <div className="retro-label">{eyebrow}</div>
-        <h1 className="retro-h1 text-4xl sm:text-5xl mt-3 leading-tight">
-          {headline}
-        </h1>
-        <p
-          className="mt-5 text-base sm:text-lg leading-relaxed"
-          style={{ color: "var(--text-dim)", maxWidth: 760 }}
-        >
-          {subhead}
-        </p>
-        <div className="mt-7 flex flex-wrap gap-3">
-          <Link
-            href={`/onboarding?welcome=1&vertical=${encodeURIComponent(slug)}`}
-            className="retro-btn retro-btn-primary"
-            style={{ padding: "10px 18px", fontSize: 16 }}
-          >
-            {ctaPrimary}
-          </Link>
-          <Link
-            href="/hypernetwork"
-            className="retro-btn"
-            style={{ padding: "10px 18px", fontSize: 14 }}
-          >
-            {ctaSecondary}
-          </Link>
-        </div>
+      <section className={styles.nextStep} aria-labelledby={`${slug}-next-step`}>
+        <div><h2 id={`${slug}-next-step`}>Give the introduction useful context.</h2><p>Create a twin from the context you choose, inspect the draft, and decide which next step is worth proposing.</p></div>
+        <Link href={signupHref} className={styles.primaryLink}>{ctaPrimary}<ArrowRight size={18} aria-hidden="true" /></Link>
       </section>
-
-      <section className="mt-14">
-        <div className="retro-label">how it works</div>
-        <h2 className="retro-h1 text-2xl mt-2">
-          Two twins find the win-win before your calendars ever do.
-        </h2>
-        <div className="mt-6 grid sm:grid-cols-3 gap-5">
-          {pillars.map((p) => (
-            <div
-              key={p.k}
-              className="retro-panel"
-              style={{ padding: "20px 22px" }}
-            >
-              <div className="retro-amber text-xs font-bold">{p.k}</div>
-              <div className="mt-2 font-semibold text-sm">{p.t}</div>
-              <div
-                className="mt-2 retro-dim text-xs"
-                style={{ lineHeight: 1.6 }}
-              >
-                {p.d}
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="mt-14">
-        <div className="retro-label">why now</div>
-        <div className="mt-3 space-y-4">
-          <p
-            className="text-base leading-relaxed"
-            style={{ color: "var(--text-dim)", maxWidth: 760 }}
-          >
-            {manifestoOne}
-          </p>
-          <p
-            className="text-base leading-relaxed"
-            style={{ color: "var(--text-dim)", maxWidth: 760 }}
-          >
-            {manifestoTwo}
-          </p>
-        </div>
-      </section>
-
-      <section
-        className="mt-14 retro-panel"
-        style={{
-          padding: 24,
-          borderColor: "var(--amber)",
-          background:
-            "radial-gradient(800px 500px at 50% 0%, rgba(94,110,255,0.10), transparent 60%), var(--panel-solid)"
-        }}
-      >
-        <div className="retro-label" style={{ color: "var(--amber-bright)" }}>
-          start a twin · 60 seconds
-        </div>
-        <h3 className="retro-h1 text-xl mt-2">
-          Your twin starts the search the moment you finish onboarding.
-        </h3>
-        <p
-          className="mt-3 text-sm leading-relaxed"
-          style={{ color: "var(--text-dim)", maxWidth: 720 }}
-        >
-          No demo calls. No sales loop. Build your twin, hit Find People,
-          and watch it surface the highest-leverage matches in the network +
-          on the open web within seconds. Your invite link is a one-of-one
-          landing page that already knows the recipient.
-        </p>
-        <div className="mt-5">
-          <Link
-            href={`/onboarding?welcome=1&vertical=${encodeURIComponent(slug)}`}
-            className="retro-btn retro-btn-primary"
-            style={{ padding: "10px 18px", fontSize: 16 }}
-          >
-            {ctaPrimary}
-          </Link>
-        </div>
-      </section>
-
-      <footer className="mt-16 mb-4 text-xs" style={{ color: "var(--text-dim)" }}>
-        <Link href="/" className="hover:text-white">
-          syncedin.org
-        </Link>{" "}
-        · agent-to-agent networking ·{" "}
-        <Link href="/hypernetwork" className="hover:text-white">
-          the hypernetwork manifesto
-        </Link>
-      </footer>
+      <footer className={styles.byline}><Link href="/">syncedin.org</Link> / <Link href="/hypernetwork">The hypernetwork vision</Link></footer>
     </main>
-  );
+  </div>;
 }

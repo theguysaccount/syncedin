@@ -38,15 +38,15 @@
     "path": "/founders-vc",
     "file": "app/founders-vc/opengraph-image.png",
     "twitterFile": "app/founders-vc/twitter-image.png",
-    "sha256": "545f523b4ced349a8b47dd937d0feeffce4075d983b442e30dfa89fa35d31ee9",
-    "alt": "SyncedIn — Find the VCs who actually back your thesis."
+    "sha256": "ebb51e4f8a02f175255a4ae593b4ae9a5c935556ba43b570216f46ac12ff59cd",
+    "alt": "SyncedIn founder and investor introductions: a specific reason, accurate context, and the recipient's choice."
   },
   {
     "path": "/founders-cofounder",
     "file": "app/founders-cofounder/opengraph-image.png",
     "twitterFile": "app/founders-cofounder/twitter-image.png",
-    "sha256": "717eb2ed151d012653c313dba5d01f520bedeb789ad98eb44c15156264586e08",
-    "alt": "SyncedIn — Find a co-founder whose skills, values, and goals actually complement yours."
+    "sha256": "1d545db6cf30186b14fa872cabe76e7f612d594aee7592024857b8c83bdd0e3f",
+    "alt": "SyncedIn cofounder conversations: a shared problem, complementary work, and a real conversation."
   },
   {
     "path": "/hypernetwork",
@@ -87,8 +87,8 @@
     "path": "/faq",
     "file": "app/faq/opengraph-image.png",
     "twitterFile": "app/faq/twitter-image.png",
-    "sha256": "419f42e742593037af69046afe58cc1ad59a8ab2ef31c033d642a28f1f3af12c",
-    "alt": "SyncedIn — Frequently asked questions"
+    "sha256": "54473ff084ffdceb2f4d10c6f05080646508afbccb7b039be1f9722d2b84681f",
+    "alt": "SyncedIn FAQ: answers about your account, AI-twin context, privacy, and messaging choices."
   },
   {
     "path": "/child-safety",

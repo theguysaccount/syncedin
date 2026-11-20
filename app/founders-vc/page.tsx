@@ -1,47 +1,37 @@
-import { withPublicSEO } from '@/lib/public-seo';
+import type { Viewport } from "next";
+import { withPublicSEO } from "@/lib/public-seo";
 import { VerticalLandingShell } from "../(verticals)/VerticalLandingShell";
 
-export const metadata = withPublicSEO('/founders-vc', {
-  title: "SyncedIn for founders × VCs",
-  description:
-    "Find a VC who actually backs your thesis. Your twin reads every public note, post, and portfolio company they care about and surfaces the ones who would say yes immediately."
+export const viewport: Viewport = { width: "device-width", initialScale: 1, maximumScale: 5, userScalable: true };
+export const metadata = withPublicSEO("/founders-vc", {
+  title: "Founder and investor introductions with SyncedIn",
+  description: "Prepare a more intentional investor introduction with relevant public context, a clear reason to connect, and a twin draft for human review. No funding or reply guarantee.",
 });
 
-/**
- * /founders-vc — top-of-funnel landing page for founders looking to match
- * with the right investor. Shareable into entrepreneur boards (YC, OnDeck,
- * IndieHackers), accelerator alumni Slacks, conference channels. The
- * use-case is singular so the page converts hotter than the generic
- * homepage which has to talk to many audiences at once.
- */
 export default function FoundersVCPage() {
-  return (
-    <VerticalLandingShell
-      slug="founders-vc"
-      eyebrow="for founders raising"
-      headline="Find the VCs who actually back your thesis."
-      subhead="Your twin reads every public note, post, and portfolio company a VC has put on the open internet — then surfaces the ones who would say yes to your round immediately. No cold-DM lottery. No 'just sending you my deck.'"
-      manifestoOne="Most pitch loops are a slow lottery. You send the same deck to 80 funds, get 5 calls, 4 are wrong fit, and you burn three months learning what the VC already knew about themselves the day they started their fund. The win-win was visible before any meeting ever happened — your twin should have caught it."
-      manifestoTwo="SyncedIn flips the loop. Your twin reads the VC's actual stated thesis (recent investments, Twitter takes, fund updates) against your goals and stage. When there's a real match, the two twins start the conversation. You see the chat, edit anything, accept the meeting only when the win-win is already on the table."
-      pillars={[
-        {
-          k: "01",
-          t: "Drop your raise context",
-          d: "Stage, sector, traction, who you're already talking to. Your twin uses this to filter — it never pitches you to a fund whose last three investments contradict your space."
-        },
-        {
-          k: "02",
-          t: "Find People surfaces the real fits",
-          d: "Scans the platform + open web for VCs whose public footprint actually overlaps your raise. Sorted by win-win density, not vanity reach."
-        },
-        {
-          k: "03",
-          t: "Your twin opens the conversation",
-          d: "A real opener that references their specific portfolio company, post, or thesis line. Their clone replies in their voice. The clones surface what the meeting would actually be about before either of you spends 30 minutes."
-        }
-      ]}
-      ctaPrimary="Build my founder twin →"
-      ctaSecondary="Read the hypernetwork manifesto"
-    />
-  );
+  return <VerticalLandingShell
+    slug="founders-vc"
+    eyebrow="For founders exploring an introduction"
+    headline="Founder and investor introductions"
+    subhead="Explain why a particular conversation could be useful. A SyncedIn twin can help prepare the context and explore a possible next step for people to review."
+    manifestoOne="An investor's public thesis, work, or portfolio can help you form a relevant question. It does not tell you that they are currently investing, interested in your company, or willing to take a meeting. Start by checking the current source and the actual person you want to reach."
+    manifestoTwo="Give your twin the professional context you are comfortable sharing and the purpose of the introduction. Review the draft for accuracy and remove assumed endorsements, availability, or funding commitments. SyncedIn does not guarantee investor acceptance or a fundraising outcome."
+    pillars={[
+      { k: "01", t: "Choose what you want to discuss", d: "Name the company or problem, your current question, and why this person's work seems relevant. Leave sensitive financial, customer, and personal information out of an initial public-source draft." },
+      { k: "02", t: "Verify the reason for the introduction", d: "Check the person's role and current public statements. A past investment or social post can be a starting point, but it is not confirmation of today's mandate or interest." },
+      { k: "03", t: "Propose a next step they can choose", d: "A question in the current channel may be enough. When someone offers an introduction, ask whether both people are comfortable with it before sharing contact details or adding them to a thread." },
+    ]}
+    questions={[
+      { title: "Why this person, rather than a generic investor list?", detail: "Identify one relevant, current piece of professional context. Do not imply a relationship with the person or their firm merely because you read a public source." },
+      { title: "Is your purpose clear?", detail: "Be direct about whether you are seeking feedback, learning about a sector, or asking about fundraising fit. Do not disguise a fundraising request as an unrelated research conversation." },
+      { title: "What may be shared in a first exchange?", detail: "Choose a brief summary you are comfortable having forwarded. Share confidential materials only through an appropriate, agreed process, not because a twin generated a plausible reason to send them." },
+      { title: "What would a useful response look like?", detail: "A clarification, a referral offered with permission, or an honest no may all be useful. A draft meeting, introduction, or investment is not an accepted commitment." },
+    ]}
+    sources={[
+      { href: "https://avc.com/2009/11/the-double-optin-introduction/", label: "Fred Wilson: the double-opt-in introduction" },
+      { href: "https://www.linkedin.com/help/linkedin/answer/a554575", label: "LinkedIn: messaging access and recipient settings" },
+    ]}
+    ctaPrimary="Build my founder twin"
+    ctaSecondary="Read the hypernetwork vision"
+  />;
 }

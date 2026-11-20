@@ -48,8 +48,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${APP_URL}/vs/linkedin-dms`, lastModified: "2026-11-19", changeFrequency: "monthly", priority: 0.8 },
 
     // === Vertical landing pages ===
-    { url: `${APP_URL}/founders-vc`, changeFrequency: "monthly", priority: 0.7 },
-    { url: `${APP_URL}/founders-cofounder`, changeFrequency: "monthly", priority: 0.7 },
+    { url: `${APP_URL}/founders-vc`, lastModified: "2026-11-20", changeFrequency: "monthly", priority: 0.7 },
+    { url: `${APP_URL}/founders-cofounder`, lastModified: "2026-11-20", changeFrequency: "monthly", priority: 0.7 },
 
     // === Community-shaped surfaces ===
     { url: `${APP_URL}/hypernetwork`, changeFrequency: "weekly", priority: 0.7 },
@@ -58,7 +58,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${APP_URL}/feedback`, changeFrequency: "daily", priority: 0.5 },
 
     // Existing public pages discovered outside the original sitemap.
-    { url: `${APP_URL}/faq` },
+    { url: `${APP_URL}/faq`, lastModified: "2026-11-20" },
     { url: `${APP_URL}/child-safety` },
     { url: `${APP_URL}/transformer` },
     { url: `${APP_URL}/wins` },

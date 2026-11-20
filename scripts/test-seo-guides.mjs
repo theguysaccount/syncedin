@@ -21,6 +21,7 @@ function load(file, dependencies = {}) {
 }
 const guides = load("lib/networking-guides.ts");
 const goals = load("lib/networking-goals.ts");
+const productFaq = load("lib/product-faq.ts");
 const cards = JSON.parse(fs.readFileSync("verification/social-card-manifest.json", "utf8"));
 const seo = load("lib/public-seo.ts", { "@/verification/social-card-manifest.json": { default: cards } });
 const css = new Proxy({}, { get: (_, name) => String(name) });
@@ -144,6 +145,56 @@ test("About names the existing project team and offers real help with matching e
   assert.equal(schema.about["@id"], "https://syncedin.org/#organization");
   assert.equal(schema.image, "https://syncedin.org/about/opengraph-image.png");
   assert.equal(page.viewport.userScalable, true);
+});
+
+test("the product FAQ exposes the same reviewed answers in native disclosures and structured data", () => {
+  const page = load("app/faq/page.tsx", { ...dependencies, "lucide-react": icons, "@/lib/product-faq": productFaq, "../guides/GuideLayout": layout, "../guides/guides.module.css": { __esModule: true, default: css } });
+  const html = renderToStaticMarkup(React.createElement(page.default));
+  const parsed = inspectPublicPage(`<html><body>${html}</body></html>`);
+  assert.equal(parsed.headings.length, 1);
+  assert.equal(new Set(productFaq.PRODUCT_FAQS.map(item => item.id)).size, 16);
+  assert.equal((html.match(/<details[ >]/g) || []).length, productFaq.PRODUCT_FAQS.length);
+  assert.equal((html.match(/<summary[ >]/g) || []).length, productFaq.PRODUCT_FAQS.length);
+  const schema = parsed.schemas.find(item => item["@type"] === "FAQPage");
+  assert.equal(schema.dateModified, productFaq.PRODUCT_FAQ_REVIEWED_AT);
+  assert.deepEqual(schema.mainEntity.map(item => [item.name, item.acceptedAnswer.text]), productFaq.PRODUCT_FAQS.map(item => [item.q, item.a]));
+  for (const item of productFaq.PRODUCT_FAQS) {
+    assert(html.includes(`id="${item.id}"`));
+    assert(html.includes(item.q.replaceAll("'", "&#x27;")), item.id);
+    for (const link of item.links) assert(html.includes(`href="${link.href}"`));
+  }
+  for (const falseClaim of ["$20M", "founded in 2025", "never leaves our database", "unlimited outbound", "paid creator inbox", "App Store review", "30-60 seconds"]) assert(!html.includes(falseClaim), falseClaim);
+  assert(html.includes("They do not retrain the underlying model"));
+  assert(html.includes("500 characters"));
+  assert(html.includes("Saving a number is separate from opting in"));
+  assert(html.includes('href="/support"'));
+  assert.equal(page.metadata.alternates.canonical, "https://syncedin.org/faq");
+  assert.equal(page.viewport.userScalable, true);
+});
+
+test("founder pages retain their actions and pass the intended onboarding destination through sign-in", () => {
+  const shell = load("app/(verticals)/VerticalLandingShell.tsx", { "react/jsx-runtime": jsx, "next/link": nextLink, "lucide-react": icons, "../guides/GuideLayout": layout, "../guides/guides.module.css": { __esModule: true, default: css } });
+  for (const slug of ["founders-cofounder", "founders-vc"]) {
+    const page = load(`app/${slug}/page.tsx`, { ...dependencies, "../(verticals)/VerticalLandingShell": shell });
+    const html = renderToStaticMarkup(React.createElement(page.default));
+    assert.equal((html.match(/<h1[ >]/g) || []).length, 1);
+    const parsed = inspectPublicPage(`<html><body>${html}</body></html>`);
+    const links = [...html.matchAll(/href="([^"]+)"/g)].map(match => match[1].replaceAll("&amp;", "&"));
+    const signupLinks = links.filter(href => href.startsWith("/login?next="));
+    assert.equal(signupLinks.length, 2, "Keep both primary signup actions");
+    for (const href of signupLinks) {
+      const auth = new URL(href, "https://syncedin.org");
+      assert.equal(auth.searchParams.get("next"), `/onboarding?welcome=1&vertical=${slug}`);
+    }
+    assert(links.includes("/hypernetwork") && links.includes("/"));
+    assert(html.includes("Sources and limits"));
+    assert(html.includes("Questions to clarify together"));
+    assert(html.includes("is not their consent"));
+    for (const claim of ["80 funds", "5 calls", "30 minutes saved", "yes immediately", "every public post"]) assert(!html.includes(claim), claim);
+    assert.equal(page.metadata.alternates.canonical, `https://syncedin.org/${slug}`);
+    assert.equal(parsed.headings.length, 1);
+    assert.equal(page.viewport.userScalable, true);
+  }
 });
 
 test("the release parser handles HTML attributes, entities, nested JSON and XML sitemap namespaces", () => {

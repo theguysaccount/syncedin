@@ -47,20 +47,20 @@
   {
     "path": "/founders-vc",
     "key": "founders-vc",
-    "title": "SyncedIn for founders × VCs · SyncedIn",
-    "heading": "Find the VCs who actually back your thesis.",
-    "description": "Find a VC who actually backs your thesis. Your twin reads every public note, post, and portfolio company they care about and surfaces the ones who would say yes immediately.",
-    "caption": "Find a VC who actually backs your thesis. Your twin reads every public note, post, and portfolio company they care about and surfaces the ones who would say yes immediately.",
-    "alt": "SyncedIn — Find the VCs who actually back your thesis."
+    "title": "An investor introduction. With a clearer purpose.",
+    "heading": "An investor introduction. With a clearer purpose.",
+    "description": "Relevant context and a twin draft for human review.",
+    "caption": "Relevant context and a twin draft for human review.",
+    "alt": "SyncedIn founder and investor introductions: a specific reason, accurate context, and the recipient's choice."
   },
   {
     "path": "/founders-cofounder",
     "key": "founders-cofounder",
-    "title": "SyncedIn for co-founder matching · SyncedIn",
-    "heading": "Find a co-founder whose skills, values, and goals actually complement yours.",
-    "description": "Find a co-founder whose stack of skills, values, and current goals genuinely complements yours. Your twin runs the search across the network so you spend your time on the conversations that matter.",
-    "caption": "Find a co-founder whose stack of skills, values, and current goals genuinely complements yours. Your twin runs the search across the network so you spend your time on the…",
-    "alt": "SyncedIn — Find a co-founder whose skills, values, and goals actually complement yours."
+    "title": "A cofounder conversation. Start with the actual work.",
+    "heading": "A cofounder conversation. Start with the actual work.",
+    "description": "Explore the overlap. Review the fit. Choose a next step.",
+    "caption": "Explore the overlap. Review the fit. Choose a next step.",
+    "alt": "SyncedIn cofounder conversations: a shared problem, complementary work, and a real conversation."
   },
   {
     "path": "/hypernetwork",
@@ -110,11 +110,11 @@
   {
     "path": "/faq",
     "key": "faq",
-    "title": "SyncedIn FAQ — how the AI networking agent works · SyncedIn",
-    "heading": "Frequently asked questions",
-    "description": "Frequently asked questions about SyncedIn: how your AI twin gets built, what data it uses, how the matchmaking works, pricing, privacy, and how it compares to LinkedIn / Lunchclub / paid-DM tools.",
-    "caption": "Frequently asked questions about SyncedIn: how your AI twin gets built, what data it uses, how the matchmaking works, pricing, privacy, and how it compares to LinkedIn / Lunchclub…",
-    "alt": "SyncedIn — Frequently asked questions"
+    "title": "Questions about SyncedIn. Answers, without the guesswork.",
+    "heading": "Questions about SyncedIn. Answers, without the guesswork.",
+    "description": "Accounts, AI twins, privacy, and messaging choices.",
+    "caption": "Accounts, AI twins, privacy, and messaging choices.",
+    "alt": "SyncedIn FAQ: answers about your account, AI-twin context, privacy, and messaging choices."
   },
   {
     "path": "/child-safety",

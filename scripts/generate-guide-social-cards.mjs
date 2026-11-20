@@ -27,14 +27,23 @@ const specs = [
     alt: "SyncedIn and lemlist comparison: a relevant introduction, campaign operations, and human review." },
   { route: "/vs/linkedin-dms", title: "A message. A conversation.\nChoose what helps.", subtitle: "LinkedIn DMs and shareable SyncedIn twin conversations.", labels: ["An honest opener", "Useful context", "The person's choice"],
     alt: "SyncedIn and LinkedIn DMs comparison: an honest opener, useful context, and the recipient's choice." },
+  { route: "/faq", category: "SyncedIn FAQ", title: "Questions about SyncedIn.\nAnswers, without the guesswork.", subtitle: "Accounts, AI twins, privacy, and messaging choices.", labels: ["Your account", "Your context", "Your choices"],
+    alt: "SyncedIn FAQ: answers about your account, AI-twin context, privacy, and messaging choices." },
+  { route: "/founders-cofounder", category: "For founders and builders", title: "A cofounder conversation.\nStart with the actual work.", subtitle: "Explore the overlap. Review the fit. Choose a next step.", labels: ["A shared problem", "Complementary work", "A real conversation"],
+    alt: "SyncedIn cofounder conversations: a shared problem, complementary work, and a real conversation." },
+  { route: "/founders-vc", category: "Founder introductions", title: "An investor introduction.\nWith a clearer purpose.", subtitle: "Relevant context and a twin draft for human review.", labels: ["A specific reason", "Accurate context", "Their choice"],
+    alt: "SyncedIn founder and investor introductions: a specific reason, accurate context, and the recipient's choice." },
 ];
+const requested = new Set(process.argv.slice(2));
+for (const route of requested) if (!specs.some(spec => spec.route === route)) throw new Error(`Unknown social-card route: ${route}`);
 const manifestPath = "verification/social-card-manifest.json";
 const existing = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
 const copyPath = "verification/social-card-copy.json";
 const copy = JSON.parse(fs.readFileSync(copyPath, "utf8"));
 for (const spec of specs) {
+  if (requested.size && !requested.has(spec.route)) continue;
   const image = new ImageResponse(h("div", { style: { width: "100%", height: "100%", display: "flex", flexDirection: "column", background: "#f8fafc", color: "#20232b", padding: "44px 64px", borderBottom: "10px solid #305ce5", fontFamily: "sans-serif" } },
-    h("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between" } }, h("img", { src: mark, width: 248, height: 60 }), h("span", { style: { fontSize: 19, color: "#117c59" } }, spec.route === "/about" ? "About SyncedIn" : spec.route.startsWith("/guides") ? "SyncedIn guides" : "SyncedIn comparisons")),
+    h("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between" } }, h("img", { src: mark, width: 248, height: 60 }), h("span", { style: { fontSize: 19, color: "#117c59" } }, spec.category || (spec.route === "/about" ? "About SyncedIn" : spec.route.startsWith("/guides") ? "SyncedIn guides" : "SyncedIn comparisons"))),
     h("div", { style: { display: "flex", flexDirection: "column", marginTop: 44, fontSize: spec.route.includes("ai-networking") ? 53 : 56, lineHeight: 1.15, fontWeight: 700 } }, ...spec.title.split("\n").map(line => h("span", { key: line }, line))),
     h("div", { style: { fontSize: 23, lineHeight: 1.5, marginTop: 20, color: "#586174", display: "flex" } }, spec.subtitle),
     h("div", { style: { display: "flex", alignItems: "center", gap: 16, marginTop: 34 } }, ...spec.labels.flatMap((label, index) => [

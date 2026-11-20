@@ -1,0 +1,191 @@
+[
+  {
+    "path": "/guides",
+    "urlPath": "/social/previews/guides.mp4",
+    "sha256": "0ab6e46953ecb6e9a06dd6ad5a4e804feb55af3515aaac3055d96a4be4c11dde",
+    "stillSha256": "a9bac04380fe9b0e6b6ca0bbad228e63779ef301e2eaade7c99630b572d23f9b",
+    "width": 1200,
+    "height": 630,
+    "duration": 5
+  },
+  {
+    "path": "/guides/linkedin-connection-request",
+    "urlPath": "/social/previews/guides--linkedin-connection-request.mp4",
+    "sha256": "4117d3e27684af83f96a00dca2ee3c68560ee7755602dc4d99c406b51ad0b1c0",
+    "stillSha256": "ff0f628d063b4330fd0a58e2db2b73c20b6adb06c3689cc79f351b02d5075431",
+    "width": 1200,
+    "height": 630,
+    "duration": 5
+  },
+  {
+    "path": "/guides/networking-follow-up",
+    "urlPath": "/social/previews/guides--networking-follow-up.mp4",
+    "sha256": "9ddfbfc59ad3320d5faefbb325cc0b1de33c897dd3f1142e04d115c235ee396e",
+    "stillSha256": "51c5119b67a787751a616904db7bd5ed6d1f5d3085b2aaa9481cf8a589848269",
+    "width": 1200,
+    "height": 630,
+    "duration": 5
+  },
+  {
+    "path": "/guides/ai-networking",
+    "urlPath": "/social/previews/guides--ai-networking.mp4",
+    "sha256": "40e30b3147847308baf2f209c8abc3d6123503e70371bbfbd28a53547de5c8a8",
+    "stillSha256": "9e4928136e1b44da52e2d62814adbed0b4e019c3eb6f57089a6ce35caf9b7de3",
+    "width": 1200,
+    "height": 630,
+    "duration": 5
+  },
+  {
+    "path": "/guides/networking-goals",
+    "urlPath": "/social/previews/guides--networking-goals.mp4",
+    "sha256": "4f7ca987513747eba78ecef3bbcef518d6a85d081db61e99340e2a500fd629fc",
+    "stillSha256": "769ecb95e53e7aa0af5860bfe720fe3a8cb4897e50b8987858c857afabda546a",
+    "width": 1200,
+    "height": 630,
+    "duration": 5
+  },
+  {
+    "path": "/guides/warm-introduction",
+    "urlPath": "/social/previews/guides--warm-introduction.mp4",
+    "sha256": "c9cfdcb862150ec5859bbddb19272cb89fc6b8d425b483d677fc0874a0b370c2",
+    "stillSha256": "c2024513b8591513f956b574993e3cdd092be0aada69f016c68b2871d562d36e",
+    "width": 1200,
+    "height": 630,
+    "duration": 5
+  },
+  {
+    "path": "/about",
+    "urlPath": "/social/previews/about.mp4",
+    "sha256": "8f5c07de62217b2fd9c76908d8dd8fdf8c3b8445159f241daa2020bfb6db4574",
+    "stillSha256": "1c4b9df74fb8e5a57ac5b596527d009c29e286b0bb8bfeae926c5accef14a963",
+    "width": 1200,
+    "height": 630,
+    "duration": 5
+  },
+  {
+    "path": "/alternatives/linkedin",
+    "urlPath": "/social/previews/alternatives--linkedin.mp4",
+    "sha256": "0c89599608f94dc2b9fe64e84011286b9adedafb70e36a5e38c8f734d6640b99",
+    "stillSha256": "b6cdb3dc35dc9530e21f5f8cc05da3a74171ae5cc76ea8e56af8d1bc38e02800",
+    "width": 1200,
+    "height": 630,
+    "duration": 5
+  },
+  {
+    "path": "/vs/linkedin-dms",
+    "urlPath": "/social/previews/vs--linkedin-dms.mp4",
+    "sha256": "beeebc92b3f735e9f3eac056d038d3778693ab15d3764c8e3956c680c0e5388b",
+    "stillSha256": "6f55efc025b003e4b8fb99c83e8f30b4e420582337861ef851b13466990a120f",
+    "width": 1200,
+    "height": 630,
+    "duration": 5
+  },
+  {
+    "path": "/vs/clay",
+    "urlPath": "/social/previews/vs--clay.mp4",
+    "sha256": "0bd69f69d1be9674cad43aac3e4e1319e8cf52eaee604a83dfc7001c890bd9c5",
+    "stillSha256": "9ab1563a30939e9d5d767b880b64243923c8920e09dcb21437b510d96a5cd16c",
+    "width": 1200,
+    "height": 630,
+    "duration": 5
+  },
+  {
+    "path": "/vs/lemlist",
+    "urlPath": "/social/previews/vs--lemlist.mp4",
+    "sha256": "3882e0f3c9799378a8688462f6a0bd3a4897b76926ccd8baa93e518ea792b391",
+    "stillSha256": "31a8419b3e92707e3a3c0d83b00eec4bfcaf37bb05d35e151d0e40ace5beb0f1",
+    "width": 1200,
+    "height": 630,
+    "duration": 5
+  },
+  {
+    "path": "/faq",
+    "urlPath": "/social/previews/faq.mp4",
+    "sha256": "40a046787b1c6fa80d1f68514a9c27fa8ec6a415d920ba9882e7e2fcee2bd4a7",
+    "stillSha256": "54473ff084ffdceb2f4d10c6f05080646508afbccb7b039be1f9722d2b84681f",
+    "width": 1200,
+    "height": 630,
+    "duration": 5
+  },
+  {
+    "path": "/founders-cofounder",
+    "urlPath": "/social/previews/founders-cofounder.mp4",
+    "sha256": "1a91e635e4978e82450597849e4d89c7355c4509c4fa47deff7cd314d9e0b5ac",
+    "stillSha256": "1d545db6cf30186b14fa872cabe76e7f612d594aee7592024857b8c83bdd0e3f",
+    "width": 1200,
+    "height": 630,
+    "duration": 5
+  },
+  {
+    "path": "/founders-vc",
+    "urlPath": "/social/previews/founders-vc.mp4",
+    "sha256": "8295c03f225d4cbd16a020d1cceb45e944bd191cdbbbee0cc68aa3911ff18b21",
+    "stillSha256": "ebb51e4f8a02f175255a4ae593b4ae9a5c935556ba43b570216f46ac12ff59cd",
+    "width": 1200,
+    "height": 630,
+    "duration": 5
+  },
+  {
+    "path": "/ai-knows-me",
+    "urlPath": "/social/previews/ai-knows-me.mp4",
+    "sha256": "8af20c010b0116c2ad1eb1ec1c0bd9067fa5fed9e9cb6ff38034e854af26bcbc",
+    "stillSha256": "98d0c493f7fb0995cbc93787c193c1ac25c5f97b84baa725ec8340a57a592d3e",
+    "width": 1200,
+    "height": 630,
+    "duration": 5
+  },
+  {
+    "path": "/generate-free-portfolio",
+    "urlPath": "/social/previews/generate-free-portfolio.mp4",
+    "sha256": "0177bac461a3eb29d17651622dcc421628fd577daaa86b0674dab98c6dfc9cdf",
+    "stillSha256": "85eed9118b5bae2d6bdc403f99eeddb20052457ccf858a761658f9aa573b6f82",
+    "width": 1200,
+    "height": 630,
+    "duration": 5
+  },
+  {
+    "path": "/for/linkme",
+    "urlPath": "/social/previews/for--linkme.mp4",
+    "sha256": "5fd7eaafb3e871338c2534ec64ea38336ed937819baf694a7a4468142975761d",
+    "stillSha256": "4338a45632f19bdc860a539659764c906351ee8a38560cf91dc8168277155acf",
+    "width": 1200,
+    "height": 630,
+    "duration": 5
+  },
+  {
+    "path": "/article",
+    "urlPath": "/social/previews/article.mp4",
+    "sha256": "6b379ac21959fac0dee155c4824cb921955e06e63369555efdc940e13d11d617",
+    "stillSha256": "3f1f5e5b4f30a8d2a7a0466018e61bb303414e7ee8bd108281ee91c4733db86a",
+    "width": 1200,
+    "height": 630,
+    "duration": 5
+  },
+  {
+    "path": "/blog",
+    "urlPath": "/social/previews/blog.mp4",
+    "sha256": "4fe690646ce042bc06b3693e636a22864be945f59b832ed87f9020ba41eb9d81",
+    "stillSha256": "54613fceb90efeb9fb8a33c01096c417ed60656e77316d94db289de47ab8866f",
+    "width": 1200,
+    "height": 630,
+    "duration": 5
+  },
+  {
+    "path": "/hypernetwork",
+    "urlPath": "/social/previews/hypernetwork.mp4",
+    "sha256": "1f0584f550180cc0ca137eb8a80ae7fbfc32dd3b8afd401c3981c37350c2c4cd",
+    "stillSha256": "e2c414ef0c7e4f6edcf9e2a1b6750bfb211e8500182da1edb16ecbece976362e",
+    "width": 1200,
+    "height": 630,
+    "duration": 5
+  },
+  {
+    "path": "/wins",
+    "urlPath": "/social/previews/wins.mp4",
+    "sha256": "80bb5d95201ab7322e80ad5889c24c1e2e8224fd6c14c199e12aa8cd502c15c7",
+    "stillSha256": "c38d910218ee35099e47978bd55437fdbea5ac8ad5b96ecc03eac23e9ec7f043",
+    "width": 1200,
+    "height": 630,
+    "duration": 5
+  }
+]

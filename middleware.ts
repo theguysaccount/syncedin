@@ -14,6 +14,7 @@ export async function middleware(request: NextRequest) {
     earlyPath === "/twitter-image" ||
     earlyPath.endsWith("/opengraph-image") ||
     earlyPath.endsWith("/twitter-image") ||
+    /^\/social\/previews\/[a-z0-9-]+\.mp4$/.test(earlyPath) ||
     earlyPath === "/robots.txt" ||
     earlyPath === "/sitemap.xml" ||
     earlyPath === "/manifest.json" ||

@@ -46,9 +46,19 @@ Run regression tests, type check, build and original-source release gate. Only r
 
 ## Status
 
-Research and source isolation are complete. Batches one through eight are deployed and publicly verified, as detailed below. Batch nine is undergoing its release checks. No new page is claimed indexed. The original tight wordmark, product controls and unpublished local product branch are preserved.
+Research and source isolation are complete. Batches one through eleven were deployed and publicly verified. The original tight wordmark, product controls and unpublished local product branch are preserved. No new page is claimed indexed.
 
-Publishing permission: Jack explicitly approved tested SEO-only batches during this sprint. Preserve the unrelated local product commits. Animated OG media remains pending creative playback review; do not describe it as completed.
+Publishing permission: Jack explicitly approved tested SEO-only batches during the sprint, then asked to continue and push the two remaining items. Preserve the unrelated local product commits. The later preview release below supersedes the historical motion holds in individual batch notes.
+
+## Follow-up: Framework Patch and Share Motion
+
+Next.js 15.5.29 is pinned as a separate dependency-only release, addressing the three moderate 15.5.28 advisories. The production dependency audit returned zero known advisories at the time of the check. This is not a general application security certification. Vendor release: https://github.com/vercel/next.js/releases/tag/v15.5.29 .
+
+The 21 cards made or substantially refreshed during the sprint now have their own silent five-second previews. The existing PNGs and home GIF are unchanged. Each clip keeps the poster and wordmark fixed while lower diagrams use a linear flow, split, or merge with subject-specific symbols. The connection-note pilot exposed a distracting dotted trace, which was replaced with a solid reveal before rendering the batch. Previews do not autoplay on the website itself, and the eight untouched card routes have no new clip. Private routes, redirects and text endpoints are outside this motion release.
+
+The release checks require distinct, fast-start MP4s tied to the exact still hashes and matching server-rendered metadata on desktop and mobile. Next.js keeps its standard metadata streaming on dynamic browser routes; the same values are real HTML tags, and an HTML-limited preview crawler gets the tags in the head. Preview files bypass account-session handling within their own static path. The link cards retain the large-image fallback. All 21 encoded clips completed at least two loops at normal speed at 380px with no dropped frames observed; a clip from each of the three layouts also completed two full-size loops. Each file was decoded for codec, dimensions, locked typography and loop-joint checks. This is not an X Player Card approval, ranking change or guarantee of Messages autoplay; native Messages delivery/cache behavior was not tested. Protocol references: https://ogp.me/ and https://developer.apple.com/documentation/technotes/tn3156-create-rich-previews-for-messages .
+
+To regenerate from the existing artwork, use the project's installed Node dependencies (including the Next.js optional Sharp package) and FFmpeg with libx264: `node scripts/generate-share-videos.mjs`. Run `node verification/check-share-video-encoding.mjs` with FFmpeg and FFprobe available, then review playback and update the release hashes for the exact intentional changes. Normal application builds do not need either media tool.
 
 ### Batch One: Deployed and Verified
 

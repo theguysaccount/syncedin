@@ -78,8 +78,8 @@
     "app/robots.ts": "102c5809d0ffc39c85029dacd420dc901aa3836312366d7f72aedc44f01c21af",
     "app/sitemap.ts": "b134affe192476986714983e2f1afaaffb2938e197844cf9ac4e67639c992ab0",
     "lib/auth-return.ts": "c59601a6c48e97b9176cc049c9fad8837335fbe1f54a84a7f5db843a46ca7fc5",
-    "verification/check-public-release.mjs": "1c031c522e63434fa7983adc08a08e53298e80475164f52a4aee80c4d9c78589",
-    "verification/check-seo-release.mjs": "b6ecc6aa2aba3748fe561023af29b10fe92abe0a9ce9a1db81a6077581dc75ea",
+    "verification/check-public-release.mjs": "35c166ff16aa90f7364a5067e18c2fd0e3da771fd0e285d69935ad3330dd69de",
+    "verification/check-seo-release.mjs": "d40e12f847e47e618e203419e2f0aa9b4b6c9d5bbd446db2ed587e717c5a47f1",
     "verification/policy-content-dates.json": "7c966bab63ba6cdcbadebd687c6f74a5599a874a58c4377470ab927f28cd1825",
     "verification/social-card-copy.json": "d32d39fb44b2971c902e380ae90b0f4d87b2a2d5c9397033cfca2b6c73402342",
     "verification/social-card-manifest.json": "e22d017fac6fee7df726c2d426e9f4ae1fa3a43da4da7e2bd1e9005ed3b10ae6",
@@ -214,7 +214,7 @@
     "app/vs/VsPageShell.tsx": "2cb38e8800ed96da5437596ff2ac5a66e5ce02a5f18ac7601d3eee88dfd96967",
     "app/vs/linkedin-dms/page.tsx": "5ddbb63b0b79edb23847fbe579d86be643849826484c0f707b0860d65ab8bfff",
     "lib/networking-guides.ts": "146ec163f22547b13d7da96ff0e0e2bfe1f3a07fbec30f81aa31a6e00587956c",
-    "scripts/test-seo-guides.mjs": "15eaddfb04c8516ac2fdecd3f19c96a7ab4787c8aa8c37194cf772ebf94e3b2a",
+    "scripts/test-seo-guides.mjs": "081bb9e11c32b395ed65c193e32c56696e39ec0a9cc407de84824cbe8bce9107",
     "scripts/generate-guide-social-cards.mjs": "42ee9bda8e62809ce176009a45fe2568f8411cbd7a80aaf00e4214c49f1790e4",
     "app/guides/ConnectionNoteEditor.tsx": "f0c5f915cbd237422f33369fa41d06e41c640bc62a48ac5cd03187f2c4d36ebd",
     "app/guides/GuideLayout.tsx": "eb019f4ad287569ca282911f95d60eec4e692342130c6f09e19091f1637a8f74",
@@ -254,8 +254,8 @@
     "app/vs/linkedin-dms/opengraph-image.png": "6f55efc025b003e4b8fb99c83e8f30b4e420582337861ef851b13466990a120f",
     "app/vs/linkedin-dms/twitter-image.alt.txt": "e1fd7b700751391b0f7c30d2ee9c0f944a80f3ea19066b01800fc5168c9e0999",
     "app/vs/linkedin-dms/twitter-image.png": "6f55efc025b003e4b8fb99c83e8f30b4e420582337861ef851b13466990a120f",
-    "docs/SEO-SPRINT.md": "ccadac463008ca5a51e40775b057ff8c6353297b2115f1c553c8ecabafe510b2",
-    "lib/public-seo.ts": "cb648a5dd6d29da1cf4583a62e570ff9374df1129eb204df886d07ad53bee458",
+    "docs/SEO-SPRINT.md": "51da8666c00e6e362cfde82222a171ddd4ee0e8c3ce7ef9912901ca5e35dbf27",
+    "lib/public-seo.ts": "e3a8a75bedc83f55a9588f914bbbf0da7b98ebbdb69ba4266e42d358d1bc93a0",
     "app/about/opengraph-image.alt.txt": "74a818c320a2732a3eb6df9a88884a846cf57beeeb2006786c63eb406c235dc6",
     "app/about/opengraph-image.png": "1c4b9df74fb8e5a57ac5b596527d009c29e286b0bb8bfeae926c5accef14a963",
     "app/about/page.tsx": "721a283f8b7581f2e940fd9faa53e45ef508d2a1bf3398b7f8f6e56dbd200733",
@@ -269,7 +269,7 @@
     "app/guides/networking-goals/twitter-image.png": "769ecb95e53e7aa0af5860bfe720fe3a8cb4897e50b8987858c857afabda546a",
     "app/vs/layout.tsx": "5cff4416d0f4128eb7bc86ee3d41d4a8ee5e57ed5bed2d0031465b39b0de2fe9",
     "lib/networking-goals.ts": "38b1f0fe1197a0a433d43475432b8a12b27d5985e958fed645c404f125ca2b89",
-    "verification/public-page.mjs": "842e3f803191e0601e651c4de987b494fadef48fd3ab368ab5601a5b25008401",
+    "verification/public-page.mjs": "19190a68884855fd832d6d8cd89bc4c7fb0d94e2f393c9b4cd4e0dee25d58668",
     "app/(verticals)/VerticalLandingShell.tsx": "bf1b52ca4fc0f4e7aac883be701b7ff3df4dcd3b90f64d436848cda34cd14abb",
     "app/faq/page.tsx": "d243e9b6cbba6e06e2e5fcb235a39808f6a0efee229cc0aaf14c5a454a74de25",
     "app/founders-cofounder/page.tsx": "a0f9748a30702f97347196659752ff8c20623ea4492dafa1113a5fa156be775d",
@@ -336,7 +336,7 @@
     "app/article.md/route.ts": "b7d3c6df2c509a180819a20a182252d52543d0b022db0576703a36d734fd9520",
     "app/page.tsx": "4aebe568f444b6fda13d9f9b4b6804167e94aad2c9ebb695c4668e593d8710e2",
     "app/LandingHandleHero.tsx": "01d257e578b48c9127ef77a03163711f941a1b43fab366a0d71a62fd9ffc9894",
-    "middleware.ts": "2018d03540541bfc2c66b339144fd596741c649030c98f93bc36c74a390684f9",
+    "middleware.ts": "3eeabb6d199fb39dfb3411b9e7c8cde25ff90099669b9668b71554c5a2d14eb4",
     "app/talk/page.tsx": "43c8e5933d5128cb649fb4ef540d82fd44e89bdb91fcffc34008d15737698eac",
     "lib/funnel-events.ts": "162f2d6a9a666aa60edcb85da84151e6c67d7017be17b27cdb5a70e2b9165ab9",
     "lib/track.ts": "ffa8543eae55422a55adbdd0f393a00448f4a6884193f9c5f39b603f90740ab1",
@@ -350,7 +350,10 @@
     "app/wins/opengraph-image.png": "c38d910218ee35099e47978bd55437fdbea5ac8ad5b96ecc03eac23e9ec7f043",
     "app/wins/twitter-image.png": "c38d910218ee35099e47978bd55437fdbea5ac8ad5b96ecc03eac23e9ec7f043",
     "app/wins/opengraph-image.alt.txt": "6408f42522a6cb712e5172ab2e6a659b03a2286f72b0e39dedd091410c938bc5",
-    "app/wins/twitter-image.alt.txt": "6408f42522a6cb712e5172ab2e6a659b03a2286f72b0e39dedd091410c938bc5"
+    "app/wins/twitter-image.alt.txt": "6408f42522a6cb712e5172ab2e6a659b03a2286f72b0e39dedd091410c938bc5",
+    "scripts/generate-share-videos.mjs": "9250a8654f1c35490253e99ba227d9dd880dc6b87a4e9265a5d1e4db75baad87",
+    "verification/social-video-manifest.json": "f56fd423e407a9a15ce6bff31f4871f0456c9654c2a519adb13c08e2d02f88da",
+    "verification/check-share-video-encoding.mjs": "c59cbf3dae5ce348b51a7caf93aef5f48af7a9b1bbcf764e93e0326c86eb9c17"
   },
   "components": {
     "app/admin/reports/page.tsx": "fa3ff87dcdce75f3fed381f4f5f80835a89ce21e676ae126f59b046440dbd0b1",
@@ -564,6 +567,9 @@
     "app/wins/opengraph-image.png",
     "app/wins/twitter-image.png",
     "app/wins/opengraph-image.alt.txt",
-    "app/wins/twitter-image.alt.txt"
+    "app/wins/twitter-image.alt.txt",
+    "scripts/generate-share-videos.mjs",
+    "verification/social-video-manifest.json",
+    "verification/check-share-video-encoding.mjs"
   ]
 }

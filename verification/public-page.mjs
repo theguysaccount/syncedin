@@ -52,6 +52,31 @@ export function verifyPublicPage(page, path, canonicalOrigin = "https://syncedin
   return page;
 }
 
+export function verifySocialVideoMetadata(html, preview, { requireHead = false, origin = "https://syncedin.org" } = {}) {
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  const head = doc.getElementsByTagName("head")[0];
+  assert(head, "Social metadata requires a document head");
+  const tags = Array.from(doc.getElementsByTagName("meta")).filter(node => {
+    // Dynamic pages can stream real HTML metadata after the head. Known
+    // limited crawlers get those same tags in the head without JavaScript.
+    for (let parent = node.parentNode; parent; parent = parent.parentNode) {
+      if (["template", "noscript"].includes(parent.localName)) return false;
+      if (parent === head) return true;
+    }
+    return !requireHead;
+  });
+  const get = (attribute, name) => tags.filter(node => node.getAttribute(attribute) === name).map(node => node.getAttribute("content"));
+  const url = origin + preview.urlPath;
+  for (const [key, value] of Object.entries({
+    "og:video": url, "og:video:secure_url": url, "og:video:type": "video/mp4",
+    "og:video:width": String(preview.width), "og:video:height": String(preview.height),
+  })) assert.deepEqual(get("property", key), [value], preview.path + ": " + key);
+  assert.deepEqual(get("name", "twitter:player:stream"), [url]);
+  assert.deepEqual(get("name", "twitter:player:stream:content_type"), ["video/mp4"]);
+  assert(get("name", "twitter:card").includes("summary_large_image"));
+  assert(get("property", "og:image").includes(origin + preview.path + "/opengraph-image.png"));
+}
+
 export function inspectSitemap(xml) {
   const namespace = "http://www.sitemaps.org/schemas/sitemap/0.9";
   const doc = new DOMParser({ onError(_level, message) { throw new Error(message); } }).parseFromString(xml, "application/xml");

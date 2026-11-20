@@ -1,11 +1,12 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import crypto from "node:crypto";
-import { inspectPublicPage, inspectSitemap, verifyPublicPage } from "./public-page.mjs";
+import { inspectPublicPage, inspectSitemap, verifyPublicPage, verifySocialVideoMetadata } from "./public-page.mjs";
 
 const base = new URL(process.argv[2] || "https://syncedin.org");
 assert.equal(base.protocol, "https:", "Public release verification requires HTTPS.");
 const cards = JSON.parse(fs.readFileSync("verification/social-card-manifest.json", "utf8"));
+const videos = new Map(JSON.parse(fs.readFileSync("verification/social-video-manifest.json", "utf8")).map(video => [video.path, video]));
 const titles = new Set();
 for (const card of cards) {
   const page = await fetch(new URL(card.path, base), { signal: AbortSignal.timeout(20000) });
@@ -35,7 +36,31 @@ for (const card of cards) {
     const bytes = Buffer.from(await response.arrayBuffer());
     assert.equal(crypto.createHash("sha256").update(bytes).digest("hex"), card.sha256);
   }
+  const preview = videos.get(card.path);
+  if (preview) {
+    verifySocialVideoMetadata(html, preview);
+    const mobile = await fetch(new URL(card.path, base), { headers: { "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148" }, signal: AbortSignal.timeout(20000) });
+    assert.equal(mobile.status, 200);
+    verifySocialVideoMetadata(await mobile.text(), preview);
+    const crawler = await fetch(new URL(card.path, base), { headers: { "user-agent": "facebookexternalhit/1.1" }, signal: AbortSignal.timeout(20000) });
+    assert.equal(crawler.status, 200);
+    verifySocialVideoMetadata(await crawler.text(), preview, { requireHead: true });
+    const mediaUrl = new URL(preview.urlPath, base);
+    const response = await fetch(mediaUrl, { redirect: "error", signal: AbortSignal.timeout(20000) });
+    assert.equal(response.status, 200, card.path);
+    assert.equal(response.headers.get("content-type")?.split(";")[0], "video/mp4");
+    assert(!response.headers.has("set-cookie"), card.path + ": media must not start a session");
+    assert(!/\bprivate\b|\bno-store\b/i.test(response.headers.get("cache-control") || ""), card.path + ": public media must remain cacheable");
+    assert(!/^attachment\b/i.test(response.headers.get("content-disposition") || ""));
+    const bytes = Buffer.from(await response.arrayBuffer());
+    assert.equal(crypto.createHash("sha256").update(bytes).digest("hex"), preview.sha256, "Wrong public video bytes: " + card.path);
+    const range = await fetch(mediaUrl, { headers: { range: "bytes=0-31" }, redirect: "error", signal: AbortSignal.timeout(20000) });
+    assert.equal(range.status, 206, card.path);
+    assert.equal(range.headers.get("content-range"), `bytes 0-31/${bytes.length}`);
+    assert.deepEqual(Buffer.from(await range.arrayBuffer()), bytes.subarray(0, 32));
+  }
 }
+console.log(`Verified ${videos.size} desktop/mobile Open Graph videos, public bytes and range support.`);
 const homeResponse = await fetch(new URL("/", base), { headers: { cookie: "syncedin_landing_ab=a" }, redirect: "manual", signal: AbortSignal.timeout(20000) });
 assert.equal(homeResponse.status, 200, "Homepage variant A must remain reachable");
 assert(!/\bnoindex\b|\bnone\b/i.test(homeResponse.headers.get("x-robots-tag") || ""));

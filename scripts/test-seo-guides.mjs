@@ -10,7 +10,7 @@ import jsx from "react/jsx-runtime";
 import { renderToStaticMarkup } from "react-dom/server";
 import * as icons from "lucide-react";
 import postcss from "postcss";
-import { inspectPublicPage, inspectSitemap, verifyPublicPage } from "../verification/public-page.mjs";
+import { inspectPublicPage, inspectSitemap, verifyPublicPage, verifySocialVideoMetadata } from "../verification/public-page.mjs";
 
 function load(file, dependencies = {}) {
   const module = { exports: {} };
@@ -25,8 +25,37 @@ const guides = load("lib/networking-guides.ts");
 const goals = load("lib/networking-goals.ts");
 const productFaq = load("lib/product-faq.ts");
 const cards = JSON.parse(fs.readFileSync("verification/social-card-manifest.json", "utf8"));
-const seo = load("lib/public-seo.ts", { "@/verification/social-card-manifest.json": { default: cards } });
+const videos = JSON.parse(fs.readFileSync("verification/social-video-manifest.json", "utf8"));
+const seo = load("lib/public-seo.ts", { "@/verification/social-card-manifest.json": { default: cards }, "@/verification/social-video-manifest.json": { default: videos } });
 const indexNow = load("lib/indexnow.ts", { "@/verification/social-card-manifest.json": { default: cards } });
+
+test("share videos keep the still fallback and match their own reviewed URL", () => {
+  for (const video of videos) {
+    const meta = seo.withPublicSEO(video.path, { title: "Guide", openGraph: { type: "article" } });
+    const url = "https://syncedin.org" + video.urlPath;
+    assert.deepEqual(meta.openGraph.videos, [{ url, secureUrl: url, width: 1200, height: 630, type: "video/mp4" }]);
+    assert.equal(meta.openGraph.type, "article");
+    assert.equal(meta.openGraph.images[0].url, "https://syncedin.org" + video.path + "/opengraph-image.png");
+    assert.equal(meta.twitter.card, "summary_large_image");
+    assert.equal(meta.other["twitter:player:stream"], url);
+  }
+  assert.equal(seo.withHomeVariantSEO({ title: "SyncedIn" }).openGraph.videos, undefined);
+  assert.equal(seo.withPublicSEO("/privacy", { title: "Privacy" }).openGraph.videos, undefined);
+});
+
+test("public video check verifies server HTML and requires head placement for limited crawlers", () => {
+  const preview = videos[0];
+  const url = "https://syncedin.org" + preview.urlPath;
+  const meta = `<meta property="og:video" content="${url}"><meta property="og:video:secure_url" content="${url}"><meta property="og:video:type" content="video/mp4"><meta property="og:video:width" content="1200"><meta property="og:video:height" content="630"><meta name="twitter:player:stream" content="${url}"><meta name="twitter:player:stream:content_type" content="video/mp4"><meta name="twitter:card" content="summary_large_image"><meta property="og:image" content="https://syncedin.org${preview.path}/opengraph-image.png">`;
+  const html = `<html><head>${meta}</head><body></body></html>`;
+  verifySocialVideoMetadata(html, preview);
+  assert.throws(() => verifySocialVideoMetadata(html.replace("1200", "600"), preview));
+  assert.throws(() => verifySocialVideoMetadata(html.replace("</head>", meta + "</head>"), preview));
+  const streamed = `<html><head></head><body>${meta}</body></html>`;
+  verifySocialVideoMetadata(streamed, preview);
+  assert.throws(() => verifySocialVideoMetadata(streamed, preview, { requireHead: true }));
+  assert.throws(() => verifySocialVideoMetadata(`<html><head></head><body><template>${meta}</template></body></html>`, preview));
+});
 const productReference = load("lib/product-reference.ts");
 const profileCopy = load("lib/profile-preview-copy.ts");
 const profileResult = load("lib/profile-preview-result.ts");
@@ -549,7 +578,7 @@ test("homepage testing leaves non-navigation methods, protected routes, assets, 
       assert.equal(response.cookies.get("syncedin_landing_ab"), undefined);
       if (expected === 307) assert.equal(new URL(response.headers.get("location")).pathname, "/login");
     }
-    for (const path of ["/api/track", "/robots.txt", "/sitemap.xml", "/opengraph-image", "/guides/ai-networking/opengraph-image", "/8e7c4f3a2b1d9e6f5c8a7b4d2e9f1c3a.txt"]) {
+    for (const path of ["/api/track", "/robots.txt", "/sitemap.xml", "/opengraph-image", "/guides/ai-networking/opengraph-image", "/social/previews/guides--ai-networking.mp4", "/8e7c4f3a2b1d9e6f5c8a7b4d2e9f1c3a.txt"]) {
       const { middleware, observed } = middlewareFixture();
       assert.equal((await middleware(new nextRuntime.NextRequest("https://syncedin.org" + path))).status, 200);
       assert.equal(observed.clients, 0, "Keep public assets free of auth-cookie work");

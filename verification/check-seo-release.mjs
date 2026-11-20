@@ -8,6 +8,29 @@ const cards = JSON.parse(read('verification/social-card-manifest.json'));
 assert(cards.length >= 22, 'Preserve the original public card inventory');
 assert.equal(new Set(cards.map(card => card.path)).size, cards.length, 'Duplicate social-card route');
 const unique = new Set();
+const videos = JSON.parse(read('verification/social-video-manifest.json'));
+assert(videos.length >= 21, 'Preserve the reviewed motion inventory');
+assert.equal(new Set(videos.map(video => video.path)).size, videos.length, 'Duplicate motion route');
+assert.equal(new Set(videos.map(video => video.sha256)).size, videos.length, 'Reused motion artwork');
+assert.deepEqual(fs.readdirSync('public/social/previews').sort(), videos.map(video => video.urlPath.split('/').pop()).sort());
+for (const video of videos) {
+  const card = cards.find(card => card.path === video.path);
+  assert(card && card.sha256 === video.stillSha256, video.path + ' motion is out of date with the still');
+  assert.equal(video.urlPath, '/social/previews/' + video.path.slice(1).replaceAll('/', '--') + '.mp4');
+  assert.deepEqual([video.width, video.height, video.duration], [1200, 630, 5]);
+  const bytes = fs.readFileSync('public' + video.urlPath);
+  assert.equal(hash(bytes), video.sha256);
+  assert(bytes.length < 1_000_000);
+  const boxes = [];
+  for (let offset = 0; offset < bytes.length;) {
+    const size = bytes.readUInt32BE(offset);
+    assert(size >= 8 && offset + size <= bytes.length, video.path + ' invalid MP4 box');
+    boxes.push(bytes.toString('ascii', offset + 4, offset + 8));
+    offset += size;
+  }
+  assert.equal(boxes[0], 'ftyp');
+  assert(boxes.includes('moov') && boxes.includes('mdat') && boxes.indexOf('moov') < boxes.indexOf('mdat'), video.path + ' must use fast-start MP4');
+}
 function hasPublicSEO(file, path) {
   const sf = ts.createSourceFile(file, read(file), ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
   let found = false;

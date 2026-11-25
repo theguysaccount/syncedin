@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "syncedin": {
+      "type": "streamable-http",
+      "url": "https://syncedin.org/api/mcp"
+    }
+  },
+  "docs": "https://syncedin.org/agents",
+  "llmsTxt": "https://syncedin.org/llms.txt",
+  "privacyPolicy": "https://syncedin.org/privacy"
+}

@@ -518,60 +518,38 @@ test("public content checks do not mistake animation percentages, SVG coordinate
   assert(inspectPublicPage('<html><body><p>4.9 average</p></body></html>').contentText.includes("4.9 average"), "Real unsupported content must still be detectable");
 });
 
-test("new homepage experiment assignments reach the actual response and use a temporary query-preserving redirect", async () => {
+test("root homepage serves 200 directly without redirecting to /talk or assigning an A/B cookie", async () => {
   const originalRandom = Math.random;
+  Math.random = () => { throw new Error("No random homepage split expected"); };
   try {
-    for (const [random, variant, status] of [[0.1, "a", 200], [0.9, "b", 302]]) {
-      Math.random = () => random;
-      const { middleware, observed } = middlewareFixture();
-      const response = await middleware(new nextRuntime.NextRequest("https://syncedin.org/?utm_source=synthetic"));
-      assert.equal(response.status, status);
-      const cookie = response.cookies.get("syncedin_landing_ab");
-      assert.equal(cookie.value, variant);
-      assert.equal(cookie.path, "/");
-      assert.equal(cookie.sameSite, "lax");
-      assert.equal(cookie.maxAge, 60 * 60 * 24 * 30);
-      assert.equal(response.headers.get("cache-control"), "private, no-store");
-      if (variant === "b") {
-        const target = new URL(response.headers.get("location"));
-        assert.equal(target.pathname, "/talk");
-        assert.equal(target.search, "?utm_source=synthetic");
-      } else assert.equal(response.headers.get("location"), null);
+    for (const [headers, label] of [
+      [{}, "fresh anonymous GET"],
+      [{ cookie: "syncedin_landing_ab=b" }, "legacy variant-b cookie"],
+      [{ "user-agent": "Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)" }, "Bingbot"],
+      [{ "user-agent": "Googlebot Synthetic QA" }, "Googlebot"],
+    ]) {
+      const { middleware, observed } = middlewareFixture({
+        refreshed: [{ name: "sb-synthetic-refresh", value: "qa-only", options: { path: "/", httpOnly: true, secure: true, sameSite: "lax", maxAge: 600 } }]
+      });
+      const response = await middleware(new nextRuntime.NextRequest("https://syncedin.org/?utm_source=synthetic", { headers }));
+      assert.equal(response.status, 200, label);
+      assert.equal(response.headers.get("location"), null, label);
+      assert.equal(response.cookies.get("syncedin_landing_ab"), undefined, label);
+      const refresh = response.cookies.get("sb-synthetic-refresh");
+      assert.equal(refresh.value, "qa-only");
+      assert(refresh.httpOnly && refresh.secure);
+      assert.equal(refresh.maxAge, 600);
       assert.equal(observed.auth, 1);
       assert.equal(observed.writes.length, 0);
     }
   } finally { Math.random = originalRandom; }
 });
 
-test("homepage variants remain sticky and preserve refreshed cookie attributes without crawler-specific treatment", async () => {
-  const originalRandom = Math.random;
-  try {
-    Math.random = () => { throw new Error("Existing assignments must not be rerolled"); };
-    for (const [variant, status] of [["a", 200], ["b", 302]]) {
-      const { middleware } = middlewareFixture();
-      const response = await middleware(new nextRuntime.NextRequest("https://syncedin.org/", { headers: { cookie: `syncedin_landing_ab=${variant}` } }));
-      assert.equal(response.status, status);
-      assert.equal(response.cookies.get("syncedin_landing_ab"), undefined, "Do not reset an existing preference's lifetime");
-    }
-    Math.random = () => 0.9;
-    for (const userAgent of ["Mozilla/5.0 Synthetic QA", "Googlebot Synthetic QA"]) {
-      const { middleware } = middlewareFixture({ refreshed: [{ name: "sb-synthetic-refresh", value: "qa-only", options: { path: "/", httpOnly: true, secure: true, sameSite: "lax", maxAge: 600 } }] });
-      const response = await middleware(new nextRuntime.NextRequest("https://syncedin.org/", { headers: { "user-agent": userAgent } }));
-      assert.equal(response.status, 302);
-      assert.equal(response.cookies.get("syncedin_landing_ab").value, "b");
-      const refresh = response.cookies.get("sb-synthetic-refresh");
-      assert.equal(refresh.value, "qa-only");
-      assert(refresh.httpOnly && refresh.secure);
-      assert.equal(refresh.maxAge, 600);
-    }
-  } finally { Math.random = originalRandom; }
-});
-
-test("homepage testing leaves non-navigation methods, protected routes, assets, signed-in users and activity stamps intact", async () => {
+test("middleware leaves non-navigation methods, protected routes, assets, signed-in users and activity stamps intact", async () => {
   const originalRandom = Math.random;
   Math.random = () => { throw new Error("No assignment expected"); };
   try {
-    for (const [path, method, expected] of [["/", "POST", 200], ["/guides", "GET", 200], ["/synthetic-invite", "GET", 200], ["/dashboard", "GET", 307], ["/settings/notifications", "GET", 307]]) {
+    for (const [path, method, expected] of [["/", "POST", 200], ["/", "HEAD", 200], ["/guides", "GET", 200], ["/synthetic-invite", "GET", 200], ["/dashboard", "GET", 307], ["/settings/notifications", "GET", 307]]) {
       const { middleware } = middlewareFixture();
       const response = await middleware(new nextRuntime.NextRequest("https://syncedin.org" + path, { method, headers: { cookie: "syncedin_landing_ab=b" } }));
       assert.equal(response.status, expected, method + path);
@@ -593,20 +571,18 @@ test("homepage testing leaves non-navigation methods, protected routes, assets, 
     const debounced = middlewareFixture({ user: { id: "isolated-qa" } });
     await debounced.middleware(new nextRuntime.NextRequest("https://syncedin.org/guides", { headers: { cookie: `syncedin_last_stamp=${Date.now()}` } }));
     assert.equal(debounced.observed.writes.length, 0);
-    const head = middlewareFixture();
-    assert.equal((await head.middleware(new nextRuntime.NextRequest("https://syncedin.org/", { method: "HEAD", headers: { cookie: "syncedin_landing_ab=b" } }))).status, 302);
   } finally { Math.random = originalRandom; }
 });
 
-test("the chat homepage variant keeps its original canonical and animation without becoming a second sitemap destination", () => {
+test("the chat entry keeps its own self-referencing canonical and animation without conflicting with the homepage", () => {
   const metadata = seo.withHomeVariantSEO({ title: "Chat with SyncedIn", description: "A test description" });
-  assert.equal(metadata.alternates.canonical, "https://syncedin.org/");
-  assert.equal(metadata.openGraph.url, "https://syncedin.org/");
+  assert.equal(metadata.alternates.canonical, "https://syncedin.org/talk");
+  assert.equal(metadata.openGraph.url, "https://syncedin.org/talk");
   assert.equal(metadata.openGraph.images[0].url, "https://syncedin.org/social/syncedin-preview.gif");
   assert(!fs.readFileSync("app/sitemap.ts", "utf8").includes('`${APP_URL}/talk`'));
   assert.equal(indexNow.canonicalIndexNowUrls(["https://syncedin.org/talk"]), null);
   const page = load("app/talk/page.tsx", { "react/jsx-runtime": jsx, "next/link": nextLink, "@/lib/public-seo": seo, "../Wordmark": wordmark, "./TalkChat": { TalkChat: () => null }, "@/lib/supabase/server": {} });
-  assert.equal(page.metadata.alternates.canonical, "https://syncedin.org/");
+  assert.equal(page.metadata.alternates.canonical, "https://syncedin.org/talk");
   assert.equal(page.viewport.userScalable, true);
 });
 

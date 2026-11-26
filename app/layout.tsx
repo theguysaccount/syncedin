@@ -256,6 +256,7 @@ export default function RootLayout({
             })
           }}
         />
+        <script defer src="https://rsio.org/vital.js"></script>
       </head>
       <body className="min-h-screen" data-clarity-mask="True">
         {/* Remove private review fragments before any telemetry loads. */}

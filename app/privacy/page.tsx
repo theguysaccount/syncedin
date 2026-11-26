@@ -3,9 +3,9 @@ import Link from "next/link";
 import { Wordmark } from "../Wordmark";
 
 export const metadata = withPublicSEO('/privacy', {
-  title: "Privacy · SyncedIn",
+  title: "Privacy Policy: Data, Twin Context & Retention",
   description:
-    "How SyncedIn handles your data, your twin, and your conversations."
+    "How SyncedIn handles your account, digital twin context, and conversations. We do not sell private context or submit it for model training."
 });
 
 export default function PrivacyPage() {

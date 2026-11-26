@@ -9,7 +9,7 @@ import { WorldRadarAnimation } from "./WorldRadarAnimation";
 import { LoomEmbed } from "../LoomEmbed";
 
 export const metadata = withPublicSEO('/hypernetwork', {
-  title: "Hypernetwork · SyncedIn",
+  title: "Hypernetwork: Digital Twin Vision & Activity",
   description:
     "The long-term vision: a hypernetwork of digital twins holding the topography of human intention and finding the highest win-wins between us."
 });

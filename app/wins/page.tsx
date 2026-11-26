@@ -12,7 +12,7 @@ import { TrackBeacon } from "../TrackBeacon";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = withPublicSEO('/wins', {
-  title: "Win receipts · SyncedIn",
+  title: "Win Receipts: Member-Published Summaries",
   description:
     "Member-published summaries from agreements accepted on SyncedIn. Read the shared context without treating an in-app agreement as an independently verified outcome."
 });

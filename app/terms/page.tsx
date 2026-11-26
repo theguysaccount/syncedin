@@ -3,8 +3,9 @@ import Link from "next/link";
 import { Wordmark } from "../Wordmark";
 
 export const metadata = withPublicSEO('/terms', {
-  title: "Terms · SyncedIn",
-  description: "Terms of service for using SyncedIn."
+  title: "Terms of Service: Accounts, Content & AI Twins",
+  description:
+    "Plain-English Terms of Service for SyncedIn covering account eligibility, content ownership, acceptable use, and editable AI twin conversations."
 });
 
 export default function TermsPage() {

@@ -3,9 +3,9 @@ import Link from "next/link";
 import { Wordmark } from "../Wordmark";
 
 export const metadata = withPublicSEO('/support', {
-  title: "Support · SyncedIn",
+  title: "Support & Help: Contact, Account & Privacy FAQ",
   description:
-    "Get help with SyncedIn — bug reports, feature requests, privacy questions, and account issues. We respond fast."
+    "Get help with SyncedIn — contact Jack by email, book a call, report bugs, ask privacy questions, or request full account and twin data deletion."
 });
 
 /**

@@ -80,32 +80,6 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Both homepage experiences stay available. Set the preference on
-  // the response actually returned, preserving refreshed auth cookies.
-  if (!user && path === "/" && (request.method === "GET" || request.method === "HEAD")) {
-    const AB_COOKIE = "syncedin_landing_ab";
-    let variant = request.cookies.get(AB_COOKIE)?.value;
-    const needsAssignment = variant !== "a" && variant !== "b";
-    if (needsAssignment) {
-      variant = Math.random() < 0.5 ? "a" : "b";
-    }
-    if (variant === "b") {
-      const url = request.nextUrl.clone();
-      url.pathname = "/talk";
-      const redirect = NextResponse.redirect(url, 302);
-      response.cookies.getAll().forEach(cookie => redirect.cookies.set(cookie));
-      response = redirect;
-    }
-    if (needsAssignment) {
-      response.cookies.set(AB_COOKIE, variant!, {
-        path: "/",
-        sameSite: "lax",
-        maxAge: 60 * 60 * 24 * 30
-      });
-    }
-    response.headers.set("Cache-Control", "private, no-store");
-  }
-
   // === Last-active stamp ===
   // Fire-and-forget update of profiles.last_active_at so dashboard
   // cards can render "active 3h ago" badges. Debounced via cookie:

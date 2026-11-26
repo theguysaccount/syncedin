@@ -10,8 +10,8 @@ import { createServiceClient } from "@/lib/supabase/server";
  * /talk — chat-landing variant. The "talking to the master model of
  * the platform" interface Jack greenlit for the A/B test against /.
  *
- * Public homepage experiment. Keep its canonical tied to the original
- * entry, and measure comparable outcomes before choosing a winner.
+ * Public chat entry with its own self-referencing canonical URL,
+ * while / serves the canonical homepage directly with HTTP 200.
  *
  * Architecture:
  *  - Server: renders the shell + intro

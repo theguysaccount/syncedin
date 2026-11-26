@@ -61,9 +61,10 @@ for (const card of cards) {
   }
 }
 console.log(`Verified ${videos.size} desktop/mobile Open Graph videos, public bytes and range support.`);
-const homeResponse = await fetch(new URL("/", base), { headers: { cookie: "syncedin_landing_ab=a" }, redirect: "manual", signal: AbortSignal.timeout(20000) });
-assert.equal(homeResponse.status, 200, "Homepage variant A must remain reachable");
+const homeResponse = await fetch(new URL("/", base), { redirect: "manual", signal: AbortSignal.timeout(20000) });
+assert.equal(homeResponse.status, 200, "Homepage must return HTTP 200 directly without redirecting");
 assert(!/\bnoindex\b|\bnone\b/i.test(homeResponse.headers.get("x-robots-tag") || ""));
+assert(!homeResponse.headers.get("set-cookie")?.includes("syncedin_landing_ab="), "Homepage must not set an A/B redirect cookie");
 const homeHTML = await homeResponse.text();
 const home = inspectPublicPage(homeHTML);
 assert.equal(home.title.length, 1);
@@ -85,26 +86,16 @@ assert(talkHTML.includes('data-clarity-mask="True"'), "Keep the rendered public 
 const talk = inspectPublicPage(talkHTML);
 assert.equal(talk.title.length, 1);
 assert.equal(talk.descriptions.length, 1);
+assert.notEqual(talk.title[0], home.title[0], "/talk title must remain distinct from /");
+assert.notEqual(talk.descriptions[0], home.descriptions[0], "/talk description must remain distinct from /");
 assert.equal(talk.canonical.length, 1);
-assert.equal(new URL(talk.canonical[0]).href, "https://syncedin.org/");
+assert.equal(new URL(talk.canonical[0]).href, "https://syncedin.org/talk");
 assert.deepEqual(talk.headings, ["Chat with SyncedIn"]);
 assert(!talk.robots.some(value => /\bnoindex\b|\bnone\b/i.test(value)));
 for (const label of ["Drop my X handle", "Drop my LinkedIn URL", "Drop my Instagram", "Paste my Personal Intelligence"]) assert(talk.contentText.includes(label), "Keep chat entry action: " + label);
-const variantRedirect = await fetch(new URL("/?utm_source=seo-release-check", base), { headers: { cookie: "syncedin_landing_ab=b" }, redirect: "manual", signal: AbortSignal.timeout(20000) });
-assert.equal(variantRedirect.status, 302, "The homepage experiment must remain temporary");
-const variantTarget = new URL(variantRedirect.headers.get("location"), base);
-assert.equal(variantTarget.pathname, "/talk");
-assert.equal(variantTarget.search, "?utm_source=seo-release-check");
-assert(variantRedirect.headers.get("cache-control")?.includes("no-store"));
-const freshVisitor = await fetch(new URL("/", base), { redirect: "manual", signal: AbortSignal.timeout(20000) });
-const assignment = freshVisitor.headers.get("set-cookie")?.match(/syncedin_landing_ab=([ab])(?:;|,|$)/)?.[1];
-assert(assignment, "A new assignment must reach the response, including the redirect variant");
-assert.equal(freshVisitor.status, assignment === "a" ? 200 : 302);
-await freshVisitor.arrayBuffer();
-const repeatVisitor = await fetch(new URL("/", base), { headers: { cookie: `syncedin_landing_ab=${assignment}` }, redirect: "manual", signal: AbortSignal.timeout(20000) });
-assert.equal(repeatVisitor.status, assignment === "a" ? 200 : 302);
-assert(!repeatVisitor.headers.get("set-cookie")?.includes("syncedin_landing_ab="), "Do not reroll a returning visitor");
-await repeatVisitor.arrayBuffer();
+const legacyCookieHome = await fetch(new URL("/?utm_source=seo-release-check", base), { headers: { cookie: "syncedin_landing_ab=b" }, redirect: "manual", signal: AbortSignal.timeout(20000) });
+assert.equal(legacyCookieHome.status, 200, "Legacy A/B cookie must not redirect / to /talk");
+await legacyCookieHome.arrayBuffer();
 const approvedHomeGIF = fs.readFileSync("public/social/syncedin-preview.gif");
 const approvedHomeHash = crypto.createHash("sha256").update(approvedHomeGIF).digest("hex");
 assert(home.openGraphImages.length && home.twitterImages.length);
